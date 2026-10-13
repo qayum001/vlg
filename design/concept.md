@@ -10,6 +10,7 @@ Updated: 2026-10-13
 - **Aiming:** most weapons are automatic. Aimed weapons fire in the camera's facing direction, so rotating the camera is aiming. No aiming cursor.
 - **Players:** single-player.
 - **Visual direction:** colorful, with heavy particles and VFX. Stylized low-poly models; shaders and effects carry the look.
+- **Low-poly level:** visible flat-shaded facets, not smooth surfaces. Not ultra-low either (not ~100-face models): enough faces for readable hands, faces, cloth folds and hair locks.
 - **Art:** all assets are made by the agent (Blender via MCP and scripts) and reviewed/adjusted by the user. No external asset packs or AI 3D generators.
 
 ## Implications
