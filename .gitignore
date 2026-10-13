@@ -1,0 +1,25 @@
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editors / IDEs
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Claude Code personal settings
+.claude/settings.local.json
+
+# Secrets
+.env
+.env.*
+
+# Build / export output
+build/
+export/
+*.log
+
+# Engine-specific entries: add when engine is chosen
