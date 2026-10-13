@@ -2,7 +2,7 @@
 Updated: 2026-10-13
 Related: [art pipeline](art-pipeline.md), [tooling](tooling.md), [concept](../../../design/concept.md)
 
-Status: under evaluation as a possible art source (user, 2026-10-13). Until decided, the concept's "agent-made art only" rule stands, and the Blender MCP generators stay forbidden.
+Status: REJECTED (user, 2026-10-13). No external 3D generation services. Art stays agent-made in Blender. Kept for reference only. Open: image generators for reference pictures (see concept Open).
 
 ## First test (mage, same spec as the agent-made one)
 - Sloyd (app.sloyd.ai): works as a guest, no login. Image-to-3D from our render came closest to our style. Output: 40k faces, 2048 texture, watertight, T-pose kept, but the staff was lost. Polycount can be picked (3k–500k), plus quad/tri, T-pose, auto-rig and animate options. Free outputs are CC BY 4.0.

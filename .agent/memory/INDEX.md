@@ -8,4 +8,4 @@ Game design source of truth: `design/` (human-readable, shared with the user). M
 - [Open questions](project/open-questions.md) — undecided tech/project items (engine, remote, LFS)
 - [Tooling](project/tooling.md) — Blender path/prefs, two Blender MCPs (ports, tools, forbidden tools), broken claude CLI
 - [Art pipeline](project/art-pipeline.md) — how models get built (procedural bpy), low-poly level, techniques, mage test file
-- [AI 3D generators](project/ai-3d-generators.md) — evaluation status, per-tool results (Sloyd, Meshy, Hunyuan3D), browser upload tricks
+- [AI 3D generators](project/ai-3d-generators.md) — rejected 2026-10-13; per-tool results (Sloyd, Meshy, Hunyuan3D), browser upload tricks
