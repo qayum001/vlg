@@ -35,3 +35,7 @@ Added: 2026-10-13
 ## R8. Features list
 `features.md` lists implemented features with manual test steps. A feature counts as confirmed once merged to `master`.
 Added: 2026-10-13
+
+## R9. Blender MCP roles
+Seeing the scene (screenshots, viewport checks): community MCP `look` (`mcp__blender__*`). Renders: official MCP (`mcp__Blender__render_*`).
+Added: 2026-10-13
