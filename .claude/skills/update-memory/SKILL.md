@@ -5,7 +5,7 @@ description: How to update vlg long-term agent memory in .agent/memory/. Use aft
 
 # Update memory (R2)
 
-Memory = current truth about the project, agent-only. Not history (devlogs), not rules (`rules.md`), not test steps (`features.md`).
+Memory = current truth about the project, agent-only. Not history (devlogs), not rules (`rules.md`), not test steps (`features.md`), not game design (`design/` — link to it, don't copy).
 
 ## Layout
 ~~~

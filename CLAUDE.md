@@ -9,6 +9,7 @@ New game, target: release on Steam. Engine not chosen yet (see memory).
 - `rules.md` — user-declared rules. Always apply.
 - `code-rules.md` — code conventions.
 - `features.md` — features + manual test steps (awaiting on dev / confirmed on master).
+- `design/` — game design docs, shared with the user. Source of truth for design; `concept.md` first.
 - `.agent/memory/` — long-term memory, current truth. Entry: `INDEX.md`.
 - `.agent/devlogs/` — append-only history.
 - `.claude/skills/` — workflows. `.claude/agents/reviewer.md` — fresh-context reviewer.

@@ -1,7 +1,9 @@
 # Memory index
 Current truth about vlg, agent-only. One line per file. How to maintain: `update-memory` skill.
+Game design source of truth: `design/` (human-readable, shared with the user). Memory links to it, doesn't copy it.
 
 ## project
-- [Overview](project/overview.md) — what vlg is, Steam goal, engine not chosen
-- [Status](project/status.md) — current phase, next steps
-- [Open questions](project/open-questions.md) — undecided: engine, concept, platforms, git remote, LFS
+- [Overview](project/overview.md) — what vlg is, concept summary, art approach, engine not chosen
+- [Status](project/status.md) — current phase, in-progress items, next steps
+- [Open questions](project/open-questions.md) — undecided tech/project items (engine, remote, LFS)
+- [Tooling](project/tooling.md) — Blender path, Blender MCP details, broken claude CLI, available tools
