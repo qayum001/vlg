@@ -218,14 +218,16 @@ def trees(objs):
     return [BVHTree.FromObject(o, dg) for o in objs]
 
 
-def push_out(p, tl, margin):
+def push_out(p, tl, margin, max_move=None):
     # Moves p along the nearest face normal until it is `margin` outside every tree. Needs outward normals.
+    # max_move: skip pushes longer than this. Garments have inward-facing turn-in faces (hems, cuffs); a nearest
+    # face like that flips the sign and throws the point far away.
     for tr in tl:
         loc, nor, idx, dist = tr.find_nearest(p)
         if loc is None:
             continue
         d = (p - loc).dot(nor)
-        if d < margin:
+        if d < margin and (max_move is None or margin - d <= max_move):
             p = p + nor * (margin - d)
     return p
 

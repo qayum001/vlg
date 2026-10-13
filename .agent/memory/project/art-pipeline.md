@@ -17,5 +17,7 @@ Related: [tooling](tooling.md), [status](status.md), [concept](../../../design/c
   - img2img over our own ortho render (strength 0.55–0.68) keeps the T-pose and adds details (front seam, collar, hat band). IoU 0.83–0.96. Faces degrade above ~0.6.
   - img2img over a near-white mannequin turns into line art and drops the T-pose. Needs a darker mannequin or ControlNet OpenPose (not downloaded).
   - IoU at 256 px is dominated by 1–2 px edge misalignment on thin parts. TODO: add a shift/scale alignment search in reference.compare.
+- ControlNet OpenPose (xinsir SDXL, in ComfyUI models/controlnet) + a T-pose skeleton drawn from the base body joints = T-pose references that follow the prompt. Use emphasis weights and negatives (short skirt, two staffs, beard, gradient background). The user picked seed 505 as the mage target.
+- Mage v4 (`models/mage.py`, scene `mage_v4`) targets 505: black dress, purple open coat hanging from the arms, kinked hat, front locks. IoU vs 505 went 0.41 -> 0.58 by tuning the coat flare/asymmetry and the hat. Known gaps: stiff coat panels, thin hair volume, thin staff, small eyes.
 - Check progress with community `look` (`mode=angles`, `shading=material`). Final image with an official render (R9).
 - Mage: v2 (standalone script, lost with the session scratchpad) is saved in `art/characters/mage.blend` (untracked until Git LFS). v3 is built from the toolkit by `tools/blender/models/mage.py` (~6.4k tris): body-based robe, rig-ready body underneath.

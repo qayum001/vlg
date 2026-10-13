@@ -62,6 +62,10 @@ class BuilderTest(unittest.TestCase):
         self.assertGreater(Vector((p.x, p.y)).length, 0.3)
         q = Vector((1.0, 0.0, 0.0))
         self.assertEqual(scene.push_out(q, tl, 0.05), q)
+        deep = Vector((0.02, 0.0, 0.0))  # needs ~0.33 m to get out; larger than max_move -> left alone
+        self.assertEqual(scene.push_out(deep, tl, 0.05, max_move=0.1), deep)
+        near = Vector((0.27, 0.0, 0.0))
+        self.assertGreater(scene.push_out(near, tl, 0.05, max_move=0.1).x, 0.3)
 
     def test_tri_count(self):
         m = self.b.mat("grey", (0.5, 0.5, 0.5))
