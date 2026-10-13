@@ -24,8 +24,9 @@ At least two branches: `master` (confirmed work) and `dev` (all ongoing work). T
 Added: 2026-10-13
 
 ## R6. Code review
-Pipeline order: write code → test → review. A fresh-context reviewer agent reviews all new code, including the tests, for bugs, improvements, misleading logic and hallucinations (`review-changes` skill).
+Per feature: write code → test, no review. Review runs only before merging `dev` to `master`, when the user says merge: a fresh-context reviewer subagent reviews everything being merged, including the tests, for bugs, improvements, misleading logic and hallucinations (`review-changes` skill). Findings are reported only; the user picks which to fix, then merge.
 Added: 2026-10-13
+Changed: 2026-10-13
 
 ## R7. Rules file
 All user-declared rules, current and future, live in this file.

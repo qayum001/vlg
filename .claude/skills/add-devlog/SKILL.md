@@ -30,6 +30,9 @@ Commits: <short hashes, or "none">
 ## Summary
 1–3 lines.
 
+## Requirements
+- feature/fix/refactor: user's request + clarify answers, short. The pre-merge reviewer reads this. Other types: omit.
+
 ## Details
 - what was done / found
 
@@ -38,7 +41,7 @@ Commits: <short hashes, or "none">
 
 ## Results
 - Tests: <command> → <result>
-- Review: <n findings, n fixed, n rejected>
+- Review (merge entries only): <n findings, n fixed, n skipped>
 
 ## Next
 - follow-ups, open questions

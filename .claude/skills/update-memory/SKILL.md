@@ -1,6 +1,6 @@
 ---
 name: update-memory
-description: How to update vlg long-term agent memory in .agent/memory/. Use after any code change (feature-pipeline step 7), after decisions, when learning non-obvious project facts or traps, or when a memory file turns out stale or wrong.
+description: How to update vlg long-term agent memory in .agent/memory/. Use after any code change (feature-pipeline step 6), after decisions, when learning non-obvious project facts or traps, or when a memory file turns out stale or wrong.
 ---
 
 # Update memory (R2)

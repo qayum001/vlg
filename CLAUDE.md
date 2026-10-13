@@ -16,7 +16,7 @@ New game, target: release on Steam. Engine not chosen yet (see memory).
 ## Workflow
 1. New request → `clarify` skill first (R4).
 2. Any code change → `feature-pipeline` skill (order and commit contents defined there).
-3. User confirms work on dev → `confirm-feature` skill (merge to master).
+3. User says merge → `confirm-feature` skill (subagent review → user picks fixes → merge to master).
 4. User states a new rule or preference about how to work → add to `rules.md` (next number, date), commit on dev.
 5. New project facts / decisions → `update-memory` skill. Notable events → `add-devlog` skill.
 
