@@ -22,6 +22,7 @@ Updated: 2026-10-13
 
 ## Open
 - Theme, setting, story.
+- AI 3D generators as an art source: being evaluated (2026-10-13, browser test of external tools). Until decided, the **Art** rule above stands.
 - Engine.
 - Controls: mouse sensitivity and smoothing for orbit; cursor shown only in menus and upgrade picks?
 - Orientation aids during free orbit: compass, minimap, off-screen indicators?
