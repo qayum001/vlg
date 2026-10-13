@@ -17,14 +17,6 @@ desktop.ini
 .env
 .env.*
 
-# Python caches (tools/blender tests)
-__pycache__/
-*.pyc
-
-# Blender backups / temp saves
-*.blend1
-*.blend@
-
 # Build / export output
 build/
 export/

@@ -27,7 +27,6 @@ Different protocols, so different ports. Never put both on one port.
 - ComfyUI portable 0.39.0, installed and started by the user: `C:\Users\qayum\Downloads\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\ComfyUI`. API at http://127.0.0.1:8188 (only while the user runs it). Model: `models\checkpoints\sd_xl_base_1.0.safetensors`.
 - Drive it over HTTP: POST /prompt (API-format workflow), poll GET /history/<id>, outputs in `ComfyUI\output`, img2img inputs copied into `ComfyUI\input`. ~20 s per 1024² image on the RTX 3070.
 - GPU trap: SDXL keeps ~5 GB VRAM. A Blender EEVEE render at the same time crashed Blender ("GPU has been disconnected", 2026-10-13). Call POST /free {"unload_models": true, "free_memory": true} after jobs. For reference renders, use headless Blender with Cycles on CPU.
-- My partial download leftovers: `C:\Tools\ComfyUI\_downloads` (unused, ~760 MB).
 
 ## Other
 - `uv` 0.13.0 via winget; aliases in `%LOCALAPPDATA%\Microsoft\WinGet\Links` (on PATH).

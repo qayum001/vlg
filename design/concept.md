@@ -1,7 +1,7 @@
 # Game concept
 
 Status: brainstorming
-Updated: 2026-10-13
+Updated: 2026-10-14
 
 ## Decided
 - **Genre:** survivors-like (Vampire Survivors style): automatic attacks, large hordes, level-up upgrade picks, run-based. The theme is not decided.
@@ -10,8 +10,7 @@ Updated: 2026-10-13
 - **Aiming:** most weapons are automatic. Aimed weapons fire in the camera's facing direction, so rotating the camera is aiming. No aiming cursor.
 - **Players:** single-player.
 - **Visual direction:** colorful, with heavy particles and VFX. Stylized low-poly models; shaders and effects carry the look.
-- **Low-poly level:** visible flat-shaded facets, not smooth surfaces. Not ultra-low either (not ~100-face models): enough faces for readable hands, faces, cloth folds and hair locks.
-- **Art:** all assets are made by the agent (Blender via MCP and scripts) and reviewed/adjusted by the user. No external asset packs or AI 3D generators. Confirmed 2026-10-13 after a browser test of Meshy, Sloyd and Hunyuan3D: no external 3D generation services.
+- **Art:** all assets are made by the agent (Blender via MCP and scripts) and reviewed/adjusted by the user. No external asset packs or AI 3D generators.
 
 ## Implications
 - Movement is relative to the camera (W = away from the camera). Directions change when the camera orbits.
@@ -22,7 +21,6 @@ Updated: 2026-10-13
 
 ## Open
 - Theme, setting, story.
-- Reference images for modeling: maybe from an image generator (2026-10-13), not decided yet.
 - Engine.
 - Controls: mouse sensitivity and smoothing for orbit; cursor shown only in menus and upgrade picks?
 - Orientation aids during free orbit: compass, minimap, off-screen indicators?

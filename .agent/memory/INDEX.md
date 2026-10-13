@@ -7,11 +7,6 @@ Game design source of truth: `design/` (human-readable, shared with the user). M
 - [Status](project/status.md) — current phase, in-progress items, next steps
 - [Open questions](project/open-questions.md) — undecided tech/project items (engine, remote, LFS)
 - [Tooling](project/tooling.md) — Blender path/prefs, two Blender MCPs (ports, tools, forbidden tools), broken claude CLI
-- [Art pipeline](project/art-pipeline.md) — how models get built (procedural bpy), low-poly level, techniques, mage test file
-- [AI 3D generators](project/ai-3d-generators.md) — rejected 2026-10-13; per-tool results (Sloyd, Meshy, Hunyuan3D), browser upload tricks
 
 ## gotchas
 - [Shell escapes](gotchas/shell-escapes.md) — Bash heredoc collapses `\\`; write backslash text with Write/Edit
-
-## architecture
-- [Blender toolkit](architecture/blender-toolkit.md) — vlg3d package: modules, test command, how to use from live Blender
