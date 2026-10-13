@@ -17,7 +17,7 @@ Set up the dev process for vlg before any game code: rules, skills, reviewer age
 - Harness memory folder holds only a pointer to the in-repo memory.
 
 ## Problems
-- Started reading C:\Projects\Games\Unknown as possible context; user stopped it — unrelated project. Recorded in memory overview.
+- None.
 
 ## Results
 - Tests: none (docs/config). settings.json parsed with node; hook command executed OK.
