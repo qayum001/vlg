@@ -3,6 +3,7 @@ Updated: 2026-10-13
 Related: [tooling](tooling.md), [status](status.md), [concept](../../../design/concept.md)
 
 - Models are built by procedural bpy scripts run in the live Blender (community MCP execute code), then saved as `.blend`. No sculpting, no external assets.
+- Shared helpers live in the repo toolkit, see [Blender toolkit](../architecture/blender-toolkit.md). Model scripts should use it instead of copying helpers.
 - Style level (user, 2026-10-13): low-poly, flat shading, visible facets, not ultra-low. A smooth first mage (~110k tris) was rejected as "too round". The low-poly mage at ~5.5k tris was the accepted direction.
 - Axes: character faces -Y, Z up, feet at z=0, metres. Her right hand is at -X.
 - Techniques that worked:

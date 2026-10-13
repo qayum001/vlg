@@ -9,3 +9,6 @@ Game design source of truth: `design/` (human-readable, shared with the user). M
 - [Tooling](project/tooling.md) — Blender path/prefs, two Blender MCPs (ports, tools, forbidden tools), broken claude CLI
 - [Art pipeline](project/art-pipeline.md) — how models get built (procedural bpy), low-poly level, techniques, mage test file
 - [AI 3D generators](project/ai-3d-generators.md) — rejected 2026-10-13; per-tool results (Sloyd, Meshy, Hunyuan3D), browser upload tricks
+
+## architecture
+- [Blender toolkit](architecture/blender-toolkit.md) — vlg3d package: modules, test command, how to use from live Blender
