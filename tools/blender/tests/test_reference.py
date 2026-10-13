@@ -107,6 +107,23 @@ class MaskTest(unittest.TestCase):
         self.assertFalse(c[2:4, 45:47].any())
         self.assertTrue(c[5:45, 5:30].all())
 
+    def test_load_mask_gradient_background_and_soft_shadow(self):
+        # Generated references often have gradient backdrops and soft ground shadows; both must count as background.
+        H, W = 100, 80
+        t = np.linspace(0, 1, H)[:, None, None]
+        img = np.ones((H, W, 4))
+        img[..., :3] = (1 - t) * np.array([0.9, 0.8, 1.0]) + t * np.array([0.5, 0.3, 0.6])
+        yy, xx = np.mgrid[0:H, 0:W]
+        r = np.sqrt(((xx - 40) / 20.0) ** 2 + ((yy - 85) / 6.0) ** 2)
+        img[..., :3] *= (1 - 0.25 * np.clip(1 - r, 0, 1))[..., None]  # soft shadow, max 25% darker
+        img[20:80, 30:50, :3] = (0.1, 0.1, 0.12)
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "grad.png")
+            save_png(img, p)
+            m = reference.load_mask(p)
+        self.assertEqual(int(m.sum()), 60 * 20)
+        self.assertTrue(m[20:80, 30:50].all())
+
     def test_load_mask_plain_and_transparent_background(self):
         with tempfile.TemporaryDirectory() as d:
             img = np.ones((40, 60, 4))

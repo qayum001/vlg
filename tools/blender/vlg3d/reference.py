@@ -90,8 +90,39 @@ def clean(mask, min_frac=0.02):
     return keep[label]
 
 
-def load_mask(path, thresh=0.12, min_frac=0.02):
-    # Foreground = alpha if the image has a transparent background, else pixels far from the corner color.
+def flood_background(rgb, step_tol=0.035):
+    # Background = 4-connected region reached from the image border through small neighbor-to-neighbor color
+    # steps. Follows gradients and soft ground shadows; stops at the figure's hard edges.
+    H, W, _ = rgb.shape
+    rgb = rgb.tolist()  # list indexing is ~10x faster than numpy scalar access in this loop
+    bg = np.zeros((H, W), bool)
+    q = deque()
+    for y in range(H):
+        for x in (0, W - 1):
+            if not bg[y, x]:
+                bg[y, x] = True
+                q.append((y, x))
+    for x in range(W):
+        for y in (0, H - 1):
+            if not bg[y, x]:
+                bg[y, x] = True
+                q.append((y, x))
+    tol2 = step_tol * step_tol
+    while q:
+        y, x = q.popleft()
+        c0, c1, c2 = rgb[y][x]
+        for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+            if 0 <= ny < H and 0 <= nx < W and not bg[ny, nx]:
+                n0, n1, n2 = rgb[ny][nx]
+                if (n0 - c0) ** 2 + (n1 - c1) ** 2 + (n2 - c2) ** 2 < tol2:
+                    bg[ny, nx] = True
+                    q.append((ny, nx))
+    return bg
+
+
+def load_mask(path, step_tol=0.035, min_frac=0.02, max_side=512):
+    # Foreground = alpha if the border is transparent, else everything flood_background() doesn't reach.
+    # Images are subsampled to <= max_side px first (masks get normalized to 256 px anyway; keeps the flood fast).
     img = bpy.data.images.load(path, check_existing=False)
     try:
         w, h = img.size
@@ -100,13 +131,14 @@ def load_mask(path, thresh=0.12, min_frac=0.02):
     finally:
         bpy.data.images.remove(img)
     px = px.reshape(h, w, 4)[::-1]
+    k = max(1, int(np.ceil(max(w, h) / max_side)))
+    px = px[::k, ::k]
     rgb, alpha = px[..., :3], px[..., 3]
-    corners = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
-    if min(alpha[c] for c in corners) < 0.5:
+    border_alpha = np.concatenate([alpha[0], alpha[-1], alpha[:, 0], alpha[:, -1]])
+    if border_alpha.min() < 0.5:
         mask = alpha > 0.5
     else:
-        bg = np.median(np.array([rgb[c] for c in corners]), axis=0)
-        mask = np.sqrt(((rgb - bg) ** 2).sum(-1)) > thresh
+        mask = ~flood_background(rgb, step_tol)
     return clean(mask, min_frac)
 
 
