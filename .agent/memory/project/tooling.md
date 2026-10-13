@@ -5,7 +5,7 @@ Related: [overview](overview.md), [status](status.md)
 ## Blender
 - Blender 5.2.2 LTS (Steam): `C:\Program Files (x86)\Steam\steamapps\common\Blender\blender.exe`. Not on PATH. Headless: `blender.exe --background --python <script>`.
 - Config: `%APPDATA%\Blender Foundation\Blender\5.2\`. Prefs: Allow Online Access = on (required by official addon). Custom `startup.blend` = factory scene + community port 9877.
-- Prefs edited headless while the GUI runs can be overwritten when the GUI quits with dirty prefs → verify after restart.
+- Prefs edited headless while the GUI runs DO get overwritten when the GUI quits (happened 2026-10-13). GUI running → change prefs inside it via MCP execute code + `bpy.ops.wm.save_userpref()`.
 
 ## Two Blender MCPs (user chose to keep both, 2026-10-13)
 Different protocols, so different ports. Never put both on one port.
