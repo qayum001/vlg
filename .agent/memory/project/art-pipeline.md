@@ -13,4 +13,4 @@ Related: [tooling](tooling.md), [status](status.md), [concept](../../../design/c
   - Eyes, lips, brows, lashes: decals ray-cast onto the head front. Eye colors (iris, pupil, highlight) come from a UV-distance color ramp with constant interpolation, not textures.
   - Cloth and hair vs body: push vertices out with `BVHTree.find_nearest` plus a margin, with smoothing between passes.
 - Check progress with community `look` (`mode=angles`, `shading=material`). Final image with an official render (R9).
-- Mage test: `art/characters/mage.blend`, untracked until Git LFS is decided. Its build script is in session scratchpad only, not in the repo.
+- Mage: v2 (standalone script, lost with the session scratchpad) is saved in `art/characters/mage.blend` (untracked until Git LFS). v3 is built from the toolkit by `tools/blender/models/mage.py` (~6.4k tris): body-based robe, rig-ready body underneath.

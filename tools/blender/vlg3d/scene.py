@@ -179,7 +179,7 @@ def flip(ob):
     ob.data.update()
 
 
-def _orient(ob, away):
+def orient(ob, away):
     # away(center) -> vector pointing outward at that face; flips all faces if most area points inward.
     s = 0.0
     for p in ob.data.polygons:
@@ -191,11 +191,11 @@ def _orient(ob, away):
 def orient_axis(ob, axis, c):
     # Outward = away from an axis line through c ('z' or 'x'), or from point c (any other axis value).
     if axis == 'z':
-        _orient(ob, lambda q: Vector((q.x - c[0], q.y - c[1], 0.0)))
+        orient(ob, lambda q: Vector((q.x - c[0], q.y - c[1], 0.0)))
     elif axis == 'x':
-        _orient(ob, lambda q: Vector((0.0, q.y - c[1], q.z - c[2])))
+        orient(ob, lambda q: Vector((0.0, q.y - c[1], q.z - c[2])))
     else:
-        _orient(ob, lambda q: q - Vector(c))
+        orient(ob, lambda q: q - Vector(c))
 
 
 def orient_path(ob, path):
@@ -204,11 +204,11 @@ def orient_path(ob, path):
     for i, p in enumerate(path):
         kd.insert(p, i)
     kd.balance()
-    _orient(ob, lambda q: q - kd.find(q)[0])
+    orient(ob, lambda q: q - kd.find(q)[0])
 
 
 def face_dir(ob, d):
-    _orient(ob, lambda q: d)
+    orient(ob, lambda q: d)
 
 
 # ---------------------------------------------------------------- collision

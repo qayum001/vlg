@@ -86,6 +86,14 @@ class BodyTest(unittest.TestCase):
         half_x = (max(v.x for v in near) - min(v.x for v in near)) / 2
         self.assertAlmostEqual(half_x, r['chest'][0], delta=0.25 * r['chest'][0])
 
+    def test_fist_body_is_closed_and_asymmetric(self):
+        p = body.BodyParams(fist=('R',))
+        ob = body.build_body(self.b, p, self.b.mats['skin'], name="FistBody")
+        count, non_manifold = islands(ob.data)
+        self.assertEqual((count, non_manifold), (1, 0))
+        J = body.joints(ob)
+        self.assertLess(abs(J['hand.R'].x), abs(J['hand.L'].x) - 0.05)
+
     def test_joints_stored(self):
         J = body.joints(self.body)
         for n in ('pelvis', 'neck', 'shoulder.L', 'hand.R', 'knee.L', 'toe.R'):

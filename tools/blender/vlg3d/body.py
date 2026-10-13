@@ -19,6 +19,7 @@ class BodyParams:
     shoulder_half: float = 0.165  # x of shoulder joints
     hip_half: float = 0.095      # x of hip joints; keep hip/thigh rx < hip_half so legs don't cross x=0
     female: bool = True
+    fist: tuple = ()             # sides ('L'/'R') with a short, round fist instead of a flat hand
     # skin radii per joint, measured half-widths after subsurf. Vertical chains: (x, y); arms: (y, z).
     radii: dict = field(default_factory=lambda: {
         'pelvis': (0.150, 0.110), 'waist': (0.100, 0.076), 'chest': (0.145, 0.100), 'neck_base': (0.090, 0.070),
@@ -62,7 +63,10 @@ def skeleton(p):
         j['elbow.' + side] = ((x0 + s * upper_arm, 0.0, sh_z), r['elbow'])
         j['forearm.' + side] = ((x0 + s * (upper_arm + 0.4 * fore_arm), 0.0, sh_z), r['forearm'])
         j['wrist.' + side] = ((x0 + s * (upper_arm + fore_arm), 0.0, sh_z), r['wrist'])
-        j['hand.' + side] = ((x0 + s * (upper_arm + fore_arm + hand), 0.0, sh_z - 0.01), r['hand'])
+        if side in p.fist:
+            j['hand.' + side] = ((x0 + s * (upper_arm + fore_arm + 0.45 * hand), 0.0, sh_z), (0.030, 0.032))
+        else:
+            j['hand.' + side] = ((x0 + s * (upper_arm + fore_arm + hand), 0.0, sh_z - 0.01), r['hand'])
         hx = s * p.hip_half
         kx = s * (p.hip_half - 0.005)
         j['hip.' + side] = ((hx, 0.0, hip_z), r['hip'])
@@ -110,9 +114,10 @@ def build_body(builder, p, mat, name="Body"):
     # mirror the +X half onto -X, then fix normals.
     bm = bmesh.new()
     bm.from_mesh(body_me)
-    bmesh.ops.symmetrize(bm, input=bm.verts[:] + bm.edges[:] + bm.faces[:], direction='X', dist=1e-4)
-    seam = [v for v in bm.verts if abs(v.co.x) < 1e-5]
-    bmesh.ops.remove_doubles(bm, verts=seam, dist=1e-5)
+    if not p.fist:  # a one-sided fist is asymmetric by design; mirroring would overwrite it
+        bmesh.ops.symmetrize(bm, input=bm.verts[:] + bm.edges[:] + bm.faces[:], direction='X', dist=1e-4)
+        seam = [v for v in bm.verts if abs(v.co.x) < 1e-5]
+        bmesh.ops.remove_doubles(bm, verts=seam, dist=1e-5)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     bm.to_mesh(body_me)
     bm.free()
