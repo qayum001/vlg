@@ -10,11 +10,13 @@ Related: [overview](overview.md), [status](status.md)
 ## Two Blender MCPs (user chose to keep both, 2026-10-13)
 Different protocols, so different ports. Never put both on one port.
 - **Official Blender Lab** (`projects.blender.org/lab/blender_mcp`): port 9876.
-  - Server: Claude Desktop extension `ant.dir.gh.blender.blender-mcp` (`uv run blender-mcp`), port not configurable there → must keep 9876. Unverified: whether Desktop extensions load in Code sessions.
+  - Server: Claude Desktop extension `ant.dir.gh.blender.blender-mcp` (`uv run blender-mcp`), port not configurable there → must keep 9876. Loads in Code sessions as `mcp__Blender__*` (capital B).
   - Addon: extension `bl_ext.user_default.mcp` v1.0.3, autostart on, binds localhost, refuses to start without online access.
-  - Tools: execute code, API/manual docs search, screenshots (area/window), render viewport/thumbnail to path, blendfile summaries.
+  - Tools: execute code (return data via `result = {...}`), API/manual docs search, screenshots (area/window), render viewport/thumbnail to path, blendfile summaries.
+  - Screenshot tools (window and area) return all-black images (2026-10-13; OpenGL, RTX 3070 Laptop, Blender window not in foreground). Unverified cause: window not in foreground. Use community `look` to see the scene.
+  - `render_viewport_to_path` ignores the given directory: writes `%TEMP%\blender_<id>\blender_mcp\<basename>`, path returned in result. It renders through the scene camera and opens a `temp` render window in the GUI → close it: `wm.window_close()` under `temp_override(window=w)`.
 - **Community "MCP for Blender"** (ahujasid, PyPI `mcp-for-blender`): port 9877.
-  - Server: repo `.mcp.json` server `blender`, env `BLENDER_PORT=9877`, `DISABLE_TELEMETRY=true`.
+  - Server: repo `.mcp.json` server `blender`, env `BLENDER_PORT=9877`, `DISABLE_TELEMETRY=true`. Loads in Code sessions as `mcp__blender__*` (lowercase). Addon v1.8, protocol 13, up to date; libraries/generators all off.
   - Addon: `5.2\scripts\addons\blender_mcp.py`, module `blender_mcp`. Port is a per-scene prop (`blendermcp_port`); new files get 9877 from startup.blend, old files keep 9876 → its autostart skips if 9876 is taken.
   - Tools: `look` (multi-angle rendered screenshots), execute code, scene info. Never use `generate_3d`, `search_assets`, `import_asset` (external assets/AI; art is agent-made only).
   - Upgrade Blender version → reinstall: `uvx mcp-for-blender install-addon` with `BLENDERMCP_ADDONS_DIR`, then enable.
