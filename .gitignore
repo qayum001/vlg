@@ -17,6 +17,10 @@ desktop.ini
 .env
 .env.*
 
+# Blender backups / temp saves
+*.blend1
+*.blend@
+
 # Build / export output
 build/
 export/
