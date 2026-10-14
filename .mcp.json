@@ -6,8 +6,8 @@
       "env": { "DISABLE_TELEMETRY": "true", "BLENDER_PORT": "9877" }
     },
     "agent_status": {
-      "command": "C:/Projects/Backend/Notifications bot/.venv/Scripts/python.exe",
-      "args": ["C:/Projects/Backend/Notifications bot/mcp_server.py"]
+      "command": "docker",
+      "args": ["compose", "-f", "C:/Projects/Backend/Notifications bot/compose.yaml", "exec", "-T", "status-bot", "python", "/app/mcp_server.py"]
     }
   }
 }

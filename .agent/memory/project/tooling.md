@@ -31,8 +31,10 @@ Different protocols, so different ports. Never put both on one port.
 ## Telegram notifications (user's own bot, 2026-10-14)
 - Use only when the user asks to be notified (R10).
 - Project: `C:\Projects\Backend\Notifications bot` (user's). Never read or print its `.env` (bot token, API key).
-- MCP: repo `.mcp.json` server `agent_status`, stdio, its `.venv` python + `mcp_server.py`. Loads as `mcp__agent_status__send_agent_status(message, media_files)`. Text ≤3900 chars; ≤10 local files (photos/videos album), caption ≤1024. Sends straight to Telegram, doesn't need the docker container.
-- HTTP fallback: docker container `notificationsbot-status-bot-1` on 127.0.0.1:9000. `GET /health`, `POST /status` `{"message":...}` with bearer `STATUS_API_KEY` from that `.env`. Other paths 404 (no MCP over HTTP).
+- MCP: repo `.mcp.json` server `agent_status`, stdio via `docker compose -f <bot>/compose.yaml exec -T status-bot python /app/mcp_server.py`. Needs the container running (`docker compose up -d` in the bot dir). Loads as `mcp__agent_status__send_agent_status(message, media_files)`. Text ≤3900 chars; ≤10 files, caption ≤1024. Verified 2026-10-14 (test message sent).
+- media_files: only files inside the bot project dir (mounted read-only at `/workspace`). vlg files can't be attached unless copied there or the mount changes.
+- Git Bash: prefix `docker exec` with `MSYS_NO_PATHCONV=1`, else `/app` becomes `C:/Program Files/Git/app`.
+- HTTP fallback: same container `notificationsbot-status-bot-1` on 127.0.0.1:9000. `GET /health`, `POST /status` `{"message":...}` with bearer `STATUS_API_KEY` from that `.env`. Other paths 404 (no MCP over HTTP).
 
 ## Other
 - `uv` 0.13.0 via winget; aliases in `%LOCALAPPDATA%\Microsoft\WinGet\Links` (on PATH).
