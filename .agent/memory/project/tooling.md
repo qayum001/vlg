@@ -1,5 +1,5 @@
 # Tooling (this machine)
-Updated: 2026-10-13
+Updated: 2026-10-14
 Related: [overview](overview.md), [status](status.md)
 
 ## Blender
@@ -27,6 +27,12 @@ Different protocols, so different ports. Never put both on one port.
 - ComfyUI portable 0.39.0, installed and started by the user: `C:\Users\qayum\Downloads\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\ComfyUI`. API at http://127.0.0.1:8188 (only while the user runs it). Model: `models\checkpoints\sd_xl_base_1.0.safetensors`.
 - Drive it over HTTP: POST /prompt (API-format workflow), poll GET /history/<id>, outputs in `ComfyUI\output`, img2img inputs copied into `ComfyUI\input`. ~20 s per 1024² image on the RTX 3070.
 - GPU trap: SDXL keeps ~5 GB VRAM. A Blender EEVEE render at the same time crashed Blender ("GPU has been disconnected", 2026-10-13). Call POST /free {"unload_models": true, "free_memory": true} after jobs. For reference renders, use headless Blender with Cycles on CPU.
+
+## Telegram notifications (user's own bot, 2026-10-14)
+- Use only when the user asks to be notified (R10).
+- Project: `C:\Projects\Backend\Notifications bot` (user's). Never read or print its `.env` (bot token, API key).
+- MCP: repo `.mcp.json` server `agent_status`, stdio, its `.venv` python + `mcp_server.py`. Loads as `mcp__agent_status__send_agent_status(message, media_files)`. Text ≤3900 chars; ≤10 local files (photos/videos album), caption ≤1024. Sends straight to Telegram, doesn't need the docker container.
+- HTTP fallback: docker container `notificationsbot-status-bot-1` on 127.0.0.1:9000. `GET /health`, `POST /status` `{"message":...}` with bearer `STATUS_API_KEY` from that `.env`. Other paths 404 (no MCP over HTTP).
 
 ## Other
 - `uv` 0.13.0 via winget; aliases in `%LOCALAPPDATA%\Microsoft\WinGet\Links` (on PATH).

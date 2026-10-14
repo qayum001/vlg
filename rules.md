@@ -39,3 +39,7 @@ Added: 2026-10-13
 ## R9. Blender MCP roles
 Seeing the scene (screenshots, viewport checks): community MCP `look` (`mcp__blender__*`). Renders: official MCP (`mcp__Blender__render_*`).
 Added: 2026-10-13
+
+## R10. Telegram notifications
+Notify the user via Telegram (`agent_status` MCP, see memory `tooling.md`) only when they ask for it in that task.
+Added: 2026-10-14
