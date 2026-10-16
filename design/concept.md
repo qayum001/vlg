@@ -23,7 +23,7 @@ Updated: 2026-10-16
 
 ## Open
 - Theme, setting, story.
-- Engine.
+- Engine, and whether to raise min spec: analysis in `engine.md`.
 - Controls: mouse sensitivity and smoothing for orbit; cursor shown only in menus and upgrade picks?
 - Orientation aids during free orbit: compass, minimap, off-screen indicators?
 - Run length, meta-progression, content scope, price.
