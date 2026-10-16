@@ -15,9 +15,12 @@ Expected: ...
 ```
 
 ## Awaiting confirmation (dev)
+_None._
+
+## Confirmed (master)
 
 ### Level run (first gameplay slice)
-Added: 2026-10-17 | Confirmed: -
+Added: 2026-10-17 | Confirmed: 2026-10-17
 What: playable run from `design/domain.md`. Capsule hero moves relative to the camera. 4 auto skills (Bolt, Nova, Aura, Orbit) with MOBA leveling: unlock or +1 per level-up, skill level ≤ ceil(hero level / 3). Walkers chase and hurt the hero. Kills drop XP gems. Stage loop: Mobs 2 min → Horde 1 min → Chest → Mobs 2 min → Shop; each loop is harder. HP, death and restart. All numbers in `game/data/run.json` (placeholders).
 How to test:
 1. Play from source (repo root): `Godot_v4.7.2-stable_mono_win64_console.exe --path game`. The game run starts (mouse is captured).
@@ -31,7 +34,7 @@ How to test:
 Expected: no errors in the console. At Bolt level 1, bolts only fire when a walker is within 14 m (+0.5 m per Bolt level). Walk far in one direction for a minute or more: ground, props, walkers, bolts and gems never disappear. Gems left more than 60 m behind vanish. Esc during a level-up card does nothing; pick first.
 
 ### Horde stress test
-Added: 2026-10-16 | Confirmed: -
+Added: 2026-10-16 | Confirmed: 2026-10-17
 What: Godot 4.7 + C# test scene for measuring limits: GPU-animated placeholder enemies chasing the player, auto-fire projectiles, hit bursts, aura particles, spell lights, full-screen overdraw layers, 4 quality presets from `game/data/stress.json`. Play mode with live stats, plus an automated benchmark that ramps load and writes CSV. Results: `design/engine.md` → "Measured".
 How to test:
 1. Play from source: `Godot_v4.7.2-stable_mono_win64_console.exe --path game -- --stress` (repo root; without `--stress` the game run opens). Mouse is captured; Esc frees it.
@@ -40,6 +43,3 @@ How to test:
 4. Run on the built-in Vega 8: add `--gpu-index 1` before `--path`. HUD first line shows the renderer (default `mobile`) and GPU name. Forward+ for comparison: add `--rendering-method forward_plus`.
 5. Benchmark (release export, see `code-rules.md` → Commands): `powershell -ExecutionPolicy Bypass -File tools\bench.ps1 -GpuIndex 1`. Each run goes fullscreen, ramps, quits by itself; CSVs land in `build\bench\<date>\`.
 Expected: steady motion, no errors in the console. Benchmark CSVs have one row per step and end with `# best_passing=<value>`.
-
-## Confirmed (master)
-_None._
