@@ -23,7 +23,7 @@ Updated: 2026-10-16
 - Steam asks developers to disclose AI-generated content that ships in the game. The store page will need this.
 
 ## Open
-- Theme, setting, story.
+- Theme, setting, story, entities, builds, run structure, meta-progression: in progress in `domain.md`.
 - Controls: mouse sensitivity and smoothing for orbit; cursor shown only in menus and upgrade picks?
 - Orientation aids during free orbit: compass, minimap, off-screen indicators?
-- Run length, meta-progression, content scope, price.
+- Content scope, price.
