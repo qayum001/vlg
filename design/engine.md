@@ -9,6 +9,7 @@ Inputs (from `concept.md`): 3D survivors-like, hundreds of enemies, heavy partic
 - **Engine: Godot 4.7 with C#** (recommended). Unity 6 is the fallback if the horde stress test fails.
 - **Min spec: raise it to 8 GB RAM + 2 GB VRAM** (GTX 750 Ti / GTX 1050 / Radeon Vega 8 class, about Steam Deck level). Keep a "very low" preset that tries to run on 4 GB / 1 GB, but don't promise it on the store page.
 - With 4 GB / 1 GB, the limit is **GPU speed**, not memory size. The thing that breaks first is the concept's main feature: heavy transparent VFX.
+- **Measured 2026-10-16 (§7):** on a Vega 8 (tier B stand-in), the low preset holds 3000 (Forward+) / 4250 (Mobile) enemies at 60 fps. Design budget: ~1500 visible enemies on low.
 
 ## 2. What hardware "4 GB RAM + 1 GB VRAM" really means
 VRAM size does not tell speed. Real machines with 1 GB VRAM in 2026 are old:
@@ -34,7 +35,7 @@ VRAM size does not tell speed. Real machines with 1 GB VRAM in 2026 are old:
 - Raising min spec from 4 GB to 8 GB RAM drops ~1.2% of Steam users. Raising VRAM to 2 GB drops ~4% more on paper; the real number is lower, because integrated GPUs often report only 512 MB and fall into that bucket.
 
 ## 3. Computing limits per tier
-**These are engineering estimates for planning, not measurements.** The first prototype (horde stress test) checks them. Frame budget at 60 fps = 16.6 ms.
+**These are engineering estimates for planning, not measurements.** Tier B measurements are in §7 and replace these where they overlap. Frame budget at 60 fps = 16.6 ms.
 
 ### Memory
 | | Tier A: 4 GB / 1 GB | Tier B: 8 GB / 2 GB |
@@ -121,6 +122,46 @@ First prototype = **horde stress test** in the chosen engine: N GPU-animated ene
 ## 6. Decision (user, 2026-10-16)
 1. Engine: **Godot 4.7 + C#**.
 2. Min spec: **8 GB RAM + 2 GB VRAM** (tier B, ≈ Steam Deck). Tier A (4 GB / 1 GB) only as a "very low" preset stretch goal, not on the store page.
+
+## 7. Measured (horde stress test, 2026-10-16)
+These replace the §3 estimates where they overlap. The stress test is in `features.md`, and the raw CSVs come from `tools/bench.ps1`.
+
+### Setup
+- Godot 4.7.2 .NET **release export**, Direct3D 12, 1920×1080 exclusive fullscreen, vsync off.
+- GPU: **Radeon Vega 8 iGPU** in the dev laptop's Ryzen 7 5800H (~2 TFLOPS, shared DDR4 ~51 GB/s). That's a bit above Steam Deck compute with less bandwidth, and above a GTX 750 Ti. CPU work runs on the 5800H. Laptop on AC, performance mode.
+- **Pass** = 95% of frames ≤ 16.7 ms (60 fps), measured for 3 s after 1.5 s warmup. A ramp stops after 2 failing steps in a row.
+- Enemies: placeholder monster, GPU-animated (baked vertex animation), one instanced draw. Spawned around the player on screen, then they crowd in. Live projectiles = half the enemy count, plus hit/death bursts.
+- Presets (`game/data/stress.json`):
+  - **very_low**: 60% resolution, 280-triangle enemies, no shadows.
+  - **low**: 75% resolution, 760 triangles, sun shadows on props only, FXAA, glow, 4 lights, 400 aura particles.
+  - **medium**: 100% resolution, enemies cast shadows (2 cascades), 8 lights, 1000 aura particles.
+  - **high**: medium + TAA, SSAO, 2700-triangle enemies.
+
+### Results, Vega 8 (tier B / Deck stand-in)
+| Test (other load at preset values) | Forward+ renderer | Mobile renderer |
+|---|---|---|
+| Enemies, low preset | **3000** | **4250** |
+| Enemies, very_low preset | ≥ 10 000 (ramp max) | ≥ 10 000 (9.5 ms p95) |
+| Enemies, medium preset | 250 | 500 |
+| Full-screen additive layers (500 enemies, low) | 43 | ≥ 60 (ramp max) |
+| GPU particles, ~0.6 m soft additive (500 enemies, low) | 20 000 | 56 000 |
+| Enemies, low, **Vulkan** instead of D3D12 | 1000 | – |
+
+Sanity check, RTX 3070 Laptop, high preset, Forward+: 4250 enemies (34 M triangles per frame).
+
+Other numbers:
+- **Game logic (CPU)**: 1.3 ms for 3000 enemies + 1500 projectiles; 4.2 ms at 10 000. Single thread on the 5800H. Not the limit.
+- **Draw calls**: ~85 regardless of enemy count, so instancing works.
+- **Memory**: process working set 430–630 MB, video memory 130–210 MB. Far below 8 GB / 2 GB, and even below 4 GB / 1 GB.
+
+### What this means
+1. **Min-spec target is reachable with a big margin.** On the low preset the Vega 8 holds 3000–4250 enemies with projectiles and VFX at 60 fps. A real GTX 750 Ti / GTX 1050 is slower, and real art, gameplay and UI cost more. Plan **~1500 visible enemies on low** as the design budget (about 50% headroom).
+2. **Enemy shadows are the most expensive setting.** Medium (enemies cast shadows, native 1080p) drops to 250–500 enemies, about 3× the per-enemy cost of low. Keep real-time enemy shadows off up to medium; use fake blob shadows instead.
+3. **The Mobile renderer is faster on this GPU in every test**: +40% enemies, +40% overdraw, ~2.8× particles. It lacks Forward+ extras (SSAO, SSR, SDFGI, volumetric fog, TAA) and lights only 8 omni lights per mesh. The concept's stylized look doesn't need those. → candidate default renderer.
+4. **Transparent overdraw is not the wall I estimated** (§3 said 10–15 layers on tier B; measured 43+). Particle *count* costs more than fill: 20 000 (Forward+) vs 56 000 (Mobile).
+5. **Keep Direct3D 12 on Windows.** Vulkan used less GPU time but presented frames unevenly on this hybrid laptop, so it passed only 1000 enemies.
+6. **Tier A (4 GB / 1 GB) looks possible on very_low.** very_low passes 10 000 enemies here. A 3–4× slower tier A GPU could still hold ~2000 on very_low. This is an extrapolation, not tested; it needs an old test laptop.
+7. **Steam Deck** (800p native, about Vega 8 class) should land near the low-preset numbers. Not tested; the Windows build runs through Proton.
 
 ## Sources
 - Steam Hardware & Software Survey, September 2026: https://store.steampowered.com/hwsurvey/

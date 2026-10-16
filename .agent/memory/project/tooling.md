@@ -40,5 +40,12 @@ Different protocols, so different ports. Never put both on one port.
 - `uv` 0.13.0 via winget; aliases in `%LOCALAPPDATA%\Microsoft\WinGet\Links` (on PATH).
 - `claude` CLI on PATH is broken (npm shim → missing claude.exe). Edit `.mcp.json` instead of `claude mcp add`.
 - Available: node, python 3.13, winget, git 2.45, git-lfs 3.5.1.
-- .NET SDKs: 8.0.401, 9.0.300, 10.0.102. Godot: not installed (2026-10-16).
-- Hardware: Ryzen 7 5800H (Vega 8 iGPU = perf test GPU), RTX 3070 Laptop, 32 GB RAM.
+- .NET SDKs: 8.0.401, 9.0.300, 10.0.102 (`dotnet` = 10; see [dotnet test gotcha](../gotchas/dotnet-test-mtp.md)).
+- Hardware: Ryzen 7 5800H (Vega 8 iGPU = perf test GPU), RTX 3070 Laptop, 32 GB RAM. Display 1920×1080 144 Hz. Legion laptop; run benchmarks on AC power.
+
+## Godot
+- 4.7.2 .NET (project engine): `C:\Projects\Games\Godot\engine\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe` (console exe for CLI; plain exe for GUI). Not on PATH. Same folder has the user's 4.4.1 and 4.6-rc1 — don't use or delete.
+- Downloads kept in `C:\Projects\Games\Godot\engine\_downloads\4.7.2\` (SHA512-verified).
+- Export templates: `%APPDATA%\Godot\export_templates\4.7.2.stable.mono\`.
+- D3D12 device indexes for `--gpu-index`: 0 = RTX 3070 Laptop, 1 = AMD Radeon (Vega 8), 2 = Microsoft Basic Render. Godot defaults to 0.
+- Godot windows open on the user's screen; benchmarks go exclusive fullscreen. Tell the user before long runs.

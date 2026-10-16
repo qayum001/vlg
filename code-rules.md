@@ -24,7 +24,7 @@ Rules marked (R#) come from `rules.md`. The rest are agent defaults; the user ma
 
 ## Dependencies and assets
 - Ask the user before adding any third-party library, plugin, or asset.
-- Check the license allows commercial release on Steam; record it (file TBD when the first one is added).
+- Check the license allows commercial release on Steam; record it in `third-party.md`.
 
 ## Engine-specific
 Godot 4.7.x .NET build, C# only (decision: `.agent/memory/decisions/engine.md`).
@@ -33,4 +33,17 @@ Godot 4.7.x .NET build, C# only (decision: `.agent/memory/decisions/engine.md`).
 - Game rules live in a plain C# library with no Godot reference, unit-tested with `dotnet test`. Godot nodes are thin adapters: input, rendering, audio.
 - Hordes (enemies, projectiles, pickups): no Node per entity. Struct arrays + MultiMesh/RenderingServer, own spatial grid for collisions, pools. Budgets per quality preset from data.
 - Hot paths: no LINQ, closures, boxing, string building or `new` of reference types per frame.
-- Project layout, test frameworks and commands: added at project setup.
+
+Layout:
+- `game/`: Godot project (`project.godot`, `Vlg.csproj`, `Vlg.sln`). `scenes/` (snake_case `.tscn`), `scripts/` (C#, file = class), `shaders/`, `data/` (JSON tuning, exported via `include_filter`).
+- `src/Vlg.Core/`: Godot-free logic (net8.0). `tests/Vlg.Core.Tests/`: xUnit v3 (`/global.json` opts into Microsoft.Testing.Platform for the .NET 10 SDK).
+- `tools/`: scripts. `build/`: exports, benchmark CSVs, screenshots (ignored).
+- Commit Godot `.uid` sidecar files. `.godot/` is ignored.
+
+Commands (repo root; `G` = Godot console exe, path in memory `project/tooling.md`):
+- Tests: `dotnet test --project tests/Vlg.Core.Tests/Vlg.Core.Tests.csproj`
+- Build game C#: `dotnet build game/Vlg.csproj`
+- Import after adding resources/shaders: `"$G" --headless --path game --import`
+- Run from source (debug): `"$G" --path game -- <game args>`; game args: `LaunchOptions.Usage`.
+- Export release: `"$G" --headless --path game --export-release "Windows Desktop" ../build/stress/vlg.exe`
+- Benchmarks on the export: `tools/bench.ps1`. Performance numbers only from release exports, never from the editor binary.
