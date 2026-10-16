@@ -16,6 +16,7 @@ public class RunConfigTests
             c.Stages.Select(s => s.Kind));
         Assert.Equal(new[] { SkillKind.Bolt, SkillKind.Nova, SkillKind.Aura, SkillKind.Orbit }, c.Skills.Select(s => s.Kind));
         Assert.Equal(3, c.Leveling.LevelDivisor);
+        Assert.Equal((40f, 28f), (c.Camera.TiltDeg, c.Camera.Distance));
         Assert.Equal(10, c.Leveling.MaxSkillLevel);
     }
 
@@ -77,6 +78,23 @@ public class RunConfigTests
         Assert.Equal(1.6f, s.Hp(3), 4);
         Assert.Equal(1.4f, s.Damage(3), 4);
         Assert.Equal(1.5f, s.Spawn(3), 4);
+    }
+
+    [Fact]
+    public void Camera_that_sees_the_horizon_throws()
+    {
+        // 25 - 45 / 2 = 2.5 degrees below the horizon: under the 5 degree minimum.
+        string json = TestConfig.RunJson.Replace("\"tiltDeg\": 40", "\"tiltDeg\": 25");
+        var e = Assert.Throws<FormatException>(() => RunConfig.Parse(json));
+        Assert.Contains("tiltDeg", e.Message);
+    }
+
+    [Fact]
+    public void Despawn_radius_inside_the_visible_area_throws()
+    {
+        string json = TestConfig.RunJson.Replace("\"band\": 6, \"despawnRadius\": 80", "\"band\": 6, \"despawnRadius\": 50");
+        var e = Assert.Throws<FormatException>(() => RunConfig.Parse(json));
+        Assert.Contains("spawn.despawnRadius", e.Message);
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using Vlg.Core.Sim;
 
 namespace Vlg.Core.Config;
 
@@ -8,6 +9,7 @@ namespace Vlg.Core.Config;
 public sealed record RunConfig
 {
     public required RunSimSettings Sim { get; init; }
+    public required CameraSettings Camera { get; init; }
     public required HeroSettings Hero { get; init; }
     public required WalkerSettings Walker { get; init; }
     public required SpawnSettings Spawn { get; init; }
@@ -25,6 +27,10 @@ public sealed record RunConfig
     public const int MaxBlades = 32;
     /// <summary>Upper bound for Bolt/Nova count (Bolt target buffer).</summary>
     public const int MaxProjectilesPerCast = 256;
+    /// <summary>Widest supported screen (21:9). Despawn radii must lie beyond the view at this aspect.</summary>
+    public const float MaxAspect = 21f / 9f;
+    /// <summary>Top screen edge at least this far below the horizon, else the view reaches very far.</summary>
+    public const float MinTopEdgeDeg = 5f;
 
     public static RunConfig Parse(string json)
     {
@@ -53,10 +59,18 @@ public sealed record RunConfig
         Require(w.SeparationRadius > 0 && w.SeparationStrength >= 0, "walker separation out of range");
         Require(w.MaxNeighbors is > 0 and <= 64, "walker.maxNeighbors must be 1..64 (stackalloc)");
 
-        Require(Spawn.RingMin > 0 && Spawn.RingMin < Spawn.RingMax && Spawn.RingMax < Spawn.DespawnRadius,
-            "spawn needs 0 < ringMin < ringMax < despawnRadius");
+        var cam = Camera;
+        Require(cam.FovDeg is > 10 and < 120 && cam.Distance > 0 && cam.FollowRate > 0 && cam.ShadowDistance > 0,
+            "camera fovDeg must be 10..120, distance/followRate/shadowDistance > 0");
+        Require(cam.TiltDeg <= 89 && cam.TiltDeg - cam.FovDeg / 2 >= MinTopEdgeDeg,
+            $"camera tiltDeg must be <= 89 and >= fovDeg / 2 + {MinTopEdgeDeg} (top edge below the horizon)");
+        float farthest = ViewFootprint.Compute(cam.TiltDeg, cam.Distance, cam.FovDeg, MaxAspect, 0f).FarthestCorner;
+        Require(Spawn.ViewMargin >= 0 && Spawn.Band >= 0, "spawn viewMargin/band must be >= 0");
+        Require(Spawn.DespawnRadius > farthest + Spawn.ViewMargin + Spawn.Band,
+            $"spawn.despawnRadius must exceed the farthest visible point at 21:9 + viewMargin + band ({farthest + Spawn.ViewMargin + Spawn.Band:F1} m)");
         Require(Pickups.MagnetSpeed > 0 && Pickups.CollectRadius > 0, "pickups magnetSpeed/collectRadius must be > 0");
-        Require(Pickups.DespawnRadius > h.PickupRadius, "pickups.despawnRadius must be > hero.pickupRadius");
+        Require(Pickups.DespawnRadius > h.PickupRadius && Pickups.DespawnRadius > farthest,
+            $"pickups.despawnRadius must exceed hero.pickupRadius and the farthest visible point at 21:9 ({farthest:F1} m)");
 
         var l = Leveling;
         Require(l.XpBase > 0 && l.XpPerLevel >= 0, "leveling xpBase must be > 0, xpPerLevel >= 0");

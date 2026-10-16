@@ -12,6 +12,8 @@
     "workerThreads": -1,
     "parallelMinCount": 2048
   },
+  // Angle below the horizon, distance to the hero, vertical FOV. Spawning follows the view.
+  "camera": { "tiltDeg": 40, "distance": 28, "fovDeg": 45, "followRate": 10, "shadowDistance": 80 },
   "hero": {
     "maxHp": 100,
     "speed": 6.5,
@@ -32,10 +34,11 @@
     "animRate": 1.6,
     "hitFlashDecay": 6.0
   },
-  // Ring min is past the farthest visible ground point (~29 m at the current camera).
-  "spawn": { "ringMin": 30, "ringMax": 36, "despawnRadius": 48 },
+  // Walkers spawn at view edge + viewMargin + [0, band) in a random direction (~16 m behind the hero, ~40-60 m ahead
+  // at 16:9). despawnRadius must exceed the farthest visible point at 21:9 (validated).
+  "spawn": { "viewMargin": 6, "band": 6, "despawnRadius": 80 },
   // Gems farther than despawnRadius from the hero vanish (XP lost).
-  "pickups": { "magnetSpeed": 16, "collectRadius": 0.6, "despawnRadius": 60 },
+  "pickups": { "magnetSpeed": 16, "collectRadius": 0.6, "despawnRadius": 80 },
   "leveling": {
     "xpBase": 5,
     "xpPerLevel": 5,

@@ -39,6 +39,10 @@ public sealed class RunSim
     readonly WorkerPool? _workers;
     readonly int[] _contacts;
     XorShift32 _rng;
+    ViewFootprint _view;
+
+    /// <summary>Until the adapter calls <see cref="SetView"/> (tests): yaw 0, 16:9.</summary>
+    public const float DefaultAspect = 16f / 9f;
 
     /// <param name="workers">Shared pool for the enemy update; null = single thread. Same result either way.</param>
     public RunSim(RunConfig config, uint seed, WorkerPool? workers = null)
@@ -60,10 +64,21 @@ public sealed class RunSim
         Skills = new SkillSystem(config.Skills, s.EnemyCapacity);
         _contacts = new int[s.EnemyCapacity];
         HeroHp = config.Hero.MaxHp;
+        SetView(0f, DefaultAspect);
         OnStageEntered();
     }
 
     public float HeroMaxHp => Config.Hero.MaxHp;
+
+    /// <summary>Ground area the camera sees, relative to the hero. Spawns and recycles land outside it.</summary>
+    public ViewFootprint View => _view;
+
+    /// <summary>Camera yaw (CameraMath convention) and viewport width / height; call when either changes.</summary>
+    public void SetView(float yaw, float aspect)
+    {
+        var c = Config.Camera;
+        _view = ViewFootprint.Compute(c.TiltDeg, c.Distance, c.FovDeg, aspect, yaw);
+    }
 
     public RunPhase Phase =>
         HeroHp <= 0f ? RunPhase.Dead
@@ -93,7 +108,7 @@ public sealed class RunSim
         if (!Stages.Current.IsTimed) return;
 
         var hero = HeroPosition;
-        _spawner.Update(dt, Stages.Current, Stages.Loop, hero, Enemies, ref _rng, Config);
+        _spawner.Update(dt, Stages.Current, Stages.Loop, hero, _view, Enemies, ref _rng, Config);
         Grid.Build(Enemies.Position, Enemies.Count, hero);
         Enemies.Update(dt, hero, Grid, _swarm, _workers);
 

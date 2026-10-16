@@ -15,7 +15,17 @@ Expected: ...
 ```
 
 ## Awaiting confirmation (dev)
-_None._
+
+### Run camera: lower and farther, off-screen spawning
+Added: 2026-10-17 | Confirmed: -
+What: the run camera tilts 40° below the horizon (was 55°) and sits 28 m from the hero (was 22 m). Values are in `game/data/run.json` → `camera`. Walkers now spawn just outside the visible screen area in every direction, following camera rotation and screen shape. The stress test camera is unchanged.
+How to test:
+1. Play from source: `Godot_v4.7.2-stable_mono_win64_console.exe --path game`.
+2. The view is flatter and wider: you see much more ground ahead, and the hero and walkers look smaller.
+3. Watch the screen edges for a minute while turning the camera with the mouse. Walkers walk in from outside the screen; none appear out of nothing inside the view. Walkers from the bottom edge (behind you) arrive sooner than those from the top.
+4. Walk far in one direction: props and shadows cover the whole view, up to the top corners.
+5. Optional: change `tiltDeg` / `distance` in `run.json` and restart. A tilt that shows the horizon (below fovDeg / 2 + 5) or a too-small `despawnRadius` stops the game with an error naming the key.
+Expected: no errors in the console, no walkers popping in on screen, the stress test (`-- --stress`) still looks as before.
 
 ## Confirmed (master)
 

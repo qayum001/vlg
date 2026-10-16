@@ -26,6 +26,11 @@ public partial class StressTest : Node3D
     const float HudRefreshSec = 0.25f;
     /// <summary>Bench starts after a few frames so the window mode switch has settled.</summary>
     const int BenchStartFrame = 5;
+    // Stress-test camera stays fixed so benchmark results remain comparable (run camera: run.json).
+    const float CameraTiltDeg = 55f;
+    const float CameraDistance = 22f;
+    const float CameraFovDeg = 45f;
+    const float CameraFollowRate = 10f;
 
     LaunchOptions _options = null!;
     StressConfig _config = null!;
@@ -81,7 +86,7 @@ public partial class StressTest : Node3D
         _arena = new Arena(this, GD.Load<Shader>("res://shaders/ground.gdshader"), _options.Seed);
         _enemies = new EnemyRenderer(this, GD.Load<Shader>("res://shaders/enemy_vat.gdshader"));
         _projectiles = new ProjectileRenderer(this);
-        _camera = new OrbitCamera(this);
+        _camera = new OrbitCamera(this, CameraTiltDeg, CameraDistance, CameraFovDeg, CameraFollowRate);
         _vfx = new VfxSystem(this, _camera.Camera, GD.Load<Shader>("res://shaders/overdraw_layer.gdshader"));
         _player = new MeshInstance3D
         {

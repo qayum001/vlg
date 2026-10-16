@@ -25,6 +25,8 @@ public partial class RunGame : Node3D
     const float HudRefreshSec = 0.1f;
     /// <summary>Renderer cull boxes recenter in these steps (box is 500 m, view reaches ~30 m).</summary>
     const float CullSnap = 50f;
+    /// <summary>5x5 prop tiles: props reach past the farthest visible point of the lower, farther run camera.</summary>
+    const int PropTiles = 5;
 
     /// <summary>Never equals a real (phase, pending) pair: forces SyncPanel to rebuild after a pick.</summary>
     static readonly (RunPhase, int) PanelStale = (RunPhase.Playing, -1);
@@ -79,12 +81,13 @@ public partial class RunGame : Node3D
         _workers = new WorkerPool(_options.Threads ?? _config.Sim.WorkerThreads, _config.Sim.ParallelMinCount);
         _sim = new RunSim(_config, _options.Seed, _workers);
 
-        _arena = new Arena(this, GD.Load<Shader>("res://shaders/ground.gdshader"), _options.Seed);
+        _arena = new Arena(this, GD.Load<Shader>("res://shaders/ground.gdshader"), _options.Seed, PropTiles);
         _enemies = new EnemyRenderer(this, GD.Load<Shader>("res://shaders/enemy_vat.gdshader"));
         _projectiles = new ProjectileRenderer(this);
         _gems = new GemRenderer(this);
         _skillVisuals = new SkillVisuals(this, _config.Skills.Length);
-        _camera = new OrbitCamera(this);
+        var cam = _config.Camera;
+        _camera = new OrbitCamera(this, cam.TiltDeg, cam.Distance, cam.FovDeg, cam.FollowRate);
         _vfx = new VfxSystem(this, _camera.Camera, GD.Load<Shader>("res://shaders/overdraw_layer.gdshader"));
         _heroMaterial = new StandardMaterial3D
         {
@@ -104,6 +107,7 @@ public partial class RunGame : Node3D
         _panel = new ChoicePanel(this);
 
         QualityApplier.Apply(_preset, GetViewport(), _arena, _enemies, _vfx);
+        _arena.Sun.DirectionalShadowMaxDistance = cam.ShadowDistance;
         // Stress-only effects off: spell lights, aura particles, overdraw layers.
         _vfx.SetLights(0);
         _vfx.SetAura(0);
@@ -123,7 +127,10 @@ public partial class RunGame : Node3D
         bool stepped = false;
         if (_sim.Phase == RunPhase.Playing && !_pauseMenu)
         {
-            _sim.Step(dt, ReadMove(dt));
+            var move = ReadMove(dt);
+            var size = GetViewport().GetVisibleRect().Size;
+            _sim.SetView(_camera.Yaw, size.X / size.Y);
+            _sim.Step(dt, move);
             stepped = true;
         }
 
