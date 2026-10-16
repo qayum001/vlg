@@ -5,7 +5,8 @@ namespace Vlg.Core.Run;
 
 /// <summary>
 /// XP pickups, packed struct-of-arrays like <see cref="Sim.EnemySwarm"/>. A gem inside the pickup radius
-/// becomes magnetized and flies to the hero until collected. Full pool: value merges into an existing gem.
+/// becomes magnetized and flies to the hero until collected. Gems left beyond the despawn radius vanish.
+/// Full pool (fallback): value merges into an existing gem.
 /// </summary>
 public sealed class GemPool
 {
@@ -40,10 +41,11 @@ public sealed class GemPool
         Magnet[i] = false;
     }
 
-    /// <summary>Moves magnetized gems, removes collected ones. Returns collected XP.</summary>
-    public float Update(float dt, Vector2 hero, float pickupRadius, float magnetSpeed, float collectRadius)
+    /// <summary>Moves magnetized gems, removes collected and left-behind ones. Returns collected XP.</summary>
+    public float Update(float dt, Vector2 hero, float pickupRadius, float magnetSpeed, float collectRadius, float despawnRadius)
     {
         float pickup2 = pickupRadius * pickupRadius;
+        float despawn2 = despawnRadius * despawnRadius;
         float step = magnetSpeed * dt;
         float collected = 0f;
         // Reverse order: swap-remove pulls in an already-processed entry.
@@ -53,6 +55,11 @@ public sealed class GemPool
             float d2 = toHero.LengthSquared();
             if (!Magnet[i])
             {
+                if (d2 > despawn2)
+                {
+                    RemoveAt(i);
+                    continue;
+                }
                 if (d2 > pickup2) continue;
                 Magnet[i] = true;
             }

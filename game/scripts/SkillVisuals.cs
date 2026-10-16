@@ -68,6 +68,8 @@ public sealed class SkillVisuals
         });
     }
 
+    public void SetCullCenter(Vector3 center) => _blades.CustomAabb = EnemyRenderer.CullBoxAround(center);
+
     public void Update(SkillSystem skills, System.Numerics.Vector2 hero, float dt)
     {
         for (int i = 0; i < _discs.Length; i++)

@@ -25,10 +25,10 @@ How to test:
 3. First level-up: the game pauses and shows 3 cards: Unlock Nova / Aura / Orbit, each with its stats. No "Bolt 1 → 2" option yet (cap is 1 at hero levels 2–3). Pick with a click, keys 1–3, or gamepad (d-pad + A).
 4. Hero level 4: upgrade options to level 2 appear. The HUD skill row shows each skill level and the current cap. Unlocked skills show up: Nova = ring of bolts, Aura = purple disc that pulses per tick, Orbit = orange blades circling you.
 5. Top center shows `Loop N · Stage · m:ss`. F2 skips to the next stage. Horde = many more walkers. Chest = pause panel "items come later" → Continue. Shop = full heal + panel → Continue → Loop 2 (walkers tougher, faster spawns).
-6. F3 gives a level instantly (one more pick). Use it to check the cap: a skill can reach level 5 at hero level 13, level 10 at hero level 28. When all 4 skills are at 10 (hero level 40), the only pick is "+2% damage to all skills".
+6. F3 gives a level instantly (one more pick). Use it to check the cap: a skill can reach level 5 at hero level 13, level 10 at hero level 28. Once all 4 skills are at 10 (after the hero level 40 pick), every later level-up offers only "+2% damage to all skills".
 7. Stand in a crowd: the hero flashes red and HP drops. At 0 HP: "You died" panel with loop, time, level, kills → Restart run starts over.
 8. Esc / Start: pause menu (Resume, Restart run, Quit). F1 hides the HUD, F11 fullscreen, F12 screenshot.
-Expected: no errors in the console. Bolts only fire when a walker is within 14 m. The ground and props never end when you walk far in one direction. Esc during a level-up card does nothing; pick first.
+Expected: no errors in the console. At Bolt level 1, bolts only fire when a walker is within 14 m (+0.5 m per Bolt level). Walk far in one direction for a minute or more: ground, props, walkers, bolts and gems never disappear. Gems left more than 60 m behind vanish. Esc during a level-up card does nothing; pick first.
 
 ### Horde stress test
 Added: 2026-10-16 | Confirmed: -

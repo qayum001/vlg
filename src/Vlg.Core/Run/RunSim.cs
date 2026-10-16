@@ -9,7 +9,8 @@ namespace Vlg.Core.Run;
 
 /// <summary>
 /// One level run: hero, stage loop, walkers, skills, XP gems, level-ups. Godot-free.
-/// Step does nothing unless <see cref="Phase"/> is Playing; the adapter answers LevelUp/Chest/Shop/Dead.
+/// Step only clears last step's events (Hits, Deaths, HeroHurt) unless <see cref="Phase"/> is Playing;
+/// the adapter answers LevelUp/Chest/Shop/Dead.
 /// Ground plane: Vector2(x, y) = world (x, z).
 /// </summary>
 public sealed class RunSim
@@ -106,7 +107,7 @@ public sealed class RunSim
         for (int i = 0; i < Deaths.Count; i++) Gems.Spawn(Deaths.Items[i], Config.Walker.Xp);
 
         var p = Config.Pickups;
-        Progress.AddXp(Gems.Update(dt, hero, Config.Hero.PickupRadius, p.MagnetSpeed, p.CollectRadius));
+        Progress.AddXp(Gems.Update(dt, hero, Config.Hero.PickupRadius, p.MagnetSpeed, p.CollectRadius, p.DespawnRadius));
     }
 
     public void ChooseLevelUp(int index)

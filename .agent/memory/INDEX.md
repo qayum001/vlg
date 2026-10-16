@@ -18,4 +18,4 @@ Game design source of truth: `design/` (human-readable, shared with the user). M
 ## gotchas
 - [Shell escapes](gotchas/shell-escapes.md) — Bash heredoc collapses `\\`; write backslash text with Write/Edit
 - [dotnet test + MTP](gotchas/dotnet-test-mtp.md) — .NET 10 SDK needs global.json test runner opt-in; `--project` syntax
-- [Godot UI + CLI](gotchas/godot-ui-and-cli.md) — SetAnchorsPreset keeps old rect; exports refuse scene path arg; test windows catch user input
+- [Godot UI + CLI](gotchas/godot-ui-and-cli.md) — SetAnchorsPreset keeps old rect; MultiMesh cull box must follow the player; exports refuse scene path arg; test windows catch user input

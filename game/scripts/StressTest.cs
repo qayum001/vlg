@@ -58,6 +58,20 @@ public partial class StressTest : Node3D
 
     public override void _Ready()
     {
+        try
+        {
+            Setup();
+        }
+        catch (Exception e)
+        {
+            StartupFailure.Quit(this, e);
+        }
+    }
+
+    void Setup()
+    {
+        // Frame times must be unthrottled for the bench (project default is vsync on for play).
+        DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Disabled);
         _options = LaunchOptions.Parse(OS.GetCmdlineUserArgs());
         _config = StressConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/stress.json"));
         _presetNames = _config.Presets.Keys.ToArray();
@@ -107,7 +121,7 @@ public partial class StressTest : Node3D
     public override void _ExitTree()
     {
         FinishBench();
-        _workers.Dispose();
+        _workers?.Dispose();
     }
 
     public override void _Process(double delta)
@@ -222,7 +236,7 @@ public partial class StressTest : Node3D
         string path = _options.OutPath
             ?? ProjectSettings.GlobalizePath($"user://bench/{mode}_{_presetName}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
         var ramp = _options.ApplyRamp(BenchLoad.RampFor(mode, _config.Bench));
-        _bench = new BenchRun(mode, ramp, _config.Bench, path, BenchMeta(mode, ramp));
+        _bench = new BenchRun(ramp, _config.Bench, path, BenchMeta(mode, ramp));
         GD.Print($"bench {mode} preset {_presetName} on {Telemetry.Adapter} [{Telemetry.Renderer}] -> {path}");
     }
 

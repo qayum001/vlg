@@ -56,6 +56,7 @@ public sealed record RunConfig
         Require(Spawn.RingMin > 0 && Spawn.RingMin < Spawn.RingMax && Spawn.RingMax < Spawn.DespawnRadius,
             "spawn needs 0 < ringMin < ringMax < despawnRadius");
         Require(Pickups.MagnetSpeed > 0 && Pickups.CollectRadius > 0, "pickups magnetSpeed/collectRadius must be > 0");
+        Require(Pickups.DespawnRadius > h.PickupRadius, "pickups.despawnRadius must be > hero.pickupRadius");
 
         var l = Leveling;
         Require(l.XpBase > 0 && l.XpPerLevel >= 0, "leveling xpBase must be > 0, xpPerLevel >= 0");

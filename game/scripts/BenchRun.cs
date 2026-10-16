@@ -11,13 +11,11 @@ public sealed class BenchRun : IDisposable
 {
     readonly StreamWriter _csv;
 
-    public BenchMode Mode { get; }
     public RampController Ramp { get; }
     public string CsvPath { get; }
 
-    public BenchRun(BenchMode mode, RampSettings ramp, BenchSettings bench, string csvPath, IEnumerable<KeyValuePair<string, string>> meta)
+    public BenchRun(RampSettings ramp, BenchSettings bench, string csvPath, IEnumerable<KeyValuePair<string, string>> meta)
     {
-        Mode = mode;
         Ramp = new RampController(ramp, bench);
         CsvPath = csvPath;
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(csvPath))!);

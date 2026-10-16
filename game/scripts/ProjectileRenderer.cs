@@ -14,8 +14,6 @@ public sealed class ProjectileRenderer
     readonly MultiMesh _multimesh;
     float[] _buffer = Array.Empty<float>();
 
-    public MultiMeshInstance3D Node { get; }
-
     public ProjectileRenderer(Node3D parent)
     {
         var material = new StandardMaterial3D
@@ -31,15 +29,16 @@ public sealed class ProjectileRenderer
             Mesh = PlaceholderMeshes.BuildProjectile(),
             CustomAabb = EnemyRenderer.WorldAabb,
         };
-        Node = new MultiMeshInstance3D
+        parent.AddChild(new MultiMeshInstance3D
         {
             Name = "Projectiles",
             Multimesh = _multimesh,
             MaterialOverride = material,
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-        };
-        parent.AddChild(Node);
+        });
     }
+
+    public void SetCullCenter(Vector3 center) => _multimesh.CustomAabb = EnemyRenderer.CullBoxAround(center);
 
     public void Update(ProjectilePool pool)
     {

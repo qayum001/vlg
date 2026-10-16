@@ -24,7 +24,10 @@ move hero → `StageLoop.Update` (entering Shop = full heal; Chest/Shop stop the
 - Loadout = `skills` array order in run.json (no loadout screen yet). Options shown in slot order, keys 1..9.
 - Bolt with no target in range stays ready (timer 0) and fires the frame one enters range.
 - Cooldown overshoot carries (`timer += cooldown`), so the average rate holds at any frame rate.
-- Hits/Deaths cleared at the start of every Step call, even when paused: VFX never replays stale events. RunGame passes burst budget 0 when it didn't step.
+- Hits/Deaths/HeroHurt cleared at the start of every Step call, even when paused. RunGame doesn't call Step while paused, so it gates bursts and hurt flash on "stepped this frame".
+- Endless map: renderer MultiMesh cull boxes (500 m) are recentered on the hero in 50 m steps (`SetCullCenter`), else everything vanishes ~250 m from the origin. Gems left > `pickups.despawnRadius` behind vanish (pool never fills).
+- ChoicePanel picks are one-shot per Show; after a pick RunGame marks the panel stale so SyncPanel always rebuilds (chained level-ups, double inputs).
+- Vsync on for play (project default); StressTest turns it off at startup. Scene roots catch _Ready errors → `StartupFailure.Quit` (log + exit code 1).
 - Quality presets still read from `stress.json` (`--preset`, default low). Spell lights/aura/overdraw layers forced off.
 - Seed = `--seed` (default 1): runs are deterministic for the same input.
 - Dev keys: F2 skip stage, F3 +1 level (`RunSim.DevSkipStage/DevGainLevel`).

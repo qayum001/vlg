@@ -34,7 +34,8 @@
   },
   // Ring min is past the farthest visible ground point (~29 m at the current camera).
   "spawn": { "ringMin": 30, "ringMax": 36, "despawnRadius": 48 },
-  "pickups": { "magnetSpeed": 16, "collectRadius": 0.6 },
+  // Gems farther than despawnRadius from the hero vanish (XP lost).
+  "pickups": { "magnetSpeed": 16, "collectRadius": 0.6, "despawnRadius": 60 },
   "leveling": {
     "xpBase": 5,
     "xpPerLevel": 5,

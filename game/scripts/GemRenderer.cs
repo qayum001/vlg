@@ -38,6 +38,8 @@ public sealed class GemRenderer
         });
     }
 
+    public void SetCullCenter(Vector3 center) => _multimesh.CustomAabb = EnemyRenderer.CullBoxAround(center);
+
     public void Update(GemPool gems, float time)
     {
         int capacity = (Math.Max(gems.Count, 1) + CapacityStep - 1) / CapacityStep * CapacityStep;

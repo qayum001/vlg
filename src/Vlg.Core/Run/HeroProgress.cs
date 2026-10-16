@@ -27,7 +27,6 @@ public sealed class HeroProgress
         _skillLevels[0] = 1;
     }
 
-    public int SkillCount => _skillLevels.Length;
     public int SkillLevel(int slot) => _skillLevels[slot];
     public int SkillCap => LevelRule.SkillCap(Level, _s.LevelDivisor, _s.MaxSkillLevel);
     public float XpToNext => XpForLevel(Level);

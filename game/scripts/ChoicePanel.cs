@@ -17,8 +17,6 @@ public sealed class ChoicePanel
     Action<int>? _onPick;
     int _count;
 
-    public bool Visible => _root.Visible;
-
     public ChoicePanel(Node parent)
     {
         var layer = new CanvasLayer { Name = "ChoicePanel", Layer = 10 };
@@ -95,10 +93,15 @@ public sealed class ChoicePanel
         Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 
-    /// <summary>Ignored when hidden or out of range.</summary>
+    /// <summary>
+    /// One pick per Show: later picks are ignored until the next Show, so two inputs in one frame
+    /// can't answer a list the player hasn't seen. Ignored when hidden or out of range.
+    /// </summary>
     public void Pick(int index)
     {
         if (!_root.Visible || _onPick == null || (uint)index >= (uint)_count) return;
-        _onPick(index);
+        var onPick = _onPick;
+        _onPick = null;
+        onPick(index);
     }
 }

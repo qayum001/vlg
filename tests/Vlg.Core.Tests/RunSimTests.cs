@@ -58,6 +58,48 @@ public class RunSimTests
     }
 
     [Fact]
+    public void Contact_damage_grows_with_the_loop()
+    {
+        var c = QuietConfig(TestConfig.Run.Walker with { Hp = 1e6f, ContactDps = 40 });
+        var sim = new RunSim(c, 1);
+        sim.DevSkipStage(); // single-stage loop: skip wraps to loop 2
+        Assert.Equal(2, sim.Stages.Loop);
+        Place(sim, new Vector2(c.Hero.Radius + c.Walker.Radius, 0), 1e6f);
+
+        sim.Step(Dt, Vector2.Zero);
+
+        Assert.True(c.LoopScaling.Damage(2) > 1f);
+        Assert.Equal(c.Hero.MaxHp - 40 * Dt * c.LoopScaling.Damage(2), sim.HeroHp, 3);
+    }
+
+    [Fact]
+    public void Death_wins_over_a_level_up_from_the_same_step()
+    {
+        var c = QuietConfig(TestConfig.Run.Walker with { Hp = 1e6f, ContactDps = 1e5f });
+        var sim = new RunSim(c, 1);
+        Place(sim, new Vector2(1, 0), 1e6f);
+        sim.Gems.Spawn(Vector2.Zero, c.Leveling.XpBase); // collected this step
+
+        sim.Step(Dt, Vector2.Zero);
+
+        Assert.Equal(1, sim.Progress.PendingLevelUps);
+        Assert.Equal(RunPhase.Dead, sim.Phase);
+    }
+
+    [Fact]
+    public void Level_up_is_answered_before_a_chest()
+    {
+        var c = QuietConfig(null, new StageDef { Kind = StageKind.Chest }, Quiet(10));
+        var sim = new RunSim(c, 1);
+        Assert.Equal(RunPhase.Chest, sim.Phase);
+
+        sim.DevGainLevel();
+        Assert.Equal(RunPhase.LevelUp, sim.Phase);
+        sim.ChooseLevelUp(0);
+        Assert.Equal(RunPhase.Chest, sim.Phase);
+    }
+
+    [Fact]
     public void Zero_hp_ends_the_run_and_freezes_it()
     {
         var c = QuietConfig(TestConfig.Run.Walker with { Hp = 1e6f, ContactDps = 1e5f });

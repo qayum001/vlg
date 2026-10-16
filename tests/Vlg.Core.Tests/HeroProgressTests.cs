@@ -69,6 +69,19 @@ public class HeroProgressTests
     }
 
     [Fact]
+    public void Multi_level_jump_lets_every_pending_pick_use_the_final_cap()
+    {
+        var p = new HeroProgress(Settings(), 4);
+        p.AddXp(5 + 10 + 15); // level 1 -> 4 at once, cap 2
+
+        Assert.Contains((LevelUpKind.Upgrade, 0, 2), Shape(p));
+        p.Choose(0); // slot 0 -> 2
+        Assert.Contains((LevelUpKind.Unlock, 1, 1), Shape(p));
+        Assert.DoesNotContain(p.Options(), o => o.Slot == 0);
+        Assert.Equal(2, p.PendingLevelUps);
+    }
+
+    [Fact]
     public void Hero_levels_two_and_three_can_only_unlock()
     {
         var p = new HeroProgress(Settings(), 4);

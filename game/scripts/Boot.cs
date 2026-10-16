@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using Vlg.Core.Bench;
 
@@ -14,7 +15,14 @@ public partial class Boot : Node
 
     public override void _Ready()
     {
-        bool stress = LaunchOptions.Parse(OS.GetCmdlineUserArgs()).WantsStressTest;
-        GetTree().CallDeferred(SceneTree.MethodName.ChangeSceneToFile, stress ? StressScene : RunScene);
+        try
+        {
+            bool stress = LaunchOptions.Parse(OS.GetCmdlineUserArgs()).WantsStressTest;
+            GetTree().CallDeferred(SceneTree.MethodName.ChangeSceneToFile, stress ? StressScene : RunScene);
+        }
+        catch (Exception e)
+        {
+            StartupFailure.Quit(this, e);
+        }
     }
 }

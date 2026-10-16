@@ -16,7 +16,6 @@ public sealed class StageLoop
     public StageLoop(StageDef[] stages) => _stages = stages;
 
     public StageDef Current => _stages[Index];
-    public int StageCount => _stages.Length;
     public float TimeLeft => Current.IsTimed ? MathF.Max(0f, Current.DurationSec - Elapsed) : 0f;
 
     /// <summary>Advances a timed stage. Returns true when the stage changed. Leftover time carries into a timed next stage.</summary>

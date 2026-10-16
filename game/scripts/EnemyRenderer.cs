@@ -13,8 +13,13 @@ public sealed class EnemyRenderer
     /// <summary>Instance capacity grows/shrinks in steps; the whole buffer is uploaded every frame.</summary>
     const int CapacityStep = 512;
 
-    /// <summary>Large fixed AABB: no per-frame AABB rebuild from the buffer, never culled.</summary>
+    /// <summary>
+    /// Large fixed AABB: no per-frame AABB rebuild from the buffer. Centered on the origin; on the endless map
+    /// the caller recenters it (<see cref="CullBoxAround"/>), else the whole MultiMesh is culled once the view leaves it.
+    /// </summary>
     public static readonly Aabb WorldAabb = new(new Vector3(-250, -5, -250), new Vector3(500, 20, 500));
+
+    public static Aabb CullBoxAround(Vector3 center) => new(new Vector3(center.X, 0f, center.Z) + WorldAabb.Position, WorldAabb.Size);
 
     readonly MultiMesh _multimesh;
     readonly ShaderMaterial _material;
@@ -45,6 +50,8 @@ public sealed class EnemyRenderer
         _material.SetShaderParameter("frame_count", PlaceholderMeshes.AnimFrames);
         TrianglesPerEnemy = asset.Triangles;
     }
+
+    public void SetCullCenter(Vector3 center) => _multimesh.CustomAabb = CullBoxAround(center);
 
     public void SetCastShadows(bool on) =>
         Node.CastShadow = on ? GeometryInstance3D.ShadowCastingSetting.On : GeometryInstance3D.ShadowCastingSetting.Off;

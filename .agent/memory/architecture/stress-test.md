@@ -26,7 +26,7 @@ Then `EnemyRenderer`/`ProjectileRenderer` write the whole MultiMesh buffer (`Ren
 - Whole horde is one MultiMesh, no per-instance culling: off-screen enemies still cost vertex + sim. Screen fits ~1000–1200 enemies at the test camera.
 - WorkerPool: `sim.workerThreads` (-1 = processors − 2), `sim.parallelMinCount` (2048; below runs inline). `--threads N` / `bench.ps1 -Threads N` overrides (0 = single thread). Jobs write only their own indices, so threaded result == single-thread (test `Threaded_horde_matches_single_thread_exactly`). Not reentrant: one Run at a time.
 - Bench ramp can be overridden per run: `--ramp-start/--ramp-step/--ramp-max` (LaunchOptions.ApplyRamp), `tools/bench.ps1 -RampStart/-RampStep/-RampMax`. Capacities in stress.json: 50 000 enemies, 25 000 projectiles, grid 256².
-- Bench frame time = wall clock between `_Process` calls (vsync off). GPU/CPU render time from `RenderingServer.ViewportGetMeasuredRenderTime*` (previous frame).
+- Bench frame time = wall clock between `_Process` calls (vsync off: set in `StressTest.Setup`, project default is vsync on). Bad args/preset/data → `StartupFailure.Quit` (exit code 1), so `bench.ps1` warns instead of hanging. GPU/CPU render time from `RenderingServer.ViewportGetMeasuredRenderTime*` (previous frame).
 - Godot `.uid` files next to scripts/shaders are committed.
 
 ## Extend

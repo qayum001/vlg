@@ -6,4 +6,6 @@ public sealed record PickupSettings
     public required float MagnetSpeed { get; init; }
     /// <summary>Gem is collected at this distance from the hero center.</summary>
     public required float CollectRadius { get; init; }
+    /// <summary>Gems left farther behind are removed, XP lost (endless map: pool never fills).</summary>
+    public required float DespawnRadius { get; init; }
 }

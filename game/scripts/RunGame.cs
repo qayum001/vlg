@@ -23,7 +23,11 @@ public partial class RunGame : Node3D
     const float StickDeadzone = 0.2f;
     const float HurtFlashSec = 0.12f;
     const float HudRefreshSec = 0.1f;
+    /// <summary>Renderer cull boxes recenter in these steps (box is 500 m, view reaches ~30 m).</summary>
+    const float CullSnap = 50f;
 
+    /// <summary>Never equals a real (phase, pending) pair: forces SyncPanel to rebuild after a pick.</summary>
+    static readonly (RunPhase, int) PanelStale = (RunPhase.Playing, -1);
     static readonly Color HeroEmission = new(0.4f, 0.7f, 1f);
     static readonly Color HurtEmission = new(1f, 0.15f, 0.1f);
 
@@ -51,8 +55,21 @@ public partial class RunGame : Node3D
     float _hudTimer;
     float _time;
     bool _screenshotDone;
+    Vector3 _cullCenter;
 
     public override void _Ready()
+    {
+        try
+        {
+            Setup();
+        }
+        catch (Exception e)
+        {
+            StartupFailure.Quit(this, e);
+        }
+    }
+
+    void Setup()
     {
         _options = LaunchOptions.Parse(OS.GetCmdlineUserArgs());
         if (_options.WantsStressTest)
@@ -97,7 +114,7 @@ public partial class RunGame : Node3D
         _arena.Follow(HeroWorld());
     }
 
-    public override void _ExitTree() => _workers.Dispose();
+    public override void _ExitTree() => _workers?.Dispose();
 
     public override void _Process(double delta)
     {
@@ -112,11 +129,21 @@ public partial class RunGame : Node3D
 
         var hero = HeroWorld();
         _hero.Position = hero + new Vector3(0, 0.85f, 0);
-        if (_sim.HeroHurt) _hurtTimer = HurtFlashSec;
+        // HeroHurt is only refreshed by Step: stale while paused.
+        if (stepped && _sim.HeroHurt) _hurtTimer = HurtFlashSec;
         _hurtTimer = MathF.Max(0f, _hurtTimer - dt);
         _heroMaterial.Emission = _hurtTimer > 0f ? HurtEmission : HeroEmission;
         _heroMaterial.EmissionEnergyMultiplier = _hurtTimer > 0f ? 2f : 0.5f;
 
+        var cull = new Vector3(MathF.Round(hero.X / CullSnap) * CullSnap, 0f, MathF.Round(hero.Z / CullSnap) * CullSnap);
+        if (cull != _cullCenter)
+        {
+            _cullCenter = cull;
+            _enemies.SetCullCenter(cull);
+            _projectiles.SetCullCenter(cull);
+            _gems.SetCullCenter(cull);
+            _skillVisuals.SetCullCenter(cull);
+        }
         _enemies.Update(_sim.Enemies, _workers);
         _projectiles.Update(_sim.Projectiles);
         _gems.Update(_sim.Gems, _time);
@@ -222,11 +249,11 @@ public partial class RunGame : Node3D
                 break;
             case RunPhase.Chest:
                 _panel.Show("Chest", "Rare items (pick 1 of 3) arrive with the item system.\nNothing to take yet.",
-                    new[] { "Continue" }, _ => _sim.ContinueStage());
+                    new[] { "Continue" }, _ => ContinueStage());
                 break;
             case RunPhase.Shop:
                 _panel.Show("Shop", "Fully healed.\nItems and rerolls arrive with the item system.",
-                    new[] { "Continue" }, _ => _sim.ContinueStage());
+                    new[] { "Continue" }, _ => ContinueStage());
                 break;
             case RunPhase.Dead:
                 var st = _sim.Stages;
@@ -248,8 +275,20 @@ public partial class RunGame : Node3D
         var labels = new List<string>(options.Count);
         foreach (var o in options) labels.Add(Describe(o));
         string pending = p.PendingLevelUps > 1 ? $" ({p.PendingLevelUps} picks)" : "";
-        _panel.Show($"Level {p.Level}{pending}", $"Skill level cap {p.SkillCap} (hero level / {_config.Leveling.LevelDivisor}, rounded up)",
-            labels, i => _sim.ChooseLevelUp(i));
+        var l = _config.Leveling;
+        _panel.Show($"Level {p.Level}{pending}",
+            $"Skill level cap {p.SkillCap} (hero level / {l.LevelDivisor}, rounded up, max {l.MaxSkillLevel})",
+            labels, i =>
+            {
+                _sim.ChooseLevelUp(i);
+                _shown = PanelStale;
+            });
+    }
+
+    void ContinueStage()
+    {
+        _sim.ContinueStage();
+        _shown = PanelStale;
     }
 
     string Describe(LevelUpOption o)
