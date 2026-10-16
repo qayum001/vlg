@@ -30,3 +30,6 @@ export/
 bin/
 obj/
 mono_crash.*.json
+
+# User-local source art (Blender files), not tracked (user, 2026-10-17)
+Assests/
