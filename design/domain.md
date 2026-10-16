@@ -1,6 +1,6 @@
 # Game domain
 
-Status: grilling (round 11, final)
+Status: grilled, awaiting user confirmation
 Updated: 2026-10-16
 Scope: theme, core entities, build & evolution, run structure, meta-progression.
 Base: `concept.md` (genre, camera, art, platforms are decided there).
@@ -57,11 +57,15 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
   - Function (Dota's pseudo-random distribution): `P(n) = min(1, C * n)`, n = ticks since the last rune. C comes from the target average interval.
   - Tick 1 s. C per target average: 30 s -> 0.001708, 45 s -> 0.000764, 60 s -> 0.000432, 90 s -> 0.000193.
   - Spread for 60 s: 80% of runes come 22-103 s after the previous one, 99% within 145 s. A flat 1/60 chance would give 7-138 s for the same 80%, and 1% of waits over 275 s.
+  - Chosen: target 60 s, C = 0.000432 (data).
+  - Lifetime: a rune stays until picked up. When a newer rune spawns, the older one vanishes 10 s later. The tick counter keeps running while a rune waits.
 - Healing: heal rune, HP regen and life steal as passive item stats, rare health drops from kills, full heal at the shop stage. Amounts are data.
 
 ### Shop and chest
-- Shop: reroll for credits. No lock.
-- Chest: 3 options, pick one. No reroll, no skip.
+- Shop: reroll for credits. No lock. Reroll cost rises within the same shop (e.g. 5, 10, 15), resets at the next shop; the base cost grows each loop.
+- Shop sells all item types, common to rare.
+- Chest: 3 options, pick one. No reroll, no skip. Gives rare items of any type (modifier, active, usable, passive).
+- Skills never come from the chest or the shop; they belong to the hero.
 
 ### Meta-progression
 - One meta currency (meta credits). Spent in the hub on slot unlocks (2 -> 5 active and usable), stat upgrades and other upgrades.
@@ -69,6 +73,7 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
 - Infinite mode rewards: meta credits per loop survived, more for each loop; a best-loop record per level.
 - Meta credits are kept fully on death and on win.
 - Storyline structure: about 5 levels, unlocked one by one. Each cleared level gives a fixed unlock (an item enters the chest and shop pools, or a lore entry). Closing the storyline unlocks its hero and its infinite-only level.
+- Difficulty tiers: clearing a level unlocks a harder tier of it (more HP, more spawns, extra elite affixes), up to 3 tiers, more meta credits per tier.
 
 ### Heroes
 - Heroes come from the storyline worlds. Closing a storyline unlocks a hero from that world (e.g. a plague doctor from the undead town).
@@ -102,30 +107,19 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
 - Stash: modifiers that stop fitting after a branch changes a skill's tags go to a stash; the branch screen warns first. Re-socket at the next shop. New modifiers with no fitting socket also go to the stash.
 - Caps: active and usable items are counted separately. Start with 2 active + 2 usable slots; meta-progression unlocks +1 at a time, up to 5 + 5.
 - Passive items: no cap.
-- Assumed (not confirmed): chest gives rare items of any type; shop sells all item types, common to rare; skills never come from chest or shop; modifiers go into hero skills only, not active items.
+- Modifiers go into hero skills only, not into active items.
 - Input note: 5 usables on gamepad = 4 shoulder/trigger buttons (reachable while both sticks are used for move + camera) + 1 face button. Steam Deck also has 4 back buttons.
 
-## Tree
-Open decisions. `needs:` = decided first.
-
-### Theme
-- T5 Horde fantasy for later storylines. needs: storyline list
-- T6 Power source: what skills and items are in-world (magic, weapons, mixed)
-
-### Core entities
-- E6 Rune rules: target interval, how many on the map, lifetime
-
-### Build & evolution
-Skill system closed by the user (2026-10-16). Left for when real skills are designed:
-- B4 Synergy layer: elements, tags, set bonuses. needs: T6
-- B5 Aimed vs automatic split: which skills use camera aim
-
-### Run structure
-- B10 Shop reroll cost
-
-### Meta-progression
-- M4 Difficulty tiers after a storyline is closed
+## Deferred
+Open on purpose; decide when the content is designed.
+- Storyline list and horde fantasy for later storylines.
+- Power source: what skills and items are in-world (magic, weapons, mixed). Likely per hero world.
+- Synergy layer: elements, tags, set bonuses.
+- Which skills are aimed with the camera vs automatic.
+- Tone and humor details.
+- All numbers marked placeholder or data: tune in the prototype.
 
 ## Parked
 - Leaderboards for infinite mode best loops.
 - Cosmetic rewards for infinite mode milestone loops.
+- Optional handicaps (Hades-style) for bonus meta credits, on top of difficulty tiers.
