@@ -1,7 +1,7 @@
 # Game domain
 
-Status: grilled, awaiting user confirmation
-Updated: 2026-10-16
+Status: confirmed by the user 2026-10-17 (Deferred items stay open)
+Updated: 2026-10-17
 Scope: theme, core entities, build & evolution, run structure, meta-progression.
 Base: `concept.md` (genre, camera, art, platforms are decided there).
 

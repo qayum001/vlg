@@ -1,7 +1,7 @@
 # Game concept
 
 Status: brainstorming
-Updated: 2026-10-16
+Updated: 2026-10-17
 
 ## Decided
 - **Genre:** survivors-like (Vampire Survivors style): automatic attacks, large hordes, level-up upgrade picks, run-based. The theme is not decided.
@@ -23,7 +23,7 @@ Updated: 2026-10-16
 - Steam asks developers to disclose AI-generated content that ships in the game. The store page will need this.
 
 ## Open
-- Theme, setting, story, entities, builds, run structure, meta-progression: in progress in `domain.md`.
+- Theme, setting, story, entities, builds, run structure, meta-progression: decided in `domain.md` (its Deferred list stays open).
 - Controls: mouse sensitivity and smoothing for orbit; cursor shown only in menus and upgrade picks?
-- Orientation aids during free orbit: compass, minimap, off-screen indicators?
+- Orientation aids during free orbit: compass, minimap, off-screen indicators? Endless map with objectives near the player (`domain.md`) needs off-screen indicators at least.
 - Content scope, price.
