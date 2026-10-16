@@ -4,12 +4,17 @@ using Vlg.Core.Sim;
 
 namespace Vlg.Game;
 
-/// <summary>Ground, scattered low props, sun and environment.</summary>
+/// <summary>
+/// Ground, scattered low props, sun and environment. Props repeat every PropTile meters (3x3 tiles in one
+/// MultiMesh), so <see cref="Follow"/> can shift them by whole tiles without popping: endless map (domain.md).
+/// </summary>
 public sealed class Arena
 {
-    const int PropCount = 400;
-    const float PropArea = 90f;
+    const int PropsPerTile = 44;
+    const float PropTile = 60f;
     const float PropClearRadius = 6f;
+
+    readonly MeshInstance3D _ground;
 
     public DirectionalLight3D Sun { get; }
     public Godot.Environment Environment { get; }
@@ -18,28 +23,34 @@ public sealed class Arena
     public Arena(Node3D parent, Shader groundShader, uint seed)
     {
         var groundMaterial = new ShaderMaterial { Shader = groundShader };
-        parent.AddChild(new MeshInstance3D
+        _ground = new MeshInstance3D
         {
             Name = "Ground",
             Mesh = new PlaneMesh { Size = new Vector2(400, 400) },
             MaterialOverride = groundMaterial,
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-        });
+        };
+        parent.AddChild(_ground);
 
         var props = new MultiMesh
         {
             TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
             Mesh = new BoxMesh { Size = new Vector3(1.4f, 0.7f, 1.1f) },
-            InstanceCount = PropCount,
+            InstanceCount = PropsPerTile * 9,
         };
         var rng = new XorShift32(seed);
-        for (int i = 0; i < PropCount; i++)
+        const float half = PropTile / 2f;
+        for (int i = 0; i < PropsPerTile; i++)
         {
             Vector3 p;
-            do p = new Vector3(rng.Range(-PropArea, PropArea), 0.3f, rng.Range(-PropArea, PropArea));
+            do p = new Vector3(rng.Range(-half, half), 0.3f, rng.Range(-half, half));
             while (p.Length() < PropClearRadius);
             var basis = new Basis(Vector3.Up, rng.Range(0, MathF.Tau)).Scaled(Vector3.One * rng.Range(0.6f, 1.8f));
-            props.SetInstanceTransform(i, new Transform3D(basis, p));
+            for (int t = 0; t < 9; t++)
+            {
+                var offset = new Vector3((t % 3 - 1) * PropTile, 0f, (t / 3 - 1) * PropTile);
+                props.SetInstanceTransform(t * PropsPerTile + i, new Transform3D(basis, p + offset));
+            }
         }
         Props = new MultiMeshInstance3D
         {
@@ -72,5 +83,12 @@ public sealed class Arena
             GlowHdrThreshold = 1f,
         };
         parent.AddChild(new WorldEnvironment { Name = "Environment", Environment = Environment });
+    }
+
+    /// <summary>Keeps ground and props around <paramref name="target"/>. Ground shader is world-space, so moving it is invisible.</summary>
+    public void Follow(Vector3 target)
+    {
+        _ground.Position = new Vector3(target.X, 0f, target.Z);
+        Props.Position = new Vector3(MathF.Round(target.X / PropTile) * PropTile, 0f, MathF.Round(target.Z / PropTile) * PropTile);
     }
 }

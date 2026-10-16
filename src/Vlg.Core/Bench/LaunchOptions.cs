@@ -24,9 +24,13 @@ public sealed record LaunchOptions
     public int? RampMax { get; init; }
     /// <summary>Overrides sim.workerThreads (0 = single thread) for comparisons.</summary>
     public int? Threads { get; init; }
+    /// <summary>Open the stress test instead of the game run. --bench implies it.</summary>
+    public bool Stress { get; init; }
+
+    public bool WantsStressTest => Stress || Bench != null;
 
     public const string Usage =
-        "--bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
+        "--stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
         "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>";
 
     public static LaunchOptions Parse(string[] args)
@@ -45,6 +49,7 @@ public sealed record LaunchOptions
                 "--screenshot-at" => o with { ScreenshotAtSec = ParseFloat(a, Next()) },
                 "--exit-after" => o with { ExitAfterSec = ParseFloat(a, Next()) },
                 "--windowed" => o with { Windowed = true },
+                "--stress" => o with { Stress = true },
                 "--seed" => o with { Seed = uint.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--ramp-start" => o with { RampStart = ParseInt(a, Next(), 0) },
                 "--ramp-step" => o with { RampStep = ParseInt(a, Next(), 1) },

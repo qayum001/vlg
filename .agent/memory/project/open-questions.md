@@ -7,3 +7,4 @@ Game design open items live in `design/concept.md` → Open. This file: project/
 - In-engine test framework (Godot side): not chosen. Pure logic uses xUnit ([engine decision](../decisions/engine.md)).
 - Git remote: none. `gh` CLI not installed. Pushing anywhere needs user approval.
 - Git LFS for binary assets (models, textures, audio): decide before the first exported assets are committed.
+- Quality presets live in `stress.json` and the run reads them from there. Move to their own data file when a settings menu exists.

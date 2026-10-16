@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Vlg.Core.Config;
 
@@ -13,18 +12,9 @@ public sealed record StressConfig
     public required BenchSettings Bench { get; init; }
     public required Dictionary<string, QualityPreset> Presets { get; init; }
 
-    static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false) },
-    };
-
     public static StressConfig Parse(string json)
     {
-        var config = JsonSerializer.Deserialize<StressConfig>(json, Options)
+        var config = JsonSerializer.Deserialize<StressConfig>(json, ConfigJson.Options)
             ?? throw new FormatException("stress config is null");
         config.Validate();
         return config;

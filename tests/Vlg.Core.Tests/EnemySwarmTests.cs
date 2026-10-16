@@ -19,7 +19,7 @@ public class EnemySwarmTests
 
     static void Step(EnemySwarm swarm, SpatialGrid grid, Vector2 target, int frames, float dt = 1f / 60f)
     {
-        var t = TestConfig.Sim;
+        var t = TestConfig.Sim.ToSwarm();
         for (int f = 0; f < frames; f++)
         {
             grid.Build(swarm.Position, swarm.Count, target);

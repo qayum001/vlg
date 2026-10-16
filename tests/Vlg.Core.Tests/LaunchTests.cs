@@ -13,6 +13,14 @@ public class LaunchTests
         Assert.Null(o.Bench);
         Assert.Equal("low", o.Preset);
         Assert.False(o.Windowed);
+        Assert.False(o.WantsStressTest);
+    }
+
+    [Fact]
+    public void Stress_flag_or_any_bench_opens_the_stress_test()
+    {
+        Assert.True(LaunchOptions.Parse(new[] { "--stress" }).WantsStressTest);
+        Assert.True(LaunchOptions.Parse(new[] { "--bench", "enemies" }).WantsStressTest);
     }
 
     [Fact]

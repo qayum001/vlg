@@ -1,6 +1,5 @@
 using System;
 using System.Numerics;
-using Vlg.Core.Config;
 
 namespace Vlg.Core.Sim;
 
@@ -13,6 +12,7 @@ public sealed class ProjectilePool
     public readonly Vector2[] Position;
     public readonly Vector2[] Velocity;
     public readonly float[] Life;
+    public readonly float[] Damage;
 
     public ProjectilePool(int capacity)
     {
@@ -20,25 +20,28 @@ public sealed class ProjectilePool
         Position = new Vector2[capacity];
         Velocity = new Vector2[capacity];
         Life = new float[capacity];
+        Damage = new float[capacity];
     }
 
-    public bool Spawn(Vector2 position, Vector2 velocity, float life)
+    public bool Spawn(Vector2 position, Vector2 velocity, float life, float damage)
     {
         if (Count == Capacity) return false;
         int i = Count++;
         Position[i] = position;
         Velocity[i] = velocity;
         Life[i] = life;
+        Damage[i] = damage;
         return true;
     }
 
     /// <param name="grid">Built from enemy positions at frame start; enemies moved since, radius is padded.</param>
-    public void Update(float dt, EnemySwarm enemies, SpatialGrid grid, PointBuffer hits, SimTuning t)
+    /// <param name="hitRadius">Projectile radius + enemy radius.</param>
+    /// <param name="enemyMaxSpeed">Fastest enemy movement since the grid build, for query padding.</param>
+    public void Update(float dt, EnemySwarm enemies, SpatialGrid grid, PointBuffer hits, float hitRadius, float enemyMaxSpeed)
     {
         Span<int> candidates = stackalloc int[16];
-        float hitR = t.ProjectileRadius + t.EnemyRadius;
-        float hitR2 = hitR * hitR;
-        float queryR = hitR + t.EnemySpeed * 1.5f * dt;
+        float hitR2 = hitRadius * hitRadius;
+        float queryR = hitRadius + enemyMaxSpeed * dt;
 
         // Reverse order: swap-remove pulls in an already-processed entry.
         for (int i = Count - 1; i >= 0; i--)
@@ -59,7 +62,7 @@ public sealed class ProjectilePool
                 int j = candidates[k];
                 if (enemies.Health[j] <= 0f) continue;
                 if (Vector2.DistanceSquared(enemies.Position[j], p) > hitR2) continue;
-                enemies.Health[j] -= t.ProjectileDamage;
+                enemies.Health[j] -= Damage[i];
                 enemies.HitFlash[j] = 1f;
                 hits.Add(p);
                 RemoveAt(i);
@@ -75,5 +78,6 @@ public sealed class ProjectilePool
         Position[i] = Position[last];
         Velocity[i] = Velocity[last];
         Life[i] = Life[last];
+        Damage[i] = Damage[last];
     }
 }

@@ -18,6 +18,7 @@ public sealed class HordeSim
 
     readonly WeaponDirector _weapons = new();
     readonly SimTuning _t;
+    readonly SwarmTuning _swarm;
     readonly WorkerPool? _workers;
     XorShift32 _rng;
 
@@ -25,6 +26,7 @@ public sealed class HordeSim
     public HordeSim(SimTuning tuning, uint seed, WorkerPool? workers = null)
     {
         _t = tuning;
+        _swarm = tuning.ToSwarm();
         _workers = workers;
         _rng = new XorShift32(seed);
         Enemies = new EnemySwarm(tuning.EnemyCapacity);
@@ -42,9 +44,9 @@ public sealed class HordeSim
         Deaths.Clear();
 
         Grid.Build(Enemies.Position, Enemies.Count, player);
-        Enemies.Update(dt, player, Grid, _t, _workers);
+        Enemies.Update(dt, player, Grid, _swarm, _workers);
         _weapons.Update(dt, targetProjectiles, player, aim, Enemies, Projectiles, ref _rng, _t);
-        Projectiles.Update(dt, Enemies, Grid, Hits, _t);
+        Projectiles.Update(dt, Enemies, Grid, Hits, _t.ProjectileRadius + _t.EnemyRadius, _t.EnemySpeed * EnemySwarm.MaxSpeedFactor);
         KilledTotal += Enemies.RemoveDead(Deaths);
         Refill(Math.Min(targetEnemies, Enemies.Capacity), player);
     }
@@ -59,14 +61,6 @@ public sealed class HordeSim
         float min = SpawnMode == SpawnMode.Ring ? _t.SpawnRadiusMin : _t.SpawnAreaMin;
         float max = SpawnMode == SpawnMode.Ring ? _t.SpawnRadiusMax : _t.SpawnAreaMax;
         while (Enemies.Count < target)
-            Enemies.Spawn(player + RandomInAnnulus(min, max), _t.EnemyHealth, ref _rng);
-    }
-
-    /// <summary>Uniform by area.</summary>
-    Vector2 RandomInAnnulus(float min, float max)
-    {
-        float a = _rng.Range(-MathF.PI, MathF.PI);
-        float r = MathF.Sqrt(_rng.Range(min * min, max * max));
-        return new Vector2(MathF.Sin(a), MathF.Cos(a)) * r;
+            Enemies.Spawn(player + RandomPoints.InAnnulus(ref _rng, min, max), _t.EnemyHealth, ref _rng);
     }
 }

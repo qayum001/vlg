@@ -27,6 +27,8 @@ public sealed class EnemySwarm
     public readonly byte[] Variant;
 
     public const int VariantCount = 4;
+    /// <summary>Separation push can exceed EnemySpeed up to this factor. Grid query padding uses it.</summary>
+    public const float MaxSpeedFactor = 1.5f;
 
     readonly SteerJob _steer = new();
     readonly IntegrateJob _integrate = new();
@@ -62,7 +64,7 @@ public sealed class EnemySwarm
 
     /// <param name="grid">Built from Position this frame, before this call.</param>
     /// <param name="workers">Null = single thread. Result is identical either way (each index writes only its own slots).</param>
-    public void Update(float dt, Vector2 target, SpatialGrid grid, SimTuning t, WorkerPool? workers = null)
+    public void Update(float dt, Vector2 target, SpatialGrid grid, SwarmTuning t, WorkerPool? workers = null)
     {
         _steer.Set(this, target, grid, t);
         _integrate.Set(this, dt, t);
@@ -79,13 +81,13 @@ public sealed class EnemySwarm
         }
     }
 
-    void Steer(int start, int end, Vector2 target, SpatialGrid grid, SimTuning t)
+    void Steer(int start, int end, Vector2 target, SpatialGrid grid, SwarmTuning t)
     {
         Span<int> neighbors = stackalloc int[t.MaxNeighbors];
         float sepR = t.SeparationRadius;
         float sepR2 = sepR * sepR;
         float stopR2 = (t.PlayerRadius + t.EnemyRadius) * (t.PlayerRadius + t.EnemyRadius);
-        float maxSpeed = t.EnemySpeed * 1.5f;
+        float maxSpeed = t.EnemySpeed * MaxSpeedFactor;
 
         for (int i = start; i < end; i++)
         {
@@ -121,7 +123,7 @@ public sealed class EnemySwarm
         }
     }
 
-    void Integrate(int start, int end, float dt, SimTuning t)
+    void Integrate(int start, int end, float dt, SwarmTuning t)
     {
         float turn = t.HeadingTurnRate * dt;
         float flashDecay = t.HitFlashDecay * dt;
@@ -149,9 +151,9 @@ public sealed class EnemySwarm
         EnemySwarm _s = null!;
         Vector2 _target;
         SpatialGrid _grid = null!;
-        SimTuning _t = null!;
+        SwarmTuning _t = null!;
 
-        public void Set(EnemySwarm s, Vector2 target, SpatialGrid grid, SimTuning t) =>
+        public void Set(EnemySwarm s, Vector2 target, SpatialGrid grid, SwarmTuning t) =>
             (_s, _target, _grid, _t) = (s, target, grid, t);
 
         public void Execute(int start, int end) => _s.Steer(start, end, _target, _grid, _t);
@@ -161,9 +163,9 @@ public sealed class EnemySwarm
     {
         EnemySwarm _s = null!;
         float _dt;
-        SimTuning _t = null!;
+        SwarmTuning _t = null!;
 
-        public void Set(EnemySwarm s, float dt, SimTuning t) => (_s, _dt, _t) = (s, dt, t);
+        public void Set(EnemySwarm s, float dt, SwarmTuning t) => (_s, _dt, _t) = (s, dt, t);
 
         public void Execute(int start, int end) => _s.Integrate(start, end, _dt, _t);
     }

@@ -45,6 +45,6 @@ Commands (repo root; `G` = Godot console exe, path in memory `project/tooling.md
 - Tests: `dotnet test --project tests/Vlg.Core.Tests/Vlg.Core.Tests.csproj`
 - Build game C#: `dotnet build game/Vlg.csproj`
 - Import after adding resources/shaders: `"$G" --headless --path game --import`
-- Run from source (debug): `"$G" --path game -- <game args>`; game args: `LaunchOptions.Usage`.
+- Run from source (debug): `"$G" --path game -- <game args>`; game args: `LaunchOptions.Usage`. Main scene `boot.tscn` opens the game run; `--stress` or `--bench` opens the stress test (exports refuse a scene path arg).
 - Export release: `"$G" --headless --path game --export-release "Windows Desktop" ../build/stress/vlg.exe`
 - Benchmarks on the export: `tools/bench.ps1`. Performance numbers only from release exports, never from the editor binary.

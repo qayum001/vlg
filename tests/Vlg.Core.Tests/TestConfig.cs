@@ -11,4 +11,8 @@ static class TestConfig
     public static StressConfig Game => StressConfig.Parse(GameJson);
 
     public static SimTuning Sim => Game.Sim;
+
+    public static string RunJson => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", "run.json"));
+
+    public static RunConfig Run => RunConfig.Parse(RunJson);
 }

@@ -35,7 +35,7 @@ public sealed class WeaponDirector
                 float a = rng.Range(-MathF.PI, MathF.PI);
                 dir = new Vector2(MathF.Sin(a), MathF.Cos(a));
             }
-            if (!pool.Spawn(player + dir * t.PlayerRadius, dir * t.ProjectileSpeed, t.ProjectileLife)) return;
+            if (!pool.Spawn(player + dir * t.PlayerRadius, dir * t.ProjectileSpeed, t.ProjectileLife, t.ProjectileDamage)) return;
         }
     }
 

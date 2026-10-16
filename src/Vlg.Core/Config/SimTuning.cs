@@ -33,4 +33,17 @@ public sealed record SimTuning
     public required int WorkerThreads { get; init; }
     /// <summary>Loops shorter than this run on one thread.</summary>
     public required int ParallelMinCount { get; init; }
+
+    public SwarmTuning ToSwarm() => new()
+    {
+        EnemySpeed = EnemySpeed,
+        EnemyRadius = EnemyRadius,
+        PlayerRadius = PlayerRadius,
+        SeparationRadius = SeparationRadius,
+        SeparationStrength = SeparationStrength,
+        MaxNeighbors = MaxNeighbors,
+        HeadingTurnRate = HeadingTurnRate,
+        AnimRate = AnimRate,
+        HitFlashDecay = HitFlashDecay,
+    };
 }
