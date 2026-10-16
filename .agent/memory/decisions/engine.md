@@ -9,5 +9,7 @@ Related: [overview](../project/overview.md), [open questions](../project/open-qu
 - Rejected: Unity 6 (YAML scenes + .meta hard for agent, license activation for batch mode, official MCP beta needs subscription).
 - Fallback trigger → Unity: horde stress test misses targets on Vega 8 iGPU and profiling blames the engine, not our code; or design moves to 3000+ visible enemies.
 - Renderer (Mobile vs Forward+): decide by stress test measurement.
+- Tests: pure C# logic → xUnit (user, 2026-10-16). In-engine test framework: not chosen.
+- Benchmarks run on release export builds (export templates installed), not the editor binary.
 - Horde rules (any engine): instanced draws + baked vertex animation, own collision grid, pools, no per-frame allocations, per-preset budgets. Details: `design/engine.md` §3.
 - Perf testing: dev laptop Vega 8 iGPU = tier B / Deck stand-in. Never judge perf on the RTX 3070.
