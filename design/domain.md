@@ -1,6 +1,6 @@
 # Game domain
 
-Status: grilling (round 9)
+Status: grilling (round 10)
 Updated: 2026-10-16
 Scope: theme, core entities, build & evolution, run structure, meta-progression.
 Base: `concept.md` (genre, camera, art, platforms are decided there).
@@ -48,12 +48,21 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
 ### NPCs
 - Map NPCs spawn near the player during a run. They give lore plus an optional side task with a reward (e.g. "kill 3 elites in 60 s" for a free item or credits). Side tasks are data.
 
+### Pickups and currencies
+- Pickups: XP, credits, meta credits, runes.
+- Credits: in-run only, never converted to meta credits. Sources: kills (small), elites (big piles), NPC tasks.
+- Meta credits: picked up during the run as their own drop (e.g. a kill drops one with 1% chance), plus rewards for objectives and loops survived.
+- Runes: one-time pickup effect with a duration: magnet, haste, damage boost, more later.
+
 ### Meta-progression
-- One meta currency, earned every run: more for objectives, loops survived, kills. Spent in the hub on slot unlocks (2 -> 5 active and usable) and other upgrades.
+- One meta currency (meta credits). Spent in the hub on slot unlocks (2 -> 5 active and usable), stat upgrades and other upgrades.
+- Permanent stat upgrades exist, small and capped (e.g. +1% damage per rank, max 10 ranks). Values are data. Most meta value comes from unlocks (slots, heroes, items).
+- Infinite mode rewards: meta credits per loop survived, more for each loop; a best-loop record per level.
 
 ### Heroes
 - Heroes come from the storyline worlds. Closing a storyline unlocks a hero from that world (e.g. a plague doctor from the undead town).
 - The starting hero lives in the hub.
+- Each hero has: own pool of 6 skills + 3 ultimates, base stats (HP, speed, pickup radius), one unique passive (e.g. plague doctor: poison spreads to nearby enemies on kill).
 
 ### Build
 - In-run power sources: XP level-ups, chest picks, shop items.
@@ -93,8 +102,8 @@ Open decisions. `needs:` = decided first.
 - T6 Power source: what skills and items are in-world (magic, weapons, mixed)
 
 ### Core entities
-- E1 Heroes: how they differ besides the skill pool (stats, unique passive)
-- E3 Pickups: XP, credits, health, magnets, others
+- E5 Healing: how the hero restores HP
+- E6 Rune spawns: where, how often
 
 ### Build & evolution
 Skill system closed by the user (2026-10-16). Left for when real skills are designed:
@@ -102,14 +111,13 @@ Skill system closed by the user (2026-10-16). Left for when real skills are desi
 - B5 Aimed vs automatic split: which skills use camera aim
 
 ### Run structure
-- R5 Credits: sources, carry over between runs or not
-- B10 Pick rules: reroll, banish, skip in chest and shop. needs: R5
+- B10 Pick rules: reroll, lock, skip in chest and shop
 
 ### Meta-progression
-- M2 Permanent stat upgrades: yes/no, how strong
-- M3 Unlock conditions in detail: which level unlocks what. needs: E1
+- M3 Storyline structure and unlocks: levels per storyline, order, what each level unlocks
 - M4 Difficulty tiers after a storyline is closed
-- M5 Infinite mode rewards: what the player gets
+- M6 Meta credits on death: kept fully or partly
 
 ## Parked
-(none yet)
+- Leaderboards for infinite mode best loops.
+- Cosmetic rewards for infinite mode milestone loops.
