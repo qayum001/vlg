@@ -1,0 +1,76 @@
+// Horde stress test tuning. Parsed strictly by Vlg.Core StressConfig: unknown or missing keys throw.
+// Distances in meters, times in seconds, angles in radians.
+{
+  "sim": {
+    "maxStepSec": 0.05,
+    "enemySpeed": 3.2,
+    "enemyRadius": 0.4,
+    "enemyHealth": 3,
+    "separationRadius": 0.9,
+    "separationStrength": 4.0,
+    "maxNeighbors": 12,
+    "headingTurnRate": 8.0,
+    "animRate": 1.6,
+    "hitFlashDecay": 6.0,
+    "spawnRadiusMin": 26,
+    "spawnRadiusMax": 32,
+    "spawnAreaMin": 3,
+    "spawnAreaMax": 22,
+    "gridCellSize": 1.0,
+    "gridDim": 256,
+    "enemyCapacity": 50000,
+    "playerSpeed": 6.0,
+    "playerRadius": 0.6,
+    "projectileSpeed": 18,
+    "projectileLife": 1.2,
+    "projectileRadius": 0.2,
+    "projectileDamage": 1,
+    "projectileCapacity": 25000,
+    "targetedShare": 0.5,
+    "aimedShare": 0.25,
+    "aimSpreadRad": 0.15,
+    "workerThreads": -1,
+    "parallelMinCount": 2048
+  },
+  "bench": {
+    "warmupSec": 1.5,
+    "measureSec": 3.0,
+    "thresholdMs": 16.7,
+    "failStepsToStop": 2,
+    "projectilesPerEnemy": 0.5,
+    "fixedEnemies": 500,
+    "enemies": { "start": 250, "step": 250, "max": 10000 },
+    "overdraw": { "start": 0, "step": 1, "max": 60 },
+    "particles": { "start": 2000, "step": 2000, "max": 200000 }
+  },
+  "presets": {
+    "very_low": {
+      "renderScale": 0.6, "scaling": "bilinear", "antiAliasing": "none",
+      "shadows": false, "enemyShadows": false, "shadowSize": 1024,
+      "glow": true, "ssao": false,
+      "particleMultiplier": 0.25, "maxEnemies": 300, "maxProjectiles": 200,
+      "burstsPerFrame": 2, "auraParticles": 150, "lights": 2, "enemyDetail": 0
+    },
+    "low": {
+      "renderScale": 0.75, "scaling": "bilinear", "antiAliasing": "fxaa",
+      "shadows": true, "enemyShadows": false, "shadowSize": 2048,
+      "glow": true, "ssao": false,
+      "particleMultiplier": 0.5, "maxEnemies": 800, "maxProjectiles": 400,
+      "burstsPerFrame": 4, "auraParticles": 400, "lights": 4, "enemyDetail": 1
+    },
+    "medium": {
+      "renderScale": 1.0, "scaling": "bilinear", "antiAliasing": "fxaa",
+      "shadows": true, "enemyShadows": true, "shadowSize": 2048,
+      "glow": true, "ssao": false,
+      "particleMultiplier": 1.0, "maxEnemies": 2000, "maxProjectiles": 1000,
+      "burstsPerFrame": 8, "auraParticles": 1000, "lights": 8, "enemyDetail": 1
+    },
+    "high": {
+      "renderScale": 1.0, "scaling": "bilinear", "antiAliasing": "taa",
+      "shadows": true, "enemyShadows": true, "shadowSize": 4096,
+      "glow": true, "ssao": true,
+      "particleMultiplier": 1.0, "maxEnemies": 4000, "maxProjectiles": 2000,
+      "burstsPerFrame": 16, "auraParticles": 2000, "lights": 16, "enemyDetail": 2
+    }
+  }
+}

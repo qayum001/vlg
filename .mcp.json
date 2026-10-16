@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "blender": {
+      "command": "uvx",
+      "args": ["mcp-for-blender"],
+      "env": { "DISABLE_TELEMETRY": "true", "BLENDER_PORT": "9877" }
+    },
+    "agent_status": {
+      "command": "docker",
+      "args": ["compose", "-f", "C:/Projects/Backend/Notifications bot/compose.yaml", "exec", "-T", "status-bot", "python", "/app/mcp_server.py"]
+    }
+  }
+}
