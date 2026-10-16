@@ -1,5 +1,5 @@
 # Tooling (this machine)
-Updated: 2026-10-14
+Updated: 2026-10-16
 Related: [overview](overview.md), [status](status.md)
 
 ## Blender
@@ -39,4 +39,6 @@ Different protocols, so different ports. Never put both on one port.
 ## Other
 - `uv` 0.13.0 via winget; aliases in `%LOCALAPPDATA%\Microsoft\WinGet\Links` (on PATH).
 - `claude` CLI on PATH is broken (npm shim → missing claude.exe). Edit `.mcp.json` instead of `claude mcp add`.
-- Available: node, python 3.13, dotnet, winget, git 2.45.
+- Available: node, python 3.13, winget, git 2.45, git-lfs 3.5.1.
+- .NET SDKs: 8.0.401, 9.0.300, 10.0.102. Godot: not installed (2026-10-16).
+- Hardware: Ryzen 7 5800H (Vega 8 iGPU = perf test GPU), RTX 3070 Laptop, 32 GB RAM.

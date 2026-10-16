@@ -1,6 +1,6 @@
 # Engine choice and min-spec budget
 
-Status: analysis, waiting for user decision
+Status: decided 2026-10-16 — Godot 4.7 + C#, min spec 8 GB RAM + 2 GB VRAM
 Updated: 2026-10-16
 
 Inputs (from `concept.md`): 3D survivors-like, hundreds of enemies, heavy particles/VFX, stylized low-poly, single-player. Platforms: Windows + Steam Deck. Min spec: 4 GB RAM + 1 GB VRAM, 60 fps on the low preset, 1080p output (render scale may drop). The agent writes all code and builds all assets; the user has not used either engine.
@@ -118,9 +118,9 @@ Current versions: Godot 4.7.2 (stable, August 2026). Unity 6.3 LTS (December 202
 ## 5. Next step after the decision
 First prototype = **horde stress test** in the chosen engine: N GPU-animated enemies, projectiles, particles, quality presets. Measure frame time and memory on the Vega 8 iGPU (tier B / Deck stand-in). Tier A numbers stay estimates unless an old test laptop is available (e.g. Core i3 7th gen, UHD 620, 4 GB).
 
-## 6. Decisions needed from the user
-1. Engine: Godot 4.7 + C# (recommended) or Unity 6.
-2. Min spec: raise to 8 GB RAM + 2 GB VRAM (recommended), or keep 4 GB + 1 GB and accept the tier A limits above.
+## 6. Decision (user, 2026-10-16)
+1. Engine: **Godot 4.7 + C#**.
+2. Min spec: **8 GB RAM + 2 GB VRAM** (tier B, ≈ Steam Deck). Tier A (4 GB / 1 GB) only as a "very low" preset stretch goal, not on the store page.
 
 ## Sources
 - Steam Hardware & Software Survey, September 2026: https://store.steampowered.com/hwsurvey/

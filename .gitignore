@@ -22,4 +22,11 @@ build/
 export/
 *.log
 
-# Engine-specific entries: add when engine is chosen
+# Godot 4
+.godot/
+/android/
+
+# C# / .NET
+bin/
+obj/
+mono_crash.*.json

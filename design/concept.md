@@ -12,7 +12,8 @@ Updated: 2026-10-16
 - **Visual direction:** colorful, with heavy particles and VFX. Stylized low-poly models; shaders and effects carry the look.
 - **Art:** all assets are made by the agent (Blender via MCP and scripts) and reviewed/adjusted by the user. No external asset packs or AI 3D generators.
 - **Platforms:** Windows + Steam Deck (Windows build through Proton). Linux/macOS native not planned.
-- **Min spec (under review):** 4 GB RAM, 1 GB VRAM. Target 60 fps on the low preset, 1080p output, render scale may drop on min spec.
+- **Engine:** Godot 4.7 + C# (why: `engine.md`).
+- **Min spec:** 8 GB RAM, 2 GB VRAM (GTX 750 Ti / GTX 1050 / Radeon Vega 8 class, about Steam Deck level). Target 60 fps on the low preset, 1080p output, render scale may drop on min spec. A "very low" preset tries to run on 4 GB / 1 GB but is not promised.
 
 ## Implications
 - Movement is relative to the camera (W = away from the camera). Directions change when the camera orbits.
@@ -23,7 +24,6 @@ Updated: 2026-10-16
 
 ## Open
 - Theme, setting, story.
-- Engine, and whether to raise min spec: analysis in `engine.md`.
 - Controls: mouse sensitivity and smoothing for orbit; cursor shown only in menus and upgrade picks?
 - Orientation aids during free orbit: compass, minimap, off-screen indicators?
 - Run length, meta-progression, content scope, price.
