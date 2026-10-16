@@ -150,10 +150,11 @@ These replace the §3 estimates where they overlap. The stress test is in `featu
 
 RTX 3070 Laptop, Mobile unless noted:
 - **High** preset: **Forward+ 4250** enemies (34 M triangles per frame), **Mobile 6750**. Mobile skips TAA and SSAO, which the high preset asks for on Forward+, so part of that gap is those effects. Either way, Mobile doesn't cap fast GPUs.
-- **very_low** preset: **24 000 enemies + 12 000 projectiles**. The GPU took only 3.2 ms; the limit was the **CPU**: single-threaded game logic took 10 ms at 24 000 (~0.4 µs per enemy). Multi-threading that loop is the lever if a design ever needs more.
+- **very_low** preset, single-threaded logic: 24 000 enemies + 12 000 projectiles. The GPU took only 3.2 ms; the **CPU** was the limit (10 ms of logic at 24 000).
+- **very_low** preset, **multi-threaded logic** (2026-10-16, 14 worker threads): **≥ 50 000 enemies + 25 000 projectiles at 6.7 ms p95**. That's the test's capacity cap, not a limit. Logic at 24 000 went from 10.1 to 2.45 ms (4.1×).
 
 Other numbers:
-- **Game logic (CPU)**: 1.3 ms for 3000 enemies + 1500 projectiles; 4.2 ms at 10 000. Single thread on the 5800H. Not the limit.
+- **Game logic (CPU)**: 1.3 ms for 3000 enemies + 1500 projectiles; 4.2 ms at 10 000 (single thread, 5800H). Multi-threaded, the enemy update and GPU buffer fill run on a worker pool (processors − 2 threads, only above 2048 enemies). Vega low: 1.92 → 0.82 ms at 4250, same 4250 limit (GPU-bound). Results are bit-identical to single-thread.
 - **Draw calls**: ~85 regardless of enemy count, so instancing works.
 - **Memory**: process working set 430–630 MB, video memory 130–210 MB. Far below 8 GB / 2 GB, and even below 4 GB / 1 GB.
 

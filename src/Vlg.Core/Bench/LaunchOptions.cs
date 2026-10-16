@@ -22,10 +22,12 @@ public sealed record LaunchOptions
     public int? RampStart { get; init; }
     public int? RampStep { get; init; }
     public int? RampMax { get; init; }
+    /// <summary>Overrides sim.workerThreads (0 = single thread) for comparisons.</summary>
+    public int? Threads { get; init; }
 
     public const string Usage =
         "--bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
-        "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>";
+        "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>";
 
     public static LaunchOptions Parse(string[] args)
     {
@@ -47,6 +49,7 @@ public sealed record LaunchOptions
                 "--ramp-start" => o with { RampStart = ParseInt(a, Next(), 0) },
                 "--ramp-step" => o with { RampStep = ParseInt(a, Next(), 1) },
                 "--ramp-max" => o with { RampMax = ParseInt(a, Next(), 0) },
+                "--threads" => o with { Threads = ParseInt(a, Next(), 0) },
                 _ => throw new ArgumentException($"unknown arg '{a}'. Usage: {Usage}"),
             };
         }

@@ -29,4 +29,8 @@ public sealed record SimTuning
     public required float TargetedShare { get; init; }
     public required float AimedShare { get; init; }
     public required float AimSpreadRad { get; init; }
+    /// <summary>Background worker threads for horde loops; -1 = processors - 2.</summary>
+    public required int WorkerThreads { get; init; }
+    /// <summary>Loops shorter than this run on one thread.</summary>
+    public required int ParallelMinCount { get; init; }
 }

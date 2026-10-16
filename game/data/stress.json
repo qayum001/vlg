@@ -28,7 +28,9 @@
     "projectileCapacity": 25000,
     "targetedShare": 0.5,
     "aimedShare": 0.25,
-    "aimSpreadRad": 0.15
+    "aimSpreadRad": 0.15,
+    "workerThreads": -1,
+    "parallelMinCount": 2048
   },
   "bench": {
     "warmupSec": 1.5,

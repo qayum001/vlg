@@ -16,7 +16,8 @@ param(
     # Ramp overrides; defaults keep game/data/stress.json values.
     [int]$RampStart = -1,  # -1 = data value
     [int]$RampStep = 0,
-    [int]$RampMax = 0
+    [int]$RampMax = 0,
+    [int]$Threads = -1  # -1 = data value (sim.workerThreads), 0 = single thread
 )
 $ErrorActionPreference = "Stop"
 # "powershell -File" passes "a,b" as one string; split so both call styles work.
@@ -37,6 +38,7 @@ foreach ($preset in $Presets) {
             if ($RampStart -ge 0) { $gameArgs += @("--ramp-start", "$RampStart") }
             if ($RampStep -gt 0) { $gameArgs += @("--ramp-step", "$RampStep") }
             if ($RampMax -gt 0) { $gameArgs += @("--ramp-max", "$RampMax") }
+            if ($Threads -ge 0) { $gameArgs += @("--threads", "$Threads") }
             Write-Host "== $mode / $preset / $renderer / $Driver"
             & $Exe @engineArgs @gameArgs | Select-String -Pattern "^(step|bench)" | ForEach-Object { Write-Host "   $_" }
             if ($LASTEXITCODE -ne 0) { Write-Warning "exit code $LASTEXITCODE" }

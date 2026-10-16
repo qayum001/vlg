@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using Vlg.Core.Config;
+using Vlg.Core.Jobs;
 
 namespace Vlg.Core.Sim;
 
@@ -17,11 +18,14 @@ public sealed class HordeSim
 
     readonly WeaponDirector _weapons = new();
     readonly SimTuning _t;
+    readonly WorkerPool? _workers;
     XorShift32 _rng;
 
-    public HordeSim(SimTuning tuning, uint seed)
+    /// <param name="workers">Shared pool for the enemy update; null = single thread. Same result either way.</param>
+    public HordeSim(SimTuning tuning, uint seed, WorkerPool? workers = null)
     {
         _t = tuning;
+        _workers = workers;
         _rng = new XorShift32(seed);
         Enemies = new EnemySwarm(tuning.EnemyCapacity);
         Projectiles = new ProjectilePool(tuning.ProjectileCapacity);
@@ -38,7 +42,7 @@ public sealed class HordeSim
         Deaths.Clear();
 
         Grid.Build(Enemies.Position, Enemies.Count, player);
-        Enemies.Update(dt, player, Grid, _t);
+        Enemies.Update(dt, player, Grid, _t, _workers);
         _weapons.Update(dt, targetProjectiles, player, aim, Enemies, Projectiles, ref _rng, _t);
         Projectiles.Update(dt, Enemies, Grid, Hits, _t);
         KilledTotal += Enemies.RemoveDead(Deaths);

@@ -6,6 +6,7 @@ using System.Linq;
 using Godot;
 using Vlg.Core.Bench;
 using Vlg.Core.Config;
+using Vlg.Core.Jobs;
 using Vlg.Core.Sim;
 using NVec2 = System.Numerics.Vector2;
 
@@ -32,6 +33,7 @@ public partial class StressTest : Node3D
     string _presetName = null!;
     QualityPreset _preset = null!;
     HordeSim _sim = null!;
+    WorkerPool _workers = null!;
     EnemyRenderer _enemies = null!;
     ProjectileRenderer _projectiles = null!;
     VfxSystem _vfx = null!;
@@ -59,7 +61,8 @@ public partial class StressTest : Node3D
         _options = LaunchOptions.Parse(OS.GetCmdlineUserArgs());
         _config = StressConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/stress.json"));
         _presetNames = _config.Presets.Keys.ToArray();
-        _sim = new HordeSim(_config.Sim, _options.Seed);
+        _workers = new WorkerPool(_options.Threads ?? _config.Sim.WorkerThreads, _config.Sim.ParallelMinCount);
+        _sim = new HordeSim(_config.Sim, _options.Seed, _workers);
 
         _arena = new Arena(this, GD.Load<Shader>("res://shaders/ground.gdshader"), _options.Seed);
         _enemies = new EnemyRenderer(this, GD.Load<Shader>("res://shaders/enemy_vat.gdshader"));
@@ -101,7 +104,11 @@ public partial class StressTest : Node3D
         _camera.Snap(PlayerWorld());
     }
 
-    public override void _ExitTree() => FinishBench();
+    public override void _ExitTree()
+    {
+        FinishBench();
+        _workers.Dispose();
+    }
 
     public override void _Process(double delta)
     {
@@ -130,7 +137,7 @@ public partial class StressTest : Node3D
 
         long simStart = Stopwatch.GetTimestamp();
         _sim.Step(dt, _playerPos, CameraMath.Forward(_camera.Yaw), load.Enemies, load.Projectiles);
-        _enemies.Update(_sim.Enemies);
+        _enemies.Update(_sim.Enemies, _workers);
         _projectiles.Update(_sim.Projectiles);
         float simMs = (float)Stopwatch.GetElapsedTime(simStart).TotalMilliseconds;
 
@@ -269,6 +276,7 @@ public partial class StressTest : Node3D
         yield return M("threshold_ms", _config.Bench.ThresholdMs.ToString(inv));
         yield return M("ramp", $"start {ramp.Start} step {ramp.Step} max {ramp.Max}");
         yield return M("seed", _options.Seed.ToString(inv));
+        yield return M("worker_threads", _workers.WorkerCount.ToString(inv));
     }
 
     void UpdateHud(float dt, in FrameSample s)
@@ -285,7 +293,7 @@ public partial class StressTest : Node3D
             : "\nWASD move · mouse orbit · 1-4 preset · [ ] enemies · , . overdraw layers · - = aura · F1 HUD · F11 fullscreen · F12 shot · Esc mouse";
         _hud.SetText(string.Create(CultureInfo.InvariantCulture,
             $"vlg horde stress · preset {_presetName} · {Telemetry.Renderer} · {Telemetry.Adapter}\n" +
-            $"FPS {1000f / Math.Max(avg, 0.01f):F0}   frame {avg:F1} ms (p95 {p95:F1})   GPU {s.GpuMs:F1}   CPU render {s.CpuRenderMs:F1}   sim {s.SimMs:F2} ms\n" +
+            $"FPS {1000f / Math.Max(avg, 0.01f):F0}   frame {avg:F1} ms (p95 {p95:F1})   GPU {s.GpuMs:F1}   CPU render {s.CpuRenderMs:F1}   sim {s.SimMs:F2} ms ({_workers.WorkerCount + 1} threads)\n" +
             $"enemies {s.Enemies} ({_enemies.TrianglesPerEnemy} tris)   projectiles {s.Projectiles}   particles ~{_vfx.EstimatedLiveParticles}   layers {_vfx.Layers}   lights {_vfx.Lights}\n" +
             $"draw calls {s.DrawCalls}   primitives {s.Primitives / 1e6f:F2} M   video {mem.VideoMb:F0} MB   RAM {mem.WorkingSetMb:F0} MB (private {mem.PrivateMb:F0})\n" +
             $"output {size.X:F0}x{size.Y:F0}   internal {size.X * _preset.RenderScale:F0}x{size.Y * _preset.RenderScale:F0}{bench}"));

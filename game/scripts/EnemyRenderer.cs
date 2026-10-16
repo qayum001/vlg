@@ -1,5 +1,6 @@
 using System;
 using Godot;
+using Vlg.Core.Jobs;
 using Vlg.Core.Sim;
 
 namespace Vlg.Game;
@@ -17,6 +18,7 @@ public sealed class EnemyRenderer
 
     readonly MultiMesh _multimesh;
     readonly ShaderMaterial _material;
+    readonly FillJob _fill = new();
     float[] _buffer = Array.Empty<float>();
 
     public MultiMeshInstance3D Node { get; }
@@ -47,7 +49,7 @@ public sealed class EnemyRenderer
     public void SetCastShadows(bool on) =>
         Node.CastShadow = on ? GeometryInstance3D.ShadowCastingSetting.On : GeometryInstance3D.ShadowCastingSetting.Off;
 
-    public void Update(EnemySwarm s)
+    public void Update(EnemySwarm s, WorkerPool? workers)
     {
         int capacity = (Math.Max(s.Count, 1) + CapacityStep - 1) / CapacityStep * CapacityStep;
         if (capacity != _multimesh.InstanceCount)
@@ -56,18 +58,33 @@ public sealed class EnemyRenderer
             _buffer = new float[capacity * Stride];
         }
 
-        var b = _buffer;
-        for (int i = 0, o = 0; i < s.Count; i++, o += Stride)
-        {
-            float cos = MathF.Cos(s.Heading[i]), sin = MathF.Sin(s.Heading[i]);
-            var p = s.Position[i];
-            // Rotation about Y: model +Z -> (sin, 0, cos), matching EnemySwarm.Heading.
-            b[o] = cos; b[o + 1] = 0f; b[o + 2] = sin; b[o + 3] = p.X;
-            b[o + 4] = 0f; b[o + 5] = 1f; b[o + 6] = 0f; b[o + 7] = 0f;
-            b[o + 8] = -sin; b[o + 9] = 0f; b[o + 10] = cos; b[o + 11] = p.Y;
-            b[o + 12] = s.AnimPhase[i]; b[o + 13] = s.HitFlash[i]; b[o + 14] = s.Variant[i]; b[o + 15] = 0f;
-        }
-        RenderingServer.MultimeshSetBuffer(_multimesh.GetRid(), b);
+        _fill.Swarm = s;
+        _fill.Buffer = _buffer;
+        if (workers != null) workers.Run(_fill, s.Count);
+        else _fill.Execute(0, s.Count);
+        RenderingServer.MultimeshSetBuffer(_multimesh.GetRid(), _buffer);
         _multimesh.VisibleInstanceCount = s.Count;
+    }
+
+    sealed class FillJob : IRangeJob
+    {
+        public EnemySwarm Swarm = null!;
+        public float[] Buffer = null!;
+
+        public void Execute(int start, int end)
+        {
+            var s = Swarm;
+            var b = Buffer;
+            for (int i = start, o = start * Stride; i < end; i++, o += Stride)
+            {
+                float cos = MathF.Cos(s.Heading[i]), sin = MathF.Sin(s.Heading[i]);
+                var p = s.Position[i];
+                // Rotation about Y: model +Z -> (sin, 0, cos), matching EnemySwarm.Heading.
+                b[o] = cos; b[o + 1] = 0f; b[o + 2] = sin; b[o + 3] = p.X;
+                b[o + 4] = 0f; b[o + 5] = 1f; b[o + 6] = 0f; b[o + 7] = 0f;
+                b[o + 8] = -sin; b[o + 9] = 0f; b[o + 10] = cos; b[o + 11] = p.Y;
+                b[o + 12] = s.AnimPhase[i]; b[o + 13] = s.HitFlash[i]; b[o + 14] = s.Variant[i]; b[o + 15] = 0f;
+            }
+        }
     }
 }

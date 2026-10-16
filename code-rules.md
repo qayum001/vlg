@@ -32,6 +32,7 @@ Godot 4.7.x .NET build, C# only (decision: `.agent/memory/decisions/engine.md`).
 - C# naming: PascalCase types/methods/properties/constants, camelCase locals/parameters, `_camelCase` private fields. One public type per file, file name = type name.
 - Game rules live in a plain C# library with no Godot reference, unit-tested with `dotnet test`. Godot nodes are thin adapters: input, rendering, audio.
 - Hordes (enemies, projectiles, pickups): no Node per entity. Struct arrays + MultiMesh/RenderingServer, own spatial grid for collisions, pools. Budgets per quality preset from data.
+- Parallel loops: `Vlg.Core.Jobs.WorkerPool` with cached `IRangeJob` objects. A job writes only data of its own indices; writes to other entities (damage, pickups) stay single-thread. Each parallel system gets a test that threaded == single-thread results.
 - Hot paths: no LINQ, closures, boxing, string building or `new` of reference types per frame.
 
 Layout:

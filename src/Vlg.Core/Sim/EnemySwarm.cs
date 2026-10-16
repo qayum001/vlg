@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using Vlg.Core.Config;
+using Vlg.Core.Jobs;
 
 namespace Vlg.Core.Sim;
 
@@ -26,6 +27,9 @@ public sealed class EnemySwarm
     public readonly byte[] Variant;
 
     public const int VariantCount = 4;
+
+    readonly SteerJob _steer = new();
+    readonly IntegrateJob _integrate = new();
 
     public EnemySwarm(int capacity)
     {
@@ -57,7 +61,25 @@ public sealed class EnemySwarm
     public void Truncate(int count) => Count = Math.Clamp(count, 0, Count);
 
     /// <param name="grid">Built from Position this frame, before this call.</param>
-    public void Update(float dt, Vector2 target, SpatialGrid grid, SimTuning t)
+    /// <param name="workers">Null = single thread. Result is identical either way (each index writes only its own slots).</param>
+    public void Update(float dt, Vector2 target, SpatialGrid grid, SimTuning t, WorkerPool? workers = null)
+    {
+        _steer.Set(this, target, grid, t);
+        _integrate.Set(this, dt, t);
+        // Pass 1 reads only old positions (order-independent), pass 2 integrates.
+        if (workers == null)
+        {
+            _steer.Execute(0, Count);
+            _integrate.Execute(0, Count);
+        }
+        else
+        {
+            workers.Run(_steer, Count);
+            workers.Run(_integrate, Count);
+        }
+    }
+
+    void Steer(int start, int end, Vector2 target, SpatialGrid grid, SimTuning t)
     {
         Span<int> neighbors = stackalloc int[t.MaxNeighbors];
         float sepR = t.SeparationRadius;
@@ -65,8 +87,7 @@ public sealed class EnemySwarm
         float stopR2 = (t.PlayerRadius + t.EnemyRadius) * (t.PlayerRadius + t.EnemyRadius);
         float maxSpeed = t.EnemySpeed * 1.5f;
 
-        // Pass 1 reads only old positions (order-independent), pass 2 integrates.
-        for (int i = 0; i < Count; i++)
+        for (int i = start; i < end; i++)
         {
             var p = Position[i];
             var toTarget = target - p;
@@ -98,11 +119,14 @@ public sealed class EnemySwarm
             if (speed2 > maxSpeed * maxSpeed) v *= maxSpeed / MathF.Sqrt(speed2);
             Velocity[i] = v;
         }
+    }
 
+    void Integrate(int start, int end, float dt, SimTuning t)
+    {
         float turn = t.HeadingTurnRate * dt;
         float flashDecay = t.HitFlashDecay * dt;
         float animStep = t.AnimRate * dt / t.EnemySpeed;
-        for (int i = 0; i < Count; i++)
+        for (int i = start; i < end; i++)
         {
             var v = Velocity[i];
             Position[i] += v * dt;
@@ -117,6 +141,31 @@ public sealed class EnemySwarm
             AnimPhase[i] = phase - MathF.Floor(phase);
             HitFlash[i] = MathF.Max(0f, HitFlash[i] - flashDecay);
         }
+    }
+
+    /// <summary>Cached job objects: per-frame parameters in fields, no allocation per Update.</summary>
+    sealed class SteerJob : IRangeJob
+    {
+        EnemySwarm _s = null!;
+        Vector2 _target;
+        SpatialGrid _grid = null!;
+        SimTuning _t = null!;
+
+        public void Set(EnemySwarm s, Vector2 target, SpatialGrid grid, SimTuning t) =>
+            (_s, _target, _grid, _t) = (s, target, grid, t);
+
+        public void Execute(int start, int end) => _s.Steer(start, end, _target, _grid, _t);
+    }
+
+    sealed class IntegrateJob : IRangeJob
+    {
+        EnemySwarm _s = null!;
+        float _dt;
+        SimTuning _t = null!;
+
+        public void Set(EnemySwarm s, float dt, SimTuning t) => (_s, _dt, _t) = (s, dt, t);
+
+        public void Execute(int start, int end) => _s.Integrate(start, end, _dt, _t);
     }
 
     /// <summary>Compacts out entries with Health &lt;= 0, records their positions. Returns removed count.</summary>

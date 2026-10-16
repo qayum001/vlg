@@ -44,6 +44,14 @@ public class LaunchTests
         Assert.Equal(0, LaunchOptions.Parse(new[] { "--ramp-start", "0" }).ApplyRamp(data).Start);
     }
 
+    [Fact]
+    public void Threads_override_parses()
+    {
+        Assert.Null(LaunchOptions.Parse(Array.Empty<string>()).Threads);
+        Assert.Equal(0, LaunchOptions.Parse(new[] { "--threads", "0" }).Threads);
+        Assert.Throws<ArgumentException>(() => LaunchOptions.Parse(new[] { "--threads", "-1" }));
+    }
+
     [Theory]
     [InlineData("--ramp-step", "0")]
     [InlineData("--ramp-max", "-1")]

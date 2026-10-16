@@ -44,6 +44,7 @@ public sealed record StressConfig
         Require(s.SpawnRadiusMin < s.SpawnRadiusMax && s.SpawnAreaMin < s.SpawnAreaMax, "spawn min must be < max");
         Require(s.TargetedShare + s.AimedShare <= 1f, "sim targetedShare + aimedShare must be <= 1");
         Require(s.EnemyCapacity > 0 && s.ProjectileCapacity > 0, "capacities must be > 0");
+        Require(s.WorkerThreads >= -1 && s.ParallelMinCount >= 1, "sim.workerThreads must be >= -1, parallelMinCount >= 1");
         Require(Bench.ThresholdMs > 0 && Bench.MeasureSec > 0 && Bench.FailStepsToStop > 0, "bench timings must be > 0");
         foreach (var ramp in new[] { Bench.Enemies, Bench.Overdraw, Bench.Particles })
             Require(ramp.Step > 0 && ramp.Max >= ramp.Start, "bench ramp needs step > 0 and max >= start");
