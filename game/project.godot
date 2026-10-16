@@ -7,7 +7,7 @@ config_version=5
 
 config/name="vlg"
 run/main_scene="res://scenes/stress_test.tscn"
-config/features=PackedStringArray("4.7", "C#", "Forward Plus")
+config/features=PackedStringArray("4.7", "C#", "Mobile")
 run/max_fps=0
 
 [display]
@@ -25,4 +25,4 @@ project/assembly_name="Vlg"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
-renderer/rendering_method="forward_plus"
+renderer/rendering_method="mobile"

@@ -10,7 +10,7 @@ Related: [overview](../project/overview.md), [open questions](../project/open-qu
 - Fallback trigger → Unity: horde stress test misses targets on Vega 8 iGPU and profiling blames the engine, not our code; or design moves to 3000+ visible enemies.
 - Stress test 2026-10-16 (Vega 8, low preset, release): 3000 enemies Forward+ / 4250 Mobile at 60 fps; design budget ~1500 visible enemies on low. Enemy real-time shadows ~3× per-enemy cost → off up to medium. Details `design/engine.md` §7. Unity fallback trigger not hit.
 - Windows rendering driver: D3D12 (Vulkan had bad frame pacing on the hybrid laptop).
-- Renderer: Mobile measured faster in every test (+40% enemies, 2.8× particles). Default renderer not decided yet (user).
+- Renderer: **Mobile is the default** (user, 2026-10-16). Faster in every test: Vega 8 +40% enemies, 2.8× particles; RTX 3070 high 6750 vs Forward+ 4250, so no cap on fast GPUs. Forward+-only preset options fall back via `Vlg.Core.Config.RendererSupport` (TAA→FXAA, SSAO off). Mobile limit: 8 omni + 8 spot lights per object (whole horde MultiMesh = one object).
 - Tests: pure C# logic → xUnit (user, 2026-10-16). In-engine test framework: not chosen.
 - Benchmarks run on release export builds (export templates installed), not the editor binary.
 - Horde rules (any engine): instanced draws + baked vertex animation, own collision grid, pools, no per-frame allocations, per-preset budgets. Details: `design/engine.md` §3.

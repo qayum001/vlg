@@ -147,7 +147,7 @@ These replace the §3 estimates where they overlap. The stress test is in `featu
 | GPU particles, ~0.6 m soft additive (500 enemies, low) | 20 000 | 56 000 |
 | Enemies, low, **Vulkan** instead of D3D12 | 1000 | – |
 
-Sanity check, RTX 3070 Laptop, high preset, Forward+: 4250 enemies (34 M triangles per frame).
+RTX 3070 Laptop, high preset: **Forward+ 4250** enemies (34 M triangles per frame), **Mobile 6750**. Mobile skips TAA and SSAO, which the high preset asks for on Forward+, so part of that gap is those effects. Either way, Mobile doesn't cap fast GPUs.
 
 Other numbers:
 - **Game logic (CPU)**: 1.3 ms for 3000 enemies + 1500 projectiles; 4.2 ms at 10 000. Single thread on the 5800H. Not the limit.
@@ -157,7 +157,7 @@ Other numbers:
 ### What this means
 1. **Min-spec target is reachable with a big margin.** On the low preset the Vega 8 holds 3000–4250 enemies with projectiles and VFX at 60 fps. A real GTX 750 Ti / GTX 1050 is slower, and real art, gameplay and UI cost more. Plan **~1500 visible enemies on low** as the design budget (about 50% headroom).
 2. **Enemy shadows are the most expensive setting.** Medium (enemies cast shadows, native 1080p) drops to 250–500 enemies, about 3× the per-enemy cost of low. Keep real-time enemy shadows off up to medium; use fake blob shadows instead.
-3. **The Mobile renderer is faster on this GPU in every test**: +40% enemies, +40% overdraw, ~2.8× particles. It lacks Forward+ extras (SSAO, SSR, SDFGI, volumetric fog, TAA) and lights only 8 omni lights per mesh. The concept's stylized look doesn't need those. → candidate default renderer.
+3. **The Mobile renderer is faster on this GPU in every test**: +40% enemies, +40% overdraw, ~2.8× particles. It lacks Forward+ extras (SSAO, SSR, SDFGI, volumetric fog, TAA) and lights only 8 omni lights per mesh. The concept's stylized look doesn't need those. → **Decided (user, 2026-10-16): Mobile is the default renderer.** Presets fall back on Mobile: TAA → FXAA, SSAO off. Switching back is one line in `project.godot`.
 4. **Transparent overdraw is not the wall I estimated** (§3 said 10–15 layers on tier B; measured 43+). Particle *count* costs more than fill: 20 000 (Forward+) vs 56 000 (Mobile).
 5. **Keep Direct3D 12 on Windows.** Vulkan used less GPU time but presented frames unevenly on this hybrid laptop, so it passed only 1000 enemies.
 6. **Tier A (4 GB / 1 GB) looks possible on very_low.** very_low passes 10 000 enemies here. A 3–4× slower tier A GPU could still hold ~2000 on very_low. This is an extrapolation, not tested; it needs an old test laptop.
