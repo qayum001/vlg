@@ -1,6 +1,6 @@
 # Game domain
 
-Status: grilling (round 10)
+Status: grilling (round 11, final)
 Updated: 2026-10-16
 Scope: theme, core entities, build & evolution, run structure, meta-progression.
 Base: `concept.md` (genre, camera, art, platforms are decided there).
@@ -49,15 +49,26 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
 - Map NPCs spawn near the player during a run. They give lore plus an optional side task with a reward (e.g. "kill 3 elites in 60 s" for a free item or credits). Side tasks are data.
 
 ### Pickups and currencies
-- Pickups: XP, credits, meta credits, runes.
+- Pickups: XP, credits, meta credits, runes, health (rare kill drop).
 - Credits: in-run only, never converted to meta credits. Sources: kills (small), elites (big piles), NPC tasks.
 - Meta credits: picked up during the run as their own drop (e.g. a kill drops one with 1% chance), plus rewards for objectives and loops survived.
-- Runes: one-time pickup effect with a duration: magnet, haste, damage boost, more later.
+- Runes: one-time pickup effect with a duration: magnet, haste, damage boost, heal, more later.
+- Rune spawn: pseudo-random. Every tick there is a chance to spawn a rune near the player; the chance grows each tick and resets to the base after a spawn.
+  - Function (Dota's pseudo-random distribution): `P(n) = min(1, C * n)`, n = ticks since the last rune. C comes from the target average interval.
+  - Tick 1 s. C per target average: 30 s -> 0.001708, 45 s -> 0.000764, 60 s -> 0.000432, 90 s -> 0.000193.
+  - Spread for 60 s: 80% of runes come 22-103 s after the previous one, 99% within 145 s. A flat 1/60 chance would give 7-138 s for the same 80%, and 1% of waits over 275 s.
+- Healing: heal rune, HP regen and life steal as passive item stats, rare health drops from kills, full heal at the shop stage. Amounts are data.
+
+### Shop and chest
+- Shop: reroll for credits. No lock.
+- Chest: 3 options, pick one. No reroll, no skip.
 
 ### Meta-progression
 - One meta currency (meta credits). Spent in the hub on slot unlocks (2 -> 5 active and usable), stat upgrades and other upgrades.
 - Permanent stat upgrades exist, small and capped (e.g. +1% damage per rank, max 10 ranks). Values are data. Most meta value comes from unlocks (slots, heroes, items).
 - Infinite mode rewards: meta credits per loop survived, more for each loop; a best-loop record per level.
+- Meta credits are kept fully on death and on win.
+- Storyline structure: about 5 levels, unlocked one by one. Each cleared level gives a fixed unlock (an item enters the chest and shop pools, or a lore entry). Closing the storyline unlocks its hero and its infinite-only level.
 
 ### Heroes
 - Heroes come from the storyline worlds. Closing a storyline unlocks a hero from that world (e.g. a plague doctor from the undead town).
@@ -102,8 +113,7 @@ Open decisions. `needs:` = decided first.
 - T6 Power source: what skills and items are in-world (magic, weapons, mixed)
 
 ### Core entities
-- E5 Healing: how the hero restores HP
-- E6 Rune spawns: where, how often
+- E6 Rune rules: target interval, how many on the map, lifetime
 
 ### Build & evolution
 Skill system closed by the user (2026-10-16). Left for when real skills are designed:
@@ -111,12 +121,10 @@ Skill system closed by the user (2026-10-16). Left for when real skills are desi
 - B5 Aimed vs automatic split: which skills use camera aim
 
 ### Run structure
-- B10 Pick rules: reroll, lock, skip in chest and shop
+- B10 Shop reroll cost
 
 ### Meta-progression
-- M3 Storyline structure and unlocks: levels per storyline, order, what each level unlocks
 - M4 Difficulty tiers after a storyline is closed
-- M6 Meta credits on death: kept fully or partly
 
 ## Parked
 - Leaderboards for infinite mode best loops.
