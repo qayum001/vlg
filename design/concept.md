@@ -1,7 +1,7 @@
 # Game concept
 
 Status: brainstorming
-Updated: 2026-10-14
+Updated: 2026-10-16
 
 ## Decided
 - **Genre:** survivors-like (Vampire Survivors style): automatic attacks, large hordes, level-up upgrade picks, run-based. The theme is not decided.
@@ -11,6 +11,8 @@ Updated: 2026-10-14
 - **Players:** single-player.
 - **Visual direction:** colorful, with heavy particles and VFX. Stylized low-poly models; shaders and effects carry the look.
 - **Art:** all assets are made by the agent (Blender via MCP and scripts) and reviewed/adjusted by the user. No external asset packs or AI 3D generators.
+- **Platforms:** Windows + Steam Deck (Windows build through Proton). Linux/macOS native not planned.
+- **Min spec (under review):** 4 GB RAM, 1 GB VRAM. Target 60 fps on the low preset, 1080p output, render scale may drop on min spec.
 
 ## Implications
 - Movement is relative to the camera (W = away from the camera). Directions change when the camera orbits.
@@ -25,4 +27,3 @@ Updated: 2026-10-14
 - Controls: mouse sensitivity and smoothing for orbit; cursor shown only in menus and upgrade picks?
 - Orientation aids during free orbit: compass, minimap, off-screen indicators?
 - Run length, meta-progression, content scope, price.
-- Platforms: Windows only, or also Steam Deck/Linux/macOS.
