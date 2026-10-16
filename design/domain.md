@@ -1,6 +1,6 @@
 # Game domain
 
-Status: grilling (round 6)
+Status: grilling (round 7)
 Updated: 2026-10-16
 Scope: theme, core entities, build & evolution, run structure, meta-progression.
 Base: `concept.md` (genre, camera, art, platforms are decided there).
@@ -42,13 +42,17 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
 - Skills are tied to the hero. They fire on their own (a few are aimed with the camera).
 - Loadout: each hero has a pool of 6 skills and 3 ultimates. Before a run the player picks 4 skills + 1 ultimate.
 - Hero level-up (kills drop XP): the player upgrades one skill by one level, or unlocks a loadout skill not unlocked yet. Unlocking costs one level-up and puts the skill at level 1 (MOBA style). Each skill has its own growth per level (e.g. Blast: +1 projectile, +2% damage).
-- MOBA-like level rules: the player can't max one skill only. Base: Dota's rule, adjusted for our higher max skill level.
-- Max skill level 10. Branch points at skill level 5 and 10.
+- Run start: hero level 1, first loadout skill already at level 1 (free).
+- MOBA-like level rule: a skill's level can't be higher than ceil(hero level / 3). Skill level 5 is possible at hero level 13, level 10 at hero level 28. Hero levels 2-3 can only unlock new skills. The divisor (3) is a data value.
+- Max skill level 10. Branch points at skill level 5 and 10. A full build is ~43 level-ups (4 skills x 10 + 3 ultimate levels).
 - Skill branching: at a branch point the player picks a new state for the skill. Options are designer-made and fixed per branch point. Socketed modifiers don't decide which options are offered.
   - Some options change the concept, some deepen the current form. Example, Lightning: base = chain lightning hits 10 enemies. Level 5 options: becomes AoE / stays chain, 10 -> 30 enemies per cast / becomes a damage aura.
   - Not every skill has concept-changing branches.
 - Branching is a full tree: each choice opens its own next options. Skills are hero-tied, so the count per hero stays manageable. Worst case with 3 options per point: 3 + 9 = 12 forms per skill; "deepen" options reuse VFX and are cheaper.
-- Ultimate: pressed by the player.
+- Ultimate: pressed by the player. Unlocks at hero level 10, upgrades at 20 and 30 (max level 3). Each level is a bigger version; no branches.
+- Ultimate charge differs per ultimate. First mechanics (more later):
+  - Rage (one hero): charged by kills, 10K kills per charge. The number is data, tune it in the prototype.
+  - Void: 1 min cooldown; on press, kills enemies on the whole map.
 - After every skill and the ultimate are maxed (infinite mode): each level-up gives a small stat bonus (e.g. +2% damage), no limit.
 - Item types:
   - Modifier item: goes into a skill socket, changes that skill (+1 projectile).
@@ -56,6 +60,8 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
   - Usable item: pressed by the player, effect lasts ~3 s. Cooldown (20-60 s) starts on press. Reusable all run.
   - Passive item: global stat or effect (+15% damage).
 - Modifiers: each skill has sockets. A modifier fits only skills with a matching tag. Modifiers can be swapped at the shop.
+- Sockets: 1 when the skill unlocks, +1 at each branch point (max 3 at skill level 10). Late build: 12 modifier slots over 4 skills.
+- Stash: modifiers that stop fitting after a branch changes a skill's tags go to a stash; the branch screen warns first. Re-socket at the next shop. New modifiers with no fitting socket also go to the stash.
 - Caps: active and usable items are counted separately. Start with 2 active + 2 usable slots; meta-progression unlocks +1 at a time, up to 5 + 5.
 - Passive items: no cap.
 - Assumed (not confirmed): chest gives rare items of any type; shop sells all item types, common to rare; skills never come from chest or shop; modifiers go into hero skills only, not active items.
@@ -75,22 +81,19 @@ Open decisions. `needs:` = decided first.
 - E4 Map NPCs: role (lore only, side tasks, trade)
 
 ### Build & evolution
-- B2 Sockets per skill, how they grow
+Skill system closed by the user (2026-10-16). Left for when real skills are designed:
 - B4 Synergy layer: elements, tags, set bonuses. needs: T6
 - B5 Aimed vs automatic split: which skills use camera aim
-- B10 Pick rules: reroll, banish, skip in chest and shop
-- B17 MOBA rule: exact rule for max skill level 10
-- B19 Ultimate charge: kills, time, damage
-- B21 Ultimate unlock and leveling
-- B22 Modifiers that stop fitting after a branch changes a skill's tags
-- B23 Run start state: which skill is unlocked at hero level 1
 
 ### Run structure
 - R2 Map per level: size, bounds, layout
 - R4 Bosses and elites: where they appear in the loop. needs: E2, R8
-- R5 Credits: sources, carry over between runs or not
+- R5 Credits: sources, carry over between runs or not. needs: M1
 - R7 Loop scaling: what changes each loop (enemy HP, count, new types). needs: E2
 - R8 How objectives fit the loop: when they show up, does the loop keep running
+- R9 Horde stage: what makes it different from basic mob stages
+- R10 Void vs elites and bosses. needs: E2
+- B10 Pick rules: reroll, banish, skip in chest and shop. needs: R5
 
 ### Meta-progression
 - M1 Meta currency besides storyline unlocks: yes/no, what it buys
