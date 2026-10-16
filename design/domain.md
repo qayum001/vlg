@@ -1,6 +1,6 @@
 # Game domain
 
-Status: grilling (round 8)
+Status: grilling (round 9)
 Updated: 2026-10-16
 Scope: theme, core entities, build & evolution, run structure, meta-progression.
 Base: `concept.md` (genre, camera, art, platforms are decided there).
@@ -41,6 +41,15 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
 - Starting behaviors (first storyline names): walker (zombie), runner (ghoul), brute (abomination), ranged (spitter), exploder (bloater). Plus horde-only swarmers.
 - Behaviors must be extensible: new enemy types with new mechanics get added later without rework.
 - Void vs tougher enemies: kills basic and horde mobs; elites and bosses take % max HP damage instead (placeholder: 30% elites, 10% bosses).
+- Elites: bigger, glowing versions of normal enemies with 1 random affix (fast, shielded, splits on death, leaves poison). A few per mob stage from loop 2. Drop a big credit pile. Affixes are data, new ones added later.
+- Bosses: in boss-objective levels the boss comes after loop N (e.g. 3). Infinite mode: a boss every 3 loops, each stronger. Other objective levels have no boss.
+- Loop scaling: each loop enemy HP and damage +X%, spawn rate +Y%, and one new enemy type or elite affix joins. Numbers are data per level.
+
+### NPCs
+- Map NPCs spawn near the player during a run. They give lore plus an optional side task with a reward (e.g. "kill 3 elites in 60 s" for a free item or credits). Side tasks are data.
+
+### Meta-progression
+- One meta currency, earned every run: more for objectives, loops survived, kills. Spent in the hub on slot unlocks (2 -> 5 active and usable) and other upgrades.
 
 ### Heroes
 - Heroes come from the storyline worlds. Closing a storyline unlocks a hero from that world (e.g. a plague doctor from the undead town).
@@ -85,9 +94,7 @@ Open decisions. `needs:` = decided first.
 
 ### Core entities
 - E1 Heroes: how they differ besides the skill pool (stats, unique passive)
-- E2 Elites: what they are, where they come from
 - E3 Pickups: XP, credits, health, magnets, others
-- E4 Map NPCs: role (lore only, side tasks, trade)
 
 ### Build & evolution
 Skill system closed by the user (2026-10-16). Left for when real skills are designed:
@@ -95,17 +102,14 @@ Skill system closed by the user (2026-10-16). Left for when real skills are desi
 - B5 Aimed vs automatic split: which skills use camera aim
 
 ### Run structure
-- R4 Bosses: when they appear (objective levels, infinite mode)
-- R5 Credits: sources, carry over between runs or not. needs: M1
-- R7 Loop scaling: what changes each loop (enemy HP, count, new types)
+- R5 Credits: sources, carry over between runs or not
 - B10 Pick rules: reroll, banish, skip in chest and shop. needs: R5
 
 ### Meta-progression
-- M1 Meta currency besides storyline unlocks: yes/no, what it buys
-- M2 Permanent stat upgrades: yes/no, how strong. needs: M1
+- M2 Permanent stat upgrades: yes/no, how strong
 - M3 Unlock conditions in detail: which level unlocks what. needs: E1
 - M4 Difficulty tiers after a storyline is closed
-- M5 Infinite mode rewards: what the player gets. needs: M1
+- M5 Infinite mode rewards: what the player gets
 
 ## Parked
 (none yet)
