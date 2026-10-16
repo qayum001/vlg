@@ -1,6 +1,6 @@
 # Game domain
 
-Status: grilling (round 7)
+Status: grilling (round 8)
 Updated: 2026-10-16
 Scope: theme, core entities, build & evolution, run structure, meta-progression.
 Base: `concept.md` (genre, camera, art, platforms are decided there).
@@ -18,6 +18,7 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
 - Content is split into storylines. Each storyline has its own levels.
 - A level is passed when the player does something during the run (level objective).
 - Level objectives come from a small set: kill a boss, destroy spawn portals, find relics, protect an NPC, survive N loops. Start with 2-3 types (boss, portals, relics).
+- Objectives run inside the loop; the loop never pauses. Each objective type has its own timing (e.g. portals and relics exist from the start, the boss arrives after loop N). Completing the objective ends the level with a short victory moment.
 - Storylines unlock items and heroes.
 - Every level also has an infinite mode.
 - Each closed storyline opens one infinite-only level.
@@ -32,6 +33,14 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
   5. Shop: 10 items, paid with credits earned during the run
 - Durations and counts are placeholders for tuning. Shop size: compare 10 vs 6 in the prototype.
 - Target: a run lasts about 30 min (about 6 loops). Difficulty must keep rising per loop.
+- Horde stage: higher density of basic mobs plus horde-only enemy types (small, fast, weak swarmers).
+- Map: endless ground in every direction. Objectives (portals, relics, NPCs) spawn near the player. Level identity comes from ground, props, enemy set, objective and lore, not layout.
+  - Implication: off-screen indicators are needed for objectives (see `concept.md` orientation aids).
+
+### Enemies
+- Starting behaviors (first storyline names): walker (zombie), runner (ghoul), brute (abomination), ranged (spitter), exploder (bloater). Plus horde-only swarmers.
+- Behaviors must be extensible: new enemy types with new mechanics get added later without rework.
+- Void vs tougher enemies: kills basic and horde mobs; elites and bosses take % max HP damage instead (placeholder: 30% elites, 10% bosses).
 
 ### Heroes
 - Heroes come from the storyline worlds. Closing a storyline unlocks a hero from that world (e.g. a plague doctor from the undead town).
@@ -76,7 +85,7 @@ Open decisions. `needs:` = decided first.
 
 ### Core entities
 - E1 Heroes: how they differ besides the skill pool (stats, unique passive)
-- E2 Enemy roster: tiers (basic, horde, elite, boss), behavior types
+- E2 Elites: what they are, where they come from
 - E3 Pickups: XP, credits, health, magnets, others
 - E4 Map NPCs: role (lore only, side tasks, trade)
 
@@ -86,13 +95,9 @@ Skill system closed by the user (2026-10-16). Left for when real skills are desi
 - B5 Aimed vs automatic split: which skills use camera aim
 
 ### Run structure
-- R2 Map per level: size, bounds, layout
-- R4 Bosses and elites: where they appear in the loop. needs: E2, R8
+- R4 Bosses: when they appear (objective levels, infinite mode)
 - R5 Credits: sources, carry over between runs or not. needs: M1
-- R7 Loop scaling: what changes each loop (enemy HP, count, new types). needs: E2
-- R8 How objectives fit the loop: when they show up, does the loop keep running
-- R9 Horde stage: what makes it different from basic mob stages
-- R10 Void vs elites and bosses. needs: E2
+- R7 Loop scaling: what changes each loop (enemy HP, count, new types)
 - B10 Pick rules: reroll, banish, skip in chest and shop. needs: R5
 
 ### Meta-progression
