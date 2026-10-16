@@ -9,7 +9,7 @@ Inputs (from `concept.md`): 3D survivors-like, hundreds of enemies, heavy partic
 - **Engine: Godot 4.7 with C#** (recommended). Unity 6 is the fallback if the horde stress test fails.
 - **Min spec: raise it to 8 GB RAM + 2 GB VRAM** (GTX 750 Ti / GTX 1050 / Radeon Vega 8 class, about Steam Deck level). Keep a "very low" preset that tries to run on 4 GB / 1 GB, but don't promise it on the store page.
 - With 4 GB / 1 GB, the limit is **GPU speed**, not memory size. The thing that breaks first is the concept's main feature: heavy transparent VFX.
-- **Measured 2026-10-16 (§7):** on a Vega 8 (tier B stand-in), the low preset holds 3000 (Forward+) / 4250 (Mobile) enemies at 60 fps. Design budget: ~1500 visible enemies on low.
+- **Measured 2026-10-16 (§7):** on a Vega 8 (tier B stand-in), the low preset holds 3000 (Forward+) / 4250 (Mobile) enemies in the world at 60 fps. The screen itself shows at most ~1000–1200 at this camera distance. Design budget on low: a full screen of enemies + ~1500 total in the world.
 
 ## 2. What hardware "4 GB RAM + 1 GB VRAM" really means
 VRAM size does not tell speed. Real machines with 1 GB VRAM in 2026 are old:
@@ -130,7 +130,8 @@ These replace the §3 estimates where they overlap. The stress test is in `featu
 - Godot 4.7.2 .NET **release export**, Direct3D 12, 1920×1080 exclusive fullscreen, vsync off.
 - GPU: **Radeon Vega 8 iGPU** in the dev laptop's Ryzen 7 5800H (~2 TFLOPS, shared DDR4 ~51 GB/s). That's a bit above Steam Deck compute with less bandwidth, and above a GTX 750 Ti. CPU work runs on the 5800H. Laptop on AC, performance mode.
 - **Pass** = 95% of frames ≤ 16.7 ms (60 fps), measured for 3 s after 1.5 s warmup. A ramp stops after 2 failing steps in a row.
-- Enemies: placeholder monster, GPU-animated (baked vertex animation), one instanced draw. Spawned around the player on screen, then they crowd in. Live projectiles = half the enemy count, plus hit/death bursts.
+- Enemies: placeholder monster, GPU-animated (baked vertex animation), one instanced draw. Spawned around the player, then they crowd in. Live projectiles = half the enemy count, plus hit/death bursts.
+- **Counts are enemies in the world, not on screen.** The camera (22 m, 55° tilt, 45° FOV) sees ~860 m² of ground, which fits ~1000–1200 enemies at their 0.9 m spacing. Higher counts fill the screen and extend past it. Off-screen enemies still cost simulation and vertex work, because the test draws the whole horde without culling.
 - Presets (`game/data/stress.json`):
   - **very_low**: 60% resolution, 280-triangle enemies, no shadows.
   - **low**: 75% resolution, 760 triangles, sun shadows on props only, FXAA, glow, 4 lights, 400 aura particles.
@@ -147,7 +148,9 @@ These replace the §3 estimates where they overlap. The stress test is in `featu
 | GPU particles, ~0.6 m soft additive (500 enemies, low) | 20 000 | 56 000 |
 | Enemies, low, **Vulkan** instead of D3D12 | 1000 | – |
 
-RTX 3070 Laptop, high preset: **Forward+ 4250** enemies (34 M triangles per frame), **Mobile 6750**. Mobile skips TAA and SSAO, which the high preset asks for on Forward+, so part of that gap is those effects. Either way, Mobile doesn't cap fast GPUs.
+RTX 3070 Laptop, Mobile unless noted:
+- **High** preset: **Forward+ 4250** enemies (34 M triangles per frame), **Mobile 6750**. Mobile skips TAA and SSAO, which the high preset asks for on Forward+, so part of that gap is those effects. Either way, Mobile doesn't cap fast GPUs.
+- **very_low** preset: **24 000 enemies + 12 000 projectiles**. The GPU took only 3.2 ms; the limit was the **CPU**: single-threaded game logic took 10 ms at 24 000 (~0.4 µs per enemy). Multi-threading that loop is the lever if a design ever needs more.
 
 Other numbers:
 - **Game logic (CPU)**: 1.3 ms for 3000 enemies + 1500 projectiles; 4.2 ms at 10 000. Single thread on the 5800H. Not the limit.
@@ -155,7 +158,7 @@ Other numbers:
 - **Memory**: process working set 430–630 MB, video memory 130–210 MB. Far below 8 GB / 2 GB, and even below 4 GB / 1 GB.
 
 ### What this means
-1. **Min-spec target is reachable with a big margin.** On the low preset the Vega 8 holds 3000–4250 enemies with projectiles and VFX at 60 fps. A real GTX 750 Ti / GTX 1050 is slower, and real art, gameplay and UI cost more. Plan **~1500 visible enemies on low** as the design budget (about 50% headroom).
+1. **Min-spec target is reachable with a big margin.** On the low preset the Vega 8 holds 3000–4250 enemies in the world with projectiles and VFX at 60 fps, so a fully packed screen (~1000–1200) fits easily. A real GTX 750 Ti / GTX 1050 is slower, and real art, gameplay and UI cost more. Design budget on low: **a full screen of enemies, ~1500 total in the world** (about 50% headroom).
 2. **Enemy shadows are the most expensive setting.** Medium (enemies cast shadows, native 1080p) drops to 250–500 enemies, about 3× the per-enemy cost of low. Keep real-time enemy shadows off up to medium; use fake blob shadows instead.
 3. **The Mobile renderer is faster on this GPU in every test**: +40% enemies, +40% overdraw, ~2.8× particles. It lacks Forward+ extras (SSAO, SSR, SDFGI, volumetric fog, TAA) and lights only 8 omni lights per mesh. The concept's stylized look doesn't need those. → **Decided (user, 2026-10-16): Mobile is the default renderer.** Presets fall back on Mobile: TAA → FXAA, SSAO off. Switching back is one line in `project.godot`.
 4. **Transparent overdraw is not the wall I estimated** (§3 said 10–15 layers on tier B; measured 43+). Particle *count* costs more than fill: 20 000 (Forward+) vs 56 000 (Mobile).

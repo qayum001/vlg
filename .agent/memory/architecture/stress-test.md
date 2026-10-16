@@ -19,6 +19,8 @@ Then `EnemyRenderer`/`ProjectileRenderer` write the whole MultiMesh buffer (`Ren
 - Enemy mesh is flat-shaded triangle soup so `VERTEX_ID` indexes the VAT texture (RGBA16F, rows = frames, then normals). LOD via index buffers would keep this valid.
 - MultiMesh buffer must be exactly instance_count × stride, so capacity rounds to 512 and the whole buffer uploads each frame.
 - Overdraw layers = camera-attached full-screen additive quads; 1 layer = every pixel blended once.
+- Whole horde is one MultiMesh, no per-instance culling: off-screen enemies still cost vertex + sim. Screen fits ~1000–1200 enemies at the test camera.
+- Bench ramp can be overridden per run: `--ramp-start/--ramp-step/--ramp-max` (LaunchOptions.ApplyRamp), `tools/bench.ps1 -RampStart/-RampStep/-RampMax`. Capacities in stress.json: 50 000 enemies, 25 000 projectiles, grid 256².
 - Bench frame time = wall clock between `_Process` calls (vsync off). GPU/CPU render time from `RenderingServer.ViewportGetMeasuredRenderTime*` (previous frame).
 - Godot `.uid` files next to scripts/shaders are committed.
 

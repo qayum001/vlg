@@ -116,7 +116,7 @@ public partial class StressTest : Node3D
         if (_options.Bench is { } mode)
         {
             if (_bench == null && !_benchFinished && _frame >= BenchStartFrame) StartBench(mode);
-            int value = _bench?.Ramp.Value ?? BenchLoad.RampFor(mode, _config.Bench).Start;
+            int value = _bench?.Ramp.Value ?? _options.ApplyRamp(BenchLoad.RampFor(mode, _config.Bench)).Start;
             load = BenchLoad.For(mode, value, _config.Bench, _preset);
             _playerPos = BenchPath.PlayerAt(_time);
             _camera.Yaw = BenchPath.YawAt(_time);
@@ -214,7 +214,8 @@ public partial class StressTest : Node3D
     {
         string path = _options.OutPath
             ?? ProjectSettings.GlobalizePath($"user://bench/{mode}_{_presetName}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
-        _bench = new BenchRun(mode, _config.Bench, path, BenchMeta(mode));
+        var ramp = _options.ApplyRamp(BenchLoad.RampFor(mode, _config.Bench));
+        _bench = new BenchRun(mode, ramp, _config.Bench, path, BenchMeta(mode, ramp));
         GD.Print($"bench {mode} preset {_presetName} on {Telemetry.Adapter} [{Telemetry.Renderer}] -> {path}");
     }
 
@@ -247,7 +248,7 @@ public partial class StressTest : Node3D
         GetTree().Quit();
     }
 
-    IEnumerable<KeyValuePair<string, string>> BenchMeta(BenchMode mode)
+    IEnumerable<KeyValuePair<string, string>> BenchMeta(BenchMode mode, RampSettings ramp)
     {
         var size = GetViewport().GetVisibleRect().Size;
         var inv = CultureInfo.InvariantCulture;
@@ -266,6 +267,7 @@ public partial class StressTest : Node3D
         yield return M("internal", $"{size.X * _preset.RenderScale:F0}x{size.Y * _preset.RenderScale:F0}");
         yield return M("enemy_tris", _enemies.TrianglesPerEnemy.ToString(inv));
         yield return M("threshold_ms", _config.Bench.ThresholdMs.ToString(inv));
+        yield return M("ramp", $"start {ramp.Start} step {ramp.Step} max {ramp.Max}");
         yield return M("seed", _options.Seed.ToString(inv));
     }
 

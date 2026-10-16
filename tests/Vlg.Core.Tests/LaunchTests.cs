@@ -33,7 +33,21 @@ public class LaunchTests
         Assert.Equal(42u, o.Seed);
     }
 
+    [Fact]
+    public void Ramp_overrides_replace_only_given_values()
+    {
+        var data = new Vlg.Core.Config.RampSettings { Start = 250, Step = 250, Max = 10000 };
+
+        Assert.Equal(data, LaunchOptions.Parse(Array.Empty<string>()).ApplyRamp(data));
+        var o = LaunchOptions.Parse(new[] { "--ramp-step", "2000", "--ramp-max", "50000" });
+        Assert.Equal(new Vlg.Core.Config.RampSettings { Start = 250, Step = 2000, Max = 50000 }, o.ApplyRamp(data));
+        Assert.Equal(0, LaunchOptions.Parse(new[] { "--ramp-start", "0" }).ApplyRamp(data).Start);
+    }
+
     [Theory]
+    [InlineData("--ramp-step", "0")]
+    [InlineData("--ramp-max", "-1")]
+    [InlineData("--ramp-start", "1.5")]
     [InlineData("--benchh", "enemies")]
     [InlineData("--bench", "bosses")]
     [InlineData("--bench", "1")]

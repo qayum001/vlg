@@ -12,7 +12,11 @@ param(
     [string[]]$Renderers = @("forward_plus", "mobile"),
     [string[]]$Presets = @("low"),
     [string]$Driver = "d3d12",
-    [string]$OutDir = ""
+    [string]$OutDir = "",
+    # Ramp overrides; defaults keep game/data/stress.json values.
+    [int]$RampStart = -1,  # -1 = data value
+    [int]$RampStep = 0,
+    [int]$RampMax = 0
 )
 $ErrorActionPreference = "Stop"
 # "powershell -File" passes "a,b" as one string; split so both call styles work.
@@ -30,6 +34,9 @@ foreach ($preset in $Presets) {
             $engineArgs = @("--rendering-method", $renderer, "--rendering-driver", $Driver)
             if ($GpuIndex -ge 0) { $engineArgs += @("--gpu-index", "$GpuIndex") }
             $gameArgs = @("--", "--bench", $mode, "--preset", $preset, "--out", $csv)
+            if ($RampStart -ge 0) { $gameArgs += @("--ramp-start", "$RampStart") }
+            if ($RampStep -gt 0) { $gameArgs += @("--ramp-step", "$RampStep") }
+            if ($RampMax -gt 0) { $gameArgs += @("--ramp-max", "$RampMax") }
             Write-Host "== $mode / $preset / $renderer / $Driver"
             & $Exe @engineArgs @gameArgs | Select-String -Pattern "^(step|bench)" | ForEach-Object { Write-Host "   $_" }
             if ($LASTEXITCODE -ne 0) { Write-Warning "exit code $LASTEXITCODE" }

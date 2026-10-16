@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using Vlg.Core.Config;
 
 namespace Vlg.Core.Bench;
 
@@ -17,10 +18,14 @@ public sealed record LaunchOptions
     public float? ExitAfterSec { get; init; }
     public bool Windowed { get; init; }
     public uint Seed { get; init; } = 1;
+    /// <summary>Overrides of the data ramp for the bench mode (e.g. fast GPUs past the default max).</summary>
+    public int? RampStart { get; init; }
+    public int? RampStep { get; init; }
+    public int? RampMax { get; init; }
 
     public const string Usage =
         "--bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
-        "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>";
+        "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>";
 
     public static LaunchOptions Parse(string[] args)
     {
@@ -39,11 +44,26 @@ public sealed record LaunchOptions
                 "--exit-after" => o with { ExitAfterSec = ParseFloat(a, Next()) },
                 "--windowed" => o with { Windowed = true },
                 "--seed" => o with { Seed = uint.Parse(Next(), CultureInfo.InvariantCulture) },
+                "--ramp-start" => o with { RampStart = ParseInt(a, Next(), 0) },
+                "--ramp-step" => o with { RampStep = ParseInt(a, Next(), 1) },
+                "--ramp-max" => o with { RampMax = ParseInt(a, Next(), 0) },
                 _ => throw new ArgumentException($"unknown arg '{a}'. Usage: {Usage}"),
             };
         }
         return o;
     }
+
+    public RampSettings ApplyRamp(RampSettings ramp) => ramp with
+    {
+        Start = RampStart ?? ramp.Start,
+        Step = RampStep ?? ramp.Step,
+        Max = RampMax ?? ramp.Max,
+    };
+
+    static int ParseInt(string arg, string s, int min) =>
+        int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) && v >= min
+            ? v
+            : throw new ArgumentException($"{arg} needs an integer >= {min}, got '{s}'");
 
     static BenchMode ParseMode(string s) =>
         Enum.TryParse<BenchMode>(s, ignoreCase: true, out var m) && !int.TryParse(s, out _)
