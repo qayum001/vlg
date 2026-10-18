@@ -85,8 +85,9 @@ public partial class RunGame : Node3D
         _heroDef = HeroDef.Parse(Godot.FileAccess.GetFileAsString(HeroPath), _config);
         _preset = StressConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/stress.json")).GetPreset(_options.Preset);
         _workers = new WorkerPool(_options.Threads ?? _config.Sim.WorkerThreads, _config.Sim.ParallelMinCount);
-        _sim = new RunSim(_config, _heroDef, _options.Seed, _workers, _options.Loadout);
+        _sim = new RunSim(_config, _heroDef, _options.Seed, _workers, _options.Loadout, _options.Ultimate);
         if (_options.SkillLevel is { } level) _sim.Progress.DevSetAllSkills(level);
+        if (_options.UltimateLevel is { } ultLevel) _sim.Progress.DevSetUltimate(ultLevel);
         foreach (int pick in _options.Branches ?? Array.Empty<int>())
         {
             if (!_sim.Progress.PendingBranch) throw new ArgumentException("--branch: more picks than queued branch choices");
@@ -172,7 +173,7 @@ public partial class RunGame : Node3D
         _gems.Update(_sim.Gems, _time);
         _skillVisuals.Update(_sim, stepped ? dt : 0f);
         _audio.Update(_sim, stepped);
-        _overlay.Update(beat, stepped, dt);
+        _overlay.Update(beat, _sim.Ultimate, stepped, dt);
         _hud.UpdateBeat(beat);
         _camera.Update(dt, hero);
         _arena.Follow(hero);
@@ -196,9 +197,10 @@ public partial class RunGame : Node3D
             _camera.Yaw -= motion.Relative.X * MouseYawPerPixel;
             return;
         }
-        if (e is InputEventJoypadButton { Pressed: true, ButtonIndex: JoyButton.Start })
+        if (e is InputEventJoypadButton { Pressed: true } pad)
         {
-            TogglePauseMenu();
+            if (pad.ButtonIndex == JoyButton.Start) TogglePauseMenu();
+            else if (pad.ButtonIndex == JoyButton.Y) PressUltimate();
             return;
         }
         if (e is not InputEventKey { Pressed: true, Echo: false } key) return;
@@ -212,6 +214,8 @@ public partial class RunGame : Node3D
             case Key.M: _audio.Muted = !_audio.Muted; break;
             case Key.F2: _sim.DevSkipStage(); break;
             case Key.F3: _sim.DevGainLevel(); break;
+            case Key.F4: _sim.DevFillUltimate(); break;
+            case Key.Space: PressUltimate(); break;
             case Key.F11:
                 DisplayServer.WindowSetMode(DisplayServer.WindowGetMode() == DisplayServer.WindowMode.Windowed
                     ? DisplayServer.WindowMode.Fullscreen
@@ -221,6 +225,11 @@ public partial class RunGame : Node3D
                 SaveScreenshot(ProjectSettings.GlobalizePath($"user://screenshots/run_{DateTime.Now:yyyyMMdd_HHmmss}.png"));
                 break;
         }
+    }
+
+    void PressUltimate()
+    {
+        if (!_pauseMenu) _sim.PressUltimate();
     }
 
     NVec2 ReadMove(float dt)
@@ -332,6 +341,12 @@ public partial class RunGame : Node3D
     {
         if (o.Kind == LevelUpKind.Bonus)
             return string.Create(CultureInfo.InvariantCulture, $"+{_config.Leveling.MaxedBonusDamage * 100f:0.#}% damage to all skills");
+        if (o.Kind == LevelUpKind.Ultimate)
+        {
+            var u = _sim.Ultimate.Def;
+            string uhead = o.NewLevel == 1 ? $"Unlock ultimate: {u.Name}" : $"{u.Name} (ultimate)  {o.NewLevel - 1} → {o.NewLevel}";
+            return $"{uhead}\n      {UltimateText(u, o.NewLevel)}";
+        }
         var p = _sim.Progress;
         var def = _sim.Loadout[o.Slot];
         if (o.Kind == LevelUpKind.Branch)
@@ -344,6 +359,26 @@ public partial class RunGame : Node3D
         int point = Array.IndexOf(_config.Leveling.BranchLevels, o.NewLevel);
         string formNext = point >= 0 && def.OptionsAt(p.Path(o.Slot), point).Count > 0 ? "  ·  new form!" : "";
         return $"{head}{formNext}\n      {SkillText(form)}";
+    }
+
+    static string UltimateText(UltimateDef u, int level)
+    {
+        var s = u.At(level);
+        var inv = CultureInfo.InvariantCulture;
+        string charge = u.Charge switch
+        {
+            ChargeKind.Cooldown => string.Create(inv, $"every {s.Charge:0} s"),
+            ChargeKind.Kills => string.Create(inv, $"charged by {s.Charge:0} kills"),
+            _ => string.Create(inv, $"charged by {s.Charge:0} Drops"),
+        };
+        string what = u.Kind switch
+        {
+            UltimateKind.SubQuake => string.Create(inv, $"{s.Damage:0} dmg + {s.Stun:0.#} s stun on screen") + (s.Tick > 0 ? string.Create(inv, $" · ground shakes {s.Duration / 4:0} bars") : ""),
+            UltimateKind.Encore => string.Create(inv, $"Drop on for {s.Duration / 4:0} bars · skills +{s.Speed * 100f:0}% faster") + (s.Heal > 0 ? string.Create(inv, $" · +{s.Heal:0} HP per kill") : ""),
+            UltimateKind.BassCannon => string.Create(inv, $"{s.Width:0} m beam for {s.Duration / 4:0} bars, kills what it touches") + (s.Tick > 0 ? " · leaves a burning line" : ""),
+            _ => u.Kind.ToString(),
+        };
+        return $"{what} · {charge} · Space / Y";
     }
 
     static string SkillText(SkillForm f)

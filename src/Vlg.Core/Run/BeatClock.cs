@@ -45,7 +45,10 @@ public sealed class BeatClock
     /// <summary>[0, 1) position inside the current beat.</summary>
     public float BeatPhase => (float)(Time / BeatSec - Math.Floor(Time / BeatSec));
 
-    public bool InDrop => _s.DropBars > 0 && Beat >= 0 && BeatInCycle >= DropStartBeat;
+    /// <summary>Keeps the Drop on regardless of the cycle (Encore). Doesn't create DropStarted events.</summary>
+    public bool ForceDrop { get; set; }
+
+    public bool InDrop => ForceDrop || (_s.DropBars > 0 && Beat >= 0 && BeatInCycle >= DropStartBeat);
     public bool InBuild => _s.BuildBars > 0 && Beat >= 0 && !InDrop && BeatInCycle >= BuildStartBeat;
 
     /// <summary>[0, 1] through the build-up, 0 outside it.</summary>

@@ -13,4 +13,6 @@ public sealed record LevelingSettings
     public required float MaxedBonusDamage { get; init; }
     /// <summary>Skill levels that open a branch pick, ascending (domain.md: 5 and 10).</summary>
     public required int[] BranchLevels { get; init; }
+    /// <summary>Hero levels where the ultimate unlocks and upgrades, ascending (domain.md: 10, 20, 30).</summary>
+    public required int[] UltimateLevels { get; init; }
 }

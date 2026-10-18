@@ -80,6 +80,9 @@ public sealed record RunConfig
         for (int i = 0; i < l.BranchLevels.Length; i++)
             Require(l.BranchLevels[i] >= 2 && l.BranchLevels[i] <= l.MaxSkillLevel && (i == 0 || l.BranchLevels[i] > l.BranchLevels[i - 1]),
                 "leveling.branchLevels must ascend within 2..maxSkillLevel");
+        for (int i = 0; i < l.UltimateLevels.Length; i++)
+            Require(l.UltimateLevels[i] >= 2 && (i == 0 || l.UltimateLevels[i] > l.UltimateLevels[i - 1]),
+                "leveling.ultimateLevels must ascend from 2");
 
         var ls = LoopScaling;
         Require(ls.HpPerLoop >= 0 && ls.DamagePerLoop >= 0 && ls.SpawnPerLoop >= 0, "loopScaling values must be >= 0");

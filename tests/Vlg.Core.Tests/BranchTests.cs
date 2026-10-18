@@ -34,7 +34,7 @@ public class BranchTests
 
     static LevelingSettings Leveling(int divisor = 1) => new()
     {
-        XpBase = 5, XpPerLevel = 0, LevelDivisor = divisor, MaxSkillLevel = 10, MaxedBonusDamage = 0.02f, BranchLevels = Levels,
+        XpBase = 5, XpPerLevel = 0, LevelDivisor = divisor, MaxSkillLevel = 10, MaxedBonusDamage = 0.02f, BranchLevels = Levels, UltimateLevels = new[] { 10, 20, 30 },
     };
 
     [Fact]

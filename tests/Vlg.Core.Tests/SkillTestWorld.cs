@@ -52,7 +52,7 @@ sealed class SkillTestWorld
         Skills = new SkillSystem(defs, Ctx, Clock, 1, 7);
         Progress = new HeroProgress(new LevelingSettings
         {
-            XpBase = 5, XpPerLevel = 0, LevelDivisor = divisor, MaxSkillLevel = 10, MaxedBonusDamage = 0.02f, BranchLevels = new[] { 5, 10 },
+            XpBase = 5, XpPerLevel = 0, LevelDivisor = divisor, MaxSkillLevel = 10, MaxedBonusDamage = 0.02f, BranchLevels = new[] { 5, 10 }, UltimateLevels = new[] { 10, 20, 30 },
         }, defs.Length, defs);
     }
 

@@ -33,4 +33,10 @@ public enum Stat
     Period,
     /// <summary>Sweep arc, degrees.</summary>
     Arc,
+    /// <summary>Damage per beat of a lingering zone (ultimates).</summary>
+    Tick,
+    /// <summary>HP per kill (ultimates).</summary>
+    Heal,
+    /// <summary>Ultimate charge needed: seconds, kills or Drops.</summary>
+    Charge,
 }

@@ -16,6 +16,20 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+### Lowkey ultimates
+Added: 2026-10-18 | Confirmed: -
+What: Lowkey's 3 ultimates from `design/heroes/lowkey.md`. Each run has 1 of them (default Sub Quake, `--ultimate` picks another). At hero level 10 a level-up card offers "Unlock ultimate", and levels 20 and 30 offer upgrades. You fire it with Space (gamepad Y) once it's charged. Each one charges differently:
+- **Sub Quake:** 60 s cooldown. One 808 hit over the whole screen that damages and stuns. At level 3 the ground keeps shaking.
+- **Encore:** charged by 1500 kills. The Drop stays on and skills fire 50% faster. At level 3 you heal on kills.
+- **Bass Cannon:** charged by 3 Drops (2 from level 2). A 1-bar charge-up, then a giant beam where the camera looks, killing everything it touches. At level 3 it leaves a burning line.
+How to test:
+1. Normal play: the bottom-right bar says "Sub Quake: unlocks at hero level 10". Use F3 up to level 10: one card is "Unlock ultimate: Sub Quake".
+2. Quick: `-- --ultimate-level 1` (Sub Quake), then F4 fills the charge, and the bar turns pink with "READY". Press Space: white flash, boom, a huge ring, and walkers on screen get hit and freeze for 2 s. The bar counts down 60 s.
+3. `-- --ultimate encore --ultimate-level 3`, F4, Space: the HUD shows "ENCORE!", the Drop stays on (pink pulse, bigger skills), and skills fire faster for 12 bars.
+4. `-- --ultimate bass_cannon --ultimate-level 3`, F4, Space: a thin line shows where the camera looks for 1 bar, then a wide beam kills every walker it touches. Turn the camera to sweep it. Orange burning circles stay along the line.
+5. Without F4: Bass Cannon fills by 1 per Drop (the HUD counts "x / 3 Drops"). Encore counts kills.
+Expected: no errors in the console. Space does nothing while locked, charging or already running. The ultimate never fires during a card or the pause menu. Upgrade cards appear only at hero levels 10, 20 and 30.
+
 ### Lowkey skill forms (branches at skill level 5 and 10)
 Added: 2026-10-18 | Confirmed: -
 What: every Lowkey skill now changes form. At skill level 5 you pick 1 of 3 forms, and at level 10 1 of 2 follow-ups of that form: 54 forms in total, as in `design/heroes/lowkey.md`. Some forms deepen the skill (more notes, pierce, bounces, extra rings). Others change what it is: falling cowbells, ground cracks, a flying boombox, a shield, a sweeping beam, records thrown like frisbees. The HUD and the level-up cards show the form name ("Cowbell · Ricochet · Pinball").

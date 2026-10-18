@@ -24,7 +24,7 @@ namespace Vlg.Core.Config;
 [JsonConverter(typeof(SkillStatsJson))]
 public readonly struct SkillStats
 {
-    public const int Size = (int)Stat.Arc + 1;
+    public const int Size = (int)Stat.Charge + 1;
 
     readonly float[]? _v;
 
@@ -53,6 +53,9 @@ public readonly struct SkillStats
     public float BurnSec { get => this[Stat.BurnSec]; init => _v = Set(_v, Stat.BurnSec, value); }
     public float Period { get => this[Stat.Period]; init => _v = Set(_v, Stat.Period, value); }
     public float Arc { get => this[Stat.Arc]; init => _v = Set(_v, Stat.Arc, value); }
+    public float Tick { get => this[Stat.Tick]; init => _v = Set(_v, Stat.Tick, value); }
+    public float Heal { get => this[Stat.Heal]; init => _v = Set(_v, Stat.Heal, value); }
+    public float Charge { get => this[Stat.Charge]; init => _v = Set(_v, Stat.Charge, value); }
 
     /// <summary>Count floored; fractional growth (0.5 per level) adds one every other level.</summary>
     public int Amount => Floor(Count);

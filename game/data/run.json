@@ -45,7 +45,9 @@
     "maxSkillLevel": 10,
     "maxedBonusDamage": 0.02,
     // Skill levels where the player picks a branch (domain.md).
-    "branchLevels": [5, 10]
+    "branchLevels": [5, 10],
+    // Hero levels where the ultimate unlocks and upgrades (domain.md).
+    "ultimateLevels": [10, 20, 30]
   },
   "loopScaling": { "hpPerLoop": 0.3, "damagePerLoop": 0.2, "spawnPerLoop": 0.25 },
   // One loop. Chest and Shop wait for the player (placeholder screens until items exist).

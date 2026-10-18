@@ -10,7 +10,7 @@ namespace Vlg.Game;
 /// <summary>Run HUD: HP, XP + level, loop/stage/timer, skill levels, beat + Drop meter, counters, controls hint.</summary>
 public sealed class RunHud
 {
-    const string Hint = "WASD / left stick move · mouse / right stick camera (aims Slap) · Esc / Start pause · M mute beat · F1 HUD · F2 skip stage · F3 +1 level";
+    const string Hint = "WASD / left stick move · mouse / right stick camera (aims Slap) · Space / Y ultimate · Esc / Start pause · M mute beat · F1 HUD · F2 skip stage · F3 +1 level · F4 charge ultimate";
 
     static readonly Color BeatOff = new(1f, 1f, 1f, 0.2f);
     static readonly Color BeatOn = new(0.3f, 0.95f, 1f);
@@ -28,6 +28,9 @@ public sealed class RunHud
     readonly ProgressBar _cycle;
     readonly StyleBoxFlat _cycleFill;
     readonly Label _dropText;
+    readonly ProgressBar _ult;
+    readonly Label _ultText;
+    readonly StyleBoxFlat _ultFill;
     readonly StringBuilder _sb = new();
 
     public bool Visible
@@ -78,6 +81,26 @@ public sealed class RunHud
         _skills.OffsetBottom = -44;
         _skills.VerticalAlignment = VerticalAlignment.Bottom;
         _skills.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+
+        // Ultimate: bottom right, above the XP bar.
+        _ultFill = new StyleBoxFlat { BgColor = new Color(1f, 0.85f, 0.3f) };
+        _ult = new ProgressBar { ShowPercentage = false, MaxValue = 1, MouseFilter = Control.MouseFilterEnum.Ignore };
+        _ult.AddThemeStyleboxOverride("fill", _ultFill);
+        _ult.AddThemeStyleboxOverride("background", new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0.55f) });
+        _ult.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomRight);
+        _ult.OffsetLeft = -360;
+        _ult.OffsetRight = -16;
+        _ult.OffsetTop = -136;
+        _ult.OffsetBottom = -108;
+        _root.AddChild(_ult);
+        _ultText = new Label
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            LabelSettings = new LabelSettings { FontSize = 15, OutlineSize = 4, OutlineColor = Colors.Black },
+        };
+        _ultText.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        _ult.AddChild(_ultText);
 
         // Beat row under the stage line: 4 beat squares, cycle bar toward the next Drop, status text.
         var beatRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -148,6 +171,31 @@ public sealed class RunHud
         _sb.Append("skill cap ").Append(p.SkillCap.ToString(inv));
         if (p.BonusCount > 0) _sb.Append("   bonus +").Append(((p.DamageMultiplier - 1f) * 100f).ToString("0.#", inv)).Append("% damage");
         _skills.Text = _sb.ToString();
+
+        var u = sim.Ultimate;
+        if (u.Level == 0)
+        {
+            _ult.Value = 0;
+            _ultText.Text = $"{u.Def.Name}: unlocks at hero level {sim.Config.Leveling.UltimateLevels[0]}";
+        }
+        else
+        {
+            _ult.Value = u.Phase != UltimatePhase.Idle ? 1 : u.Charge / u.ChargeNeeded;
+            _ultFill.BgColor = u.Ready ? new Color(1f, 0.3f, 0.75f) : new Color(1f, 0.85f, 0.3f);
+            string state = u.Phase switch
+            {
+                UltimatePhase.Encore => "ENCORE!",
+                UltimatePhase.Windup => "charging...",
+                UltimatePhase.Firing => "FIRE!",
+                _ => u.Ready ? "READY · Space / Y" : u.Def.Charge switch
+                {
+                    ChargeKind.Cooldown => string.Create(inv, $"{u.ChargeNeeded - u.Charge:0} s"),
+                    ChargeKind.Kills => string.Create(inv, $"{u.Charge:0} / {u.ChargeNeeded:0} kills"),
+                    _ => string.Create(inv, $"{u.Charge:0} / {u.ChargeNeeded:0} Drops"),
+                },
+            };
+            _ultText.Text = string.Create(inv, $"{u.Def.Name} {u.Level} · {state}");
+        }
 
         _stats.Text = string.Create(inv,
             $"time {(int)sim.Time / 60}:{(int)sim.Time % 60:D2} · kills {sim.Kills} · enemies {sim.Enemies.Count} · {fps:F0} fps");

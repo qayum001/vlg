@@ -7,12 +7,14 @@ namespace Vlg.Core.Run;
 /// <summary>
 /// Hero level, XP, loadout skill levels and branch choices. Run start: hero level 1, slot 0 at level 1 (free).
 /// Each hero level-up is one pending pick: unlock or raise one skill (MOBA style). Raising a skill to a
-/// branch level queues a branch pick for it, answered before the next level-up pick.
+/// branch level queues a branch pick for it, answered before the next level-up pick. The ultimate is one more
+/// level-up option once the hero level reaches its next entry in leveling.ultimateLevels.
 /// </summary>
 public sealed class HeroProgress
 {
     readonly LevelingSettings _s;
     readonly SkillDef[]? _defs;
+    readonly bool _hasUltimate;
     readonly int[] _skillLevels;
     readonly int[][] _paths;
     readonly List<LevelUpOption> _options = new();
@@ -26,12 +28,16 @@ public sealed class HeroProgress
     public int BonusCount { get; private set; }
     /// <summary>Bumps on every skill level or branch change (SkillSystem re-resolves forms).</summary>
     public int Version { get; private set; }
+    /// <summary>0 = locked.</summary>
+    public int UltimateLevel { get; private set; }
 
     /// <param name="defs">Loadout skills for branch picks; null = skills without branches (tests).</param>
-    public HeroProgress(LevelingSettings settings, int skillCount, SkillDef[]? defs = null)
+    /// <param name="hasUltimate">Offer ultimate unlock/upgrade picks.</param>
+    public HeroProgress(LevelingSettings settings, int skillCount, SkillDef[]? defs = null, bool hasUltimate = false)
     {
         _s = settings;
         _defs = defs;
+        _hasUltimate = hasUltimate;
         _skillLevels = new int[skillCount];
         _skillLevels[0] = 1;
         _paths = new int[skillCount][];
@@ -76,6 +82,17 @@ public sealed class HeroProgress
         PendingLevelUps++;
     }
 
+    /// <summary>The ultimate can be unlocked or raised at the current hero level.</summary>
+    public bool UltimateOpen => _hasUltimate && UltimateLevel < _s.UltimateLevels.Length && Level >= _s.UltimateLevels[UltimateLevel];
+
+    /// <summary>Dev shortcut: ultimate at <paramref name="level"/>, hero level ignored.</summary>
+    public void DevSetUltimate(int level)
+    {
+        if (!_hasUltimate || level < 0 || level > _s.UltimateLevels.Length)
+            throw new ArgumentOutOfRangeException(nameof(level), $"0..{_s.UltimateLevels.Length} with an ultimate, got {level}");
+        UltimateLevel = level;
+    }
+
     /// <summary>Dev shortcut: every skill at <paramref name="level"/>, cap ignored; queues the branch picks it passed.</summary>
     public void DevSetAllSkills(int level)
     {
@@ -114,6 +131,7 @@ public sealed class HeroProgress
             if (level == 0) _options.Add(new LevelUpOption(LevelUpKind.Unlock, slot, 1));
             else if (level < cap) _options.Add(new LevelUpOption(LevelUpKind.Upgrade, slot, level + 1));
         }
+        if (UltimateOpen) _options.Add(new LevelUpOption(LevelUpKind.Ultimate, -1, UltimateLevel + 1));
         if (_options.Count == 0) _options.Add(new LevelUpOption(LevelUpKind.Bonus, -1, 0));
         return _options;
     }
@@ -139,6 +157,10 @@ public sealed class HeroProgress
                 break;
             case LevelUpKind.Bonus:
                 BonusCount++;
+                PendingLevelUps--;
+                break;
+            case LevelUpKind.Ultimate:
+                UltimateLevel = o.NewLevel;
                 PendingLevelUps--;
                 break;
             default:

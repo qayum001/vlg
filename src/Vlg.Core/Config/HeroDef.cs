@@ -21,6 +21,10 @@ public sealed record HeroDef
     public required SkillDef[] Skills { get; init; }
     /// <summary>Skill ids in loadout order; slot 0 starts at level 1.</summary>
     public required string[] Loadout { get; init; }
+    /// <summary>Ultimate pool (domain.md: 3 per hero).</summary>
+    public required UltimateDef[] Ultimates { get; init; }
+    /// <summary>Default ultimate id for the loadout.</summary>
+    public required string Ultimate { get; init; }
 
     public static HeroDef Parse(string json, RunConfig run)
     {
@@ -44,6 +48,14 @@ public sealed record HeroDef
                 ?? throw new FormatException($"hero '{Id}': loadout skill '{ids[i]}' not in the pool ({string.Join(", ", Array.ConvertAll(Skills, s => s.Id))})");
         }
         return result;
+    }
+
+    /// <summary>The ultimate by id; null = the default.</summary>
+    public UltimateDef UltimateById(string? id = null)
+    {
+        id ??= Ultimate;
+        return Array.Find(Ultimates, u => u.Id == id)
+            ?? throw new FormatException($"hero '{Id}': ultimate '{id}' not in the pool ({string.Join(", ", Array.ConvertAll(Ultimates, u => u.Id))})");
     }
 
     void Validate(RunConfig run)
@@ -72,6 +84,39 @@ public sealed record HeroDef
             ValidateTree(sk, path, 0, l.BranchLevels, l.MaxSkillLevel);
         }
         LoadoutSkills();
+
+        Require(Ultimates.Length > 0, "no ultimates");
+        var ultIds = new HashSet<string>();
+        foreach (var u in Ultimates) ValidateUltimate(u, l.UltimateLevels.Length, ultIds);
+        UltimateById();
+    }
+
+    static void ValidateUltimate(UltimateDef u, int levels, HashSet<string> ids)
+    {
+        string at = $"ultimate '{u.Id}'";
+        Require(ids.Add(u.Id), $"duplicate ultimate id '{u.Id}'");
+        Require(u.Levels.Length == levels, $"{at}: needs {levels} levels (leveling.ultimateLevels)");
+        for (int i = 0; i < u.Levels.Length; i++)
+        {
+            var st = u.Levels[i];
+            string lv = $"{at} level {i + 1}";
+            Require(st.Charge > 0 && st.Tick >= 0 && st.Heal >= 0, $"{lv}: charge > 0, tick/heal >= 0");
+            if (st.Tick > 0) Require(st.Duration > 0, $"{lv}: tick needs duration > 0");
+            switch (u.Kind)
+            {
+                case UltimateKind.SubQuake:
+                    Require(st.Damage > 0 && st.Radius > 0 && st.Stun >= 0, $"{lv}: needs damage > 0, radius > 0, stun >= 0");
+                    break;
+                case UltimateKind.Encore:
+                    Require(st.Duration > 0 && st.Speed >= 0, $"{lv}: needs duration > 0, speed >= 0");
+                    break;
+                case UltimateKind.BassCannon:
+                    Require(st.Range > 0 && st.Width > 0 && st.Duration > 0, $"{lv}: needs range > 0, width > 0, duration > 0");
+                    break;
+                default:
+                    throw new FormatException($"{lv}: unknown kind {u.Kind}");
+            }
+        }
     }
 
     /// <summary>

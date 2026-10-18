@@ -32,13 +32,17 @@ public sealed record LaunchOptions
     public int? SkillLevel { get; init; }
     /// <summary>Dev: answers the queued branch picks at start, in order (option index, 0-based).</summary>
     public int[]? Branches { get; init; }
+    /// <summary>Ultimate id for the run; null = the hero's default.</summary>
+    public string? Ultimate { get; init; }
+    /// <summary>Dev: ultimate starts at this level (hero level ignored).</summary>
+    public int? UltimateLevel { get; init; }
 
     public bool WantsStressTest => Stress || Bench != null;
 
     public const string Usage =
         "--stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
         "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>  " +
-        "--loadout <id,id,...>  --skill-level <n>  --branch <i,i,...>";
+        "--loadout <id,id,...>  --skill-level <n>  --branch <i,i,...>  --ultimate <id>  --ultimate-level <n>";
 
     public static LaunchOptions Parse(string[] args)
     {
@@ -64,6 +68,8 @@ public sealed record LaunchOptions
                 "--threads" => o with { Threads = ParseInt(a, Next(), 0) },
                 "--loadout" => o with { Loadout = ParseList(a, Next()) },
                 "--skill-level" => o with { SkillLevel = ParseInt(a, Next(), 1) },
+                "--ultimate" => o with { Ultimate = Next() },
+                "--ultimate-level" => o with { UltimateLevel = ParseInt(a, Next(), 0) },
                 "--branch" => o with { Branches = Array.ConvertAll(ParseList(a, Next()), x => ParseInt(a, x, 0)) },
                 _ => throw new ArgumentException($"unknown arg '{a}'. Usage: {Usage}"),
             };

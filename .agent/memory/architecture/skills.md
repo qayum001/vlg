@@ -17,6 +17,11 @@ Purpose: hero-tied skills with branch forms (domain.md Build) and Lowkey's beat-
 - HeroDef validation walks every reachable form at its start level and max level.
 - Lowkey: 3 options at 5, 2 each at 10 (54 forms); all in lowkey.json, approved design in `design/heroes/lowkey.md`.
 
+## Ultimates
+- `HeroDef.Ultimates` (3) + default `ultimate`; `UltimateDef` (kind, charge kind, `levels` = SkillStats per ultimate level, `charge` stat = amount). `leveling.ultimateLevels` [10, 20, 30]: `HeroProgress` offers a `LevelUpKind.Ultimate` card at those hero levels (`hasUltimate`).
+- `UltimateSystem` (RunSim.Ultimate): charges while idle (seconds / `OnKills` / `DropStarted`); `RunSim.PressUltimate` queues the press, applied inside the next Step after the grid build (between steps the grid is stale). Sub Quake = instant screen hit (+ shake zone L3); Encore = `BeatClock.ForceDrop` + `SkillSystem.RateMultiplier` (+ heal per kill L3, applied by RunSim); Bass Cannon = 1 bar windup, then void-type beam along Aim (kills; elites later % HP), burn zones on beats L3.
+- Source `RunSim.UltimateSource` 21. Dev: `--ultimate`, `--ultimate-level`, F4 fill.
+
 ## Rules
 - Beat: 130 BPM (data). Cycle 8 bars; last buildBars + dropBars bars = build-up then Drop (+dropDamage, +dropArea on hero skills; shockwave ring from the hero on the first Drop beat, source `RunSim.DropShockSource`).
 - Beat advances only in timed stages while Playing (sim time). First Advance crosses beat 0. One tick per step even if several boundaries are crossed.
@@ -35,4 +40,4 @@ Purpose: hero-tied skills with branch forms (domain.md Build) and Lowkey's beat-
 ## Extend
 - New kind → `SkillKind` + `SkillSystem.Fire` case (+ per-frame part if continuous) + `HeroDef.ValidateForm` + `RunGame.SkillText` + visuals/audio.
 - New stat → `Stat` enum value + `SkillStats` property (one line). New flag → `SkillFlag` + code where it acts.
-- Not built yet: ultimates, items/modifiers.
+- Not built yet: items/modifiers.

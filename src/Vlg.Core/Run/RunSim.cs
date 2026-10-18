@@ -18,6 +18,7 @@ public sealed class RunSim
     /// <summary>Damage source ids (EnemySwarm.LastHit): hero skill slot i = HeroSkillSource + i.</summary>
     public const byte HeroSkillSource = 1;
     public const byte DropShockSource = 20;
+    public const byte UltimateSource = 21;
     /// <summary>After a shield block, contact damage is ignored this long.</summary>
     public const float BlockSec = 0.5f;
 
@@ -43,6 +44,7 @@ public sealed class RunSim
     public readonly HeroProgress Progress;
     public readonly StageLoop Stages;
     public readonly SkillSystem Skills;
+    public readonly UltimateSystem Ultimate;
 
     public Vector2 HeroPosition { get; private set; }
     public float HeroHp { get; private set; }
@@ -58,6 +60,7 @@ public sealed class RunSim
     readonly WorkerPool? _workers;
     readonly int[] _contacts;
     float _blockTimer;
+    bool _pressQueued;
     XorShift32 _rng;
     ViewFootprint _view;
 
@@ -66,7 +69,9 @@ public sealed class RunSim
 
     /// <param name="workers">Shared pool for the enemy update; null = single thread. Same result either way.</param>
     /// <param name="loadout">Skill ids; null = the hero's default loadout.</param>
-    public RunSim(RunConfig config, HeroDef hero, uint seed, WorkerPool? workers = null, IReadOnlyList<string>? loadout = null)
+    /// <param name="ultimate">Ultimate id; null = the hero's default.</param>
+    public RunSim(RunConfig config, HeroDef hero, uint seed, WorkerPool? workers = null, IReadOnlyList<string>? loadout = null,
+        string? ultimate = null)
     {
         Config = config;
         Hero = hero;
@@ -90,11 +95,12 @@ public sealed class RunSim
         Beams = new BeamEvents(256);
         Flashes = new FlashEvents(128);
         Beat = new BeatClock(hero.Beat);
-        Progress = new HeroProgress(config.Leveling, Loadout.Length, Loadout);
+        Progress = new HeroProgress(config.Leveling, Loadout.Length, Loadout, hasUltimate: true);
         Stages = new StageLoop(config.Stages);
         _world = new SkillWorld(Enemies, Grid, Projectiles, Rings, Summons, Zones, Strikes, Beams, Flashes, Hits,
             config.Hero.Radius, config.Walker.Radius);
         Skills = new SkillSystem(Loadout, _world, Beat, HeroSkillSource, seed ^ 0x5EEDu);
+        Ultimate = new UltimateSystem(hero.UltimateById(ultimate), _world, Beat, UltimateSource);
         _contacts = new int[s.EnemyCapacity];
         HeroHp = hero.MaxHp;
         SetView(0f, DefaultAspect);
@@ -124,6 +130,19 @@ public sealed class RunSim
         : Stages.Current.Kind == StageKind.Shop ? RunPhase.Shop
         : RunPhase.Playing;
 
+    /// <summary>
+    /// Queues the ultimate for the next Step (it needs a fresh grid). False = not playing or not ready.
+    /// </summary>
+    public bool PressUltimate()
+    {
+        if (Phase != RunPhase.Playing || !Ultimate.Ready || _pressQueued) return false;
+        _pressQueued = true;
+        return true;
+    }
+
+    /// <summary>Dev shortcut: full ultimate charge (if unlocked).</summary>
+    public void DevFillUltimate() => Ultimate.DevFill();
+
     /// <summary>Valid only in the LevelUp phase. Reused list: read before the next call.</summary>
     public IReadOnlyList<LevelUpOption> LevelUpOptions() => Progress.Options();
 
@@ -134,6 +153,7 @@ public sealed class RunSim
         Deaths.Clear();
         Beams.Clear();
         Flashes.Clear();
+        Ultimate.BeginStep();
         HeroHurt = false;
         if (Phase != RunPhase.Playing) return;
 
@@ -171,14 +191,25 @@ public sealed class RunSim
             });
         }
         float er = Config.Walker.Radius;
-        Skills.Update(dt, Progress, Progress.DamageMultiplier);
+        float dmgMul = Progress.DamageMultiplier;
+        if (_pressQueued)
+        {
+            _pressQueued = false;
+            Ultimate.Press(dmgMul);
+        }
+        Skills.RateMultiplier = Ultimate.Phase == UltimatePhase.Encore ? 1f + Ultimate.Stats.Speed : 1f;
+        Skills.Update(dt, Progress, dmgMul);
+        Ultimate.Update(dt, Progress.UltimateLevel, dmgMul);
         Strikes.Update(dt, Enemies, Grid, Hits, er, pad, Flashes);
         Zones.Update(dt, Beat.BeatTick, Enemies, Grid, Hits, er, pad, Beams);
         Rings.Update(dt, Enemies, Grid, Hits, er, pad);
         Projectiles.Update(dt, Enemies, Grid, Hits, er, enemyMaxSpeed, hero, Flashes);
         ApplyContactDamage(dt, pad);
 
-        Kills += Enemies.RemoveDead(Deaths, DeathSources);
+        int killed = Enemies.RemoveDead(Deaths, DeathSources);
+        Kills += killed;
+        HeroHp = MathF.Min(HeroMaxHp, HeroHp + Ultimate.HealPerKill * killed);
+        Ultimate.OnKills(killed);
         Skills.OnDeaths(Deaths);
         for (int i = 0; i < Deaths.Count; i++) Gems.Spawn(Deaths.Items[i], Config.Walker.Xp);
 

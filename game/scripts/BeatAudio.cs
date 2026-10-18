@@ -78,6 +78,15 @@ public sealed class BeatAudio
             }
         }
         if (skills.BlockedThisStep) Play(_boom, -10f, 1.5f);
+
+        var u = sim.Ultimate;
+        if (u.FiredThisStep)
+        {
+            if (u.Def.Kind == UltimateKind.BassCannon) Play(_riser, -8f, 2f);
+            else Play(_boom, -2f, u.Def.Kind == UltimateKind.Encore ? 1.2f : 0.8f);
+        }
+        if (u.BeamStartedThisStep) Play(_boom, -2f, 0.7f);
+        if (u.Phase == UltimatePhase.Firing && b.BeatTick) Play(_sub, -5f, 0.7f);
     }
 
     void Play(AudioStream stream, float db, float pitch = 1f)

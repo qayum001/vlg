@@ -90,6 +90,8 @@ public sealed class SkillSystem
     public readonly bool[] ShieldUp;
     /// <summary>A shield blocked contact damage this step.</summary>
     public bool BlockedThisStep { get; private set; }
+    /// <summary>Cooldowns run this many times as fast (Encore, items). 1 = normal.</summary>
+    public float RateMultiplier { get; set; } = 1f;
 
     /// <param name="sourceBase">Damage source of slot 0; slot i uses sourceBase + i.</param>
     public SkillSystem(SkillDef[] defs, SkillWorld world, BeatClock? beat, byte sourceBase, uint seed)
@@ -210,7 +212,7 @@ public sealed class SkillSystem
             }
 
             float cooldown = form.Has(SkillFlag.DropEveryBeat) && inDrop ? MathF.Min(st.Cooldown, 1f) : st.Cooldown;
-            _timer[slot] -= units;
+            _timer[slot] -= units * RateMultiplier;
             if (_timer[slot] <= 0f && canFire)
             {
                 if (Fire(slot, form, damage, radius, areaMul, inDrop, source, bladeStart, droneStart))

@@ -213,6 +213,38 @@
       ]
     }
   ],
-  // Default loadout until a loadout screen exists (launch arg --loadout overrides). Slot 0 starts at level 1.
-  "loadout": ["cowbell", "low_end", "speaker_stack", "slap"]
+  // Pool of 3 ultimates, pressed by the player. Unlock/upgrade at hero levels 10/20/30 (run.json leveling.ultimateLevels).
+  // levels[i] = ultimate level i + 1; charge = seconds (cooldown), kills or Drops. Stat use: UltimateKind.cs. Durations in beats.
+  "ultimates": [
+    {
+      "id": "sub_quake", "name": "Sub Quake", "kind": "subQuake", "charge": "cooldown",
+      "text": "One huge 808 hit over the whole screen: big damage and a stun.",
+      "levels": [
+        { "charge": 60, "damage": 60, "radius": 40, "stun": 2 },
+        { "charge": 60, "damage": 120, "radius": 40, "stun": 3 },
+        { "charge": 60, "damage": 120, "radius": 40, "stun": 3, "tick": 10, "duration": 16 }
+      ]
+    },
+    {
+      "id": "encore", "name": "Encore", "kind": "encore", "charge": "kills",
+      "text": "The crowd wants more: the Drop stays on and her skills fire 50% faster.",
+      "levels": [
+        { "charge": 1500, "duration": 32, "speed": 0.5 },
+        { "charge": 1500, "duration": 48, "speed": 0.5 },
+        { "charge": 1500, "duration": 48, "speed": 0.5, "heal": 1 }
+      ]
+    },
+    {
+      "id": "bass_cannon", "name": "Bass Cannon", "kind": "bassCannon", "charge": "drops",
+      "text": "1 bar charge-up, then a giant beam where the camera looks. Kills everything it touches.",
+      "levels": [
+        { "charge": 3, "range": 40, "width": 4, "duration": 8 },
+        { "charge": 2, "range": 40, "width": 6, "duration": 8 },
+        { "charge": 2, "range": 40, "width": 6, "duration": 12, "tick": 8 }
+      ]
+    }
+  ],
+  // Default loadout until a loadout screen exists (launch args --loadout / --ultimate override). Slot 0 starts at level 1.
+  "loadout": ["cowbell", "low_end", "speaker_stack", "slap"],
+  "ultimate": "sub_quake"
 }
