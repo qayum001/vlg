@@ -43,3 +43,11 @@ Added: 2026-10-13
 ## R10. Telegram notifications
 Notify the user via Telegram (`agent_status` MCP, see memory `tooling.md`) only when they ask for it in that task.
 Added: 2026-10-14
+
+## R11. Humanoids are the user's
+The agent never models the hero, NPCs or other human-like entities, humanoid enemies included (zombies, skeletons, ghouls). The user makes them; the game uses placeholders until then. The agent makes the rest: non-humanoid monsters, items, props, VFX, icons.
+Added: 2026-10-18
+
+## R12. ComfyUI
+The agent may use ComfyUI for assets, launch it itself, and install ComfyUI modules (custom nodes, models) without asking. Sources: ComfyUI registry / Manager, official Hugging Face or maintainer pages.
+Added: 2026-10-18
