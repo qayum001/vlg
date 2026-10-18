@@ -10,7 +10,8 @@ namespace Vlg.Game;
 /// <summary>Run HUD: HP, XP + level, loop/stage/timer, skill levels, beat + Drop meter, counters, controls hint.</summary>
 public sealed class RunHud
 {
-    const string Hint = "WASD / left stick move · mouse / right stick camera (aims Slap) · Space / Y ultimate · Esc / Start pause · M mute beat · F1 HUD · F2 skip stage · F3 +1 level · F4 charge ultimate";
+    const string Hint = "WASD / left stick move · mouse / right stick camera (aims Slap) · Space / Y ultimate · Q E / LB RB items · Esc / Start pause · M mute · F1 HUD · F2 skip stage · F3 +1 level · F4 charge ult · F5 +100 credits";
+    static readonly string[] UseKeys = { "Q", "E", "R", "F", "G" };
 
     static readonly Color BeatOff = new(1f, 1f, 1f, 0.2f);
     static readonly Color BeatOn = new(0.3f, 0.95f, 1f);
@@ -24,6 +25,7 @@ public sealed class RunHud
     readonly Label _stage;
     readonly Label _skills;
     readonly Label _stats;
+    readonly Label _items;
     readonly ColorRect[] _beats = new ColorRect[BeatClock.BeatsPerBar];
     readonly ProgressBar _cycle;
     readonly StyleBoxFlat _cycleFill;
@@ -81,6 +83,15 @@ public sealed class RunHud
         _skills.OffsetBottom = -44;
         _skills.VerticalAlignment = VerticalAlignment.Bottom;
         _skills.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+
+        // Items: bottom right, above the ultimate bar.
+        _items = AddLabel(16, HorizontalAlignment.Right);
+        _items.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomRight);
+        _items.OffsetLeft = -560;
+        _items.OffsetRight = -16;
+        _items.OffsetTop = -240;
+        _items.OffsetBottom = -140;
+        _items.VerticalAlignment = VerticalAlignment.Bottom;
 
         // Ultimate: bottom right, above the XP bar.
         _ultFill = new StyleBoxFlat { BgColor = new Color(1f, 0.85f, 0.3f) };
@@ -196,6 +207,24 @@ public sealed class RunHud
             };
             _ultText.Text = string.Create(inv, $"{u.Def.Name} {u.Level} · {state}");
         }
+
+        var invt = sim.Inventory;
+        var defs = invt.Config.Items;
+        _sb.Clear();
+        _sb.Append(string.Create(inv, $"{MathF.Floor(invt.Credits):0} credits"));
+        for (int i = 0; i < invt.Usables.Count; i++)
+        {
+            int item = invt.Usables[i];
+            float cd = sim.Usables.CooldownLeft(item);
+            _sb.Append('\n').Append(UseKeys[i]).Append("  ").Append(defs[item].Name)
+                .Append(cd > 0f ? string.Create(inv, $"  {MathF.Ceiling(cd):0} s") : "  ready");
+        }
+        if (invt.Actives.Count > 0)
+        {
+            _sb.Append("\nactive: ");
+            for (int i = 0; i < invt.Actives.Count; i++) _sb.Append(i > 0 ? ", " : "").Append(defs[invt.Actives[i]].Name);
+        }
+        _items.Text = _sb.ToString();
 
         _stats.Text = string.Create(inv,
             $"time {(int)sim.Time / 60}:{(int)sim.Time % 60:D2} · kills {sim.Kills} · enemies {sim.Enemies.Count} · {fps:F0} fps");

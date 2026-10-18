@@ -8,7 +8,7 @@ namespace Vlg.Core.Config;
 /// Skill numbers at one level, one float per <see cref="Stat"/>. JSON: object of stat keys; omitted = 0.
 /// Immutable after construction (operations return new blocks); resolve on level/branch change, not per frame.
 /// Time unit (cooldown, duration): beats for a hero with a beat clock, seconds otherwise. Use per kind:
-/// Projectile: damage, cooldown, count, speed, range (travel), radius (hit, 0 = default), pierce, bounces, falloff.
+/// Projectile: damage, cooldown, count, speed, range (travel), radius (hit, 0 = default), pierce, bounces, falloff, blast.
 /// Ring: damage, cooldown, radius (max), speed (expansion), knockback (below speed), slow + slowSec, stun.
 /// Speaker: damage (per pulse), cooldown, count (max alive), duration, radius (pulse), range (placement), pull, period.
 /// Aura: damage, cooldown (tick), radius, vuln; trail puddles: duration, slow.
@@ -16,7 +16,8 @@ namespace Vlg.Core.Config;
 /// Orbit: damage, cooldown (tick), count, speed (rad/s), range (orbit), radius (hit), burn + burnSec, period, pull.
 /// BellDrop: damage, cooldown, count (bells), radius (impact), range (target), stun.
 /// Quake: damage (per beat), cooldown, radius, duration, period.
-/// Drone: damage, cooldown, count (drones), speed (bolt), range, radius (explosion).
+/// Drone: damage, cooldown, count (drones), speed (bolt), range, blast (with ExplodeOnHit).
+/// Chain: damage, cooldown, count (targets), range (first target), radius (jump distance).
 /// Shield: damage (blast), cooldown (recharge), radius (blast), knockback.
 /// Sweep: damage, cooldown (tick), range (length), width, arc, duration (sweep time), count (beams).
 /// Boomerang: damage, cooldown, count, speed, range, radius (hit), bounces.
@@ -24,7 +25,7 @@ namespace Vlg.Core.Config;
 [JsonConverter(typeof(SkillStatsJson))]
 public readonly struct SkillStats
 {
-    public const int Size = (int)Stat.Charge + 1;
+    public const int Size = (int)Stat.Blast + 1;
 
     readonly float[]? _v;
 
@@ -56,6 +57,7 @@ public readonly struct SkillStats
     public float Tick { get => this[Stat.Tick]; init => _v = Set(_v, Stat.Tick, value); }
     public float Heal { get => this[Stat.Heal]; init => _v = Set(_v, Stat.Heal, value); }
     public float Charge { get => this[Stat.Charge]; init => _v = Set(_v, Stat.Charge, value); }
+    public float Blast { get => this[Stat.Blast]; init => _v = Set(_v, Stat.Blast, value); }
 
     /// <summary>Count floored; fractional growth (0.5 per level) adds one every other level.</summary>
     public int Amount => Floor(Count);

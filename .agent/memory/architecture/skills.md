@@ -40,4 +40,4 @@ Purpose: hero-tied skills with branch forms (domain.md Build) and Lowkey's beat-
 ## Extend
 - New kind → `SkillKind` + `SkillSystem.Fire` case (+ per-frame part if continuous) + `HeroDef.ValidateForm` + `RunGame.SkillText` + visuals/audio.
 - New stat → `Stat` enum value + `SkillStats` property (one line). New flag → `SkillFlag` + code where it acts.
-- Not built yet: items/modifiers.
+- Items/modifiers: see [items](items.md). SkillSystem takes `ISkillLevels` (HeroProgress, OwnedActives) and an optional `IFormModifier` (Inventory).

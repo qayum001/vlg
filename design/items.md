@@ -89,10 +89,11 @@ Mechanic tags only (elements and set bonuses stay deferred). Every skill has 1-3
 | Slap | Beam, Aimed | Watchtower Lens, Overclock Chip |
 | Vinyl | Orbit | Split Arrowhead, Hex Needle, Overclock Chip |
 
-## Open
-- Items don't level up. Is buying a passive again enough for growth? (proposal: yes)
-- Should the chest also offer uncommon items while the pool is small? 8 rares cover 3 options per chest.
-- "Undead" as an enemy tag (Holy Water). Every enemy in the first storyline would have it.
+## Decisions (implementation, 2026-10-18)
+- Items don't level up; buying a passive again stacks it (approved with the proposal).
+- The chest offers rare items only. It skips actives and usables you already own or have no slot for.
+- Holy Water: every enemy so far counts as undead (first storyline), so its double damage always applies. An enemy "undead" tag comes with more enemy types.
+- Copper Coil: +1 bounce for any fitting skill, +1 more when the skill's form has the Chain tag.
 
 ## Assets (after approval)
 - Icons for all 25 items (ComfyUI, R12).

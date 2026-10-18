@@ -18,6 +18,8 @@ public sealed record SkillDef
     public required SkillStats PerLevel { get; init; }
     /// <summary>Options at the first branch point; each holds the next point's options.</summary>
     public BranchDef[] Branches { get; init; } = Array.Empty<BranchDef>();
+    /// <summary>Flags the base skill already has (item actives).</summary>
+    public SkillFlag[] Flags { get; init; } = Array.Empty<SkillFlag>();
 
     /// <param name="level">1-based.</param>
     public SkillStats StatsAt(int level) => SkillStats.AtLevel(Base, PerLevel, level);
@@ -40,6 +42,7 @@ public sealed record SkillDef
         var kind = Kind;
         var tags = Tags;
         ulong flags = 0;
+        foreach (var f in Flags) flags |= SkillForm.Bit(f);
         var stats = StatsAt(level);
         var name = new StringBuilder(Name);
         var options = Branches;

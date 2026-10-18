@@ -16,6 +16,22 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+### Items: credits, shop, chest, 25 items
+Added: 2026-10-18 | Confirmed: -
+What: the item pool from `design/items.md` is in the game (`game/data/items.json`):
+- **Credits:** some kills drop gold coins, picked up like XP. The count is on the HUD, bottom right.
+- **Shop** (after each loop, full heal): 10 offers, Buy, Reroll (costs more each time, resets each shop), and your build. Modifiers go into skill sockets: 1 per unlocked skill, +1 at skill levels 5 and 10. A modifier only fits a skill that shares one of its tags. Ones that don't fit wait in the stash.
+- **Chest** (after the horde): pick 1 of 3 rare items. It can't be skipped.
+- **Items:** active items fire on their own. Usable items are bound to Q / E (gamepad LB / RB). Passives stack when bought again.
+How to test:
+1. Shop right away: `-- --stage 4 --credits 300 --skill-level 5 --branch 0,0,0,0`. You see 10 offers with price, rarity color, type, effect and flavor line. Buy a passive: credits go down, it shows under "Passive", and the offer says SOLD. Buy a modifier: a picker asks which skill to put it in, listing only skills it fits that have a free socket. Clicking a socketed modifier moves it to the stash; clicking a stash item asks again. Reroll: new offers, and the price goes up by 5. Continue: back to the run.
+2. Chest: `-- --stage 2`. 3 rare items. Pick one; a modifier asks for a socket, then the run goes on.
+3. Items in play: `-- --items tesla_backpack,toy_drone,energy_drink,holy_water --skill-level 3`. Expect: a cyan drone shooting next to you, lightning chains, Q = Energy Drink (faster skills, then a short slow crash), E = Holy Water (a yellow burning pool where the camera looks). The HUD lists usables with their cooldowns and the active items. Old Mortar and Haunted Lantern: `-- --items old_mortar,haunted_lantern` (only 2 actives fit at once).
+4. Other usables: `-- --items smoke_bomb,pocket_singularity`. Q: a grey cloud stays where you threw it and walkers go there instead of chasing you. E: a dark orb ahead pulls walkers in for 3 s, then pops.
+5. Normal play: kill walkers, gather coins, F2 to the shop and spend them. F5 gives +100 credits.
+6. Branch warning: socket Hex Needle into Low End (`--items hex_needle --loadout low_end,cowbell --skill-level 5`, socket it in the shop with `--stage 4`, then F3 up to a form pick). The Earthquake card says it moves Hex Needle to the stash.
+Expected: no errors in the console. You can't buy without credits, can't own two of the same active or usable, and can't overfill slots. Passive effects show (faster move with sneakers, regen, etc.). Credits stay between shops.
+
 ### Lowkey ultimates
 Added: 2026-10-18 | Confirmed: -
 What: Lowkey's 3 ultimates from `design/heroes/lowkey.md`. Each run has 1 of them (default Sub Quake, `--ultimate` picks another). At hero level 10 a level-up card offers "Unlock ultimate", and levels 20 and 30 offer upgrades. You fire it with Space (gamepad Y) once it's charged. Each one charges differently:

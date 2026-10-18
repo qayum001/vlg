@@ -36,13 +36,19 @@ public sealed record LaunchOptions
     public string? Ultimate { get; init; }
     /// <summary>Dev: ultimate starts at this level (hero level ignored).</summary>
     public int? UltimateLevel { get; init; }
+    /// <summary>Dev: start at this stage index of loop 1 (0 = first).</summary>
+    public int? Stage { get; init; }
+    /// <summary>Dev: starting credits.</summary>
+    public int? Credits { get; init; }
+    /// <summary>Dev: item ids granted at start (modifiers go to the stash).</summary>
+    public string[]? Items { get; init; }
 
     public bool WantsStressTest => Stress || Bench != null;
 
     public const string Usage =
         "--stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
         "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>  " +
-        "--loadout <id,id,...>  --skill-level <n>  --branch <i,i,...>  --ultimate <id>  --ultimate-level <n>";
+        "--loadout <id,id,...>  --skill-level <n>  --branch <i,i,...>  --ultimate <id>  --ultimate-level <n>  --stage <n>  --credits <n>  --items <id,id,...>";
 
     public static LaunchOptions Parse(string[] args)
     {
@@ -70,6 +76,9 @@ public sealed record LaunchOptions
                 "--skill-level" => o with { SkillLevel = ParseInt(a, Next(), 1) },
                 "--ultimate" => o with { Ultimate = Next() },
                 "--ultimate-level" => o with { UltimateLevel = ParseInt(a, Next(), 0) },
+                "--stage" => o with { Stage = ParseInt(a, Next(), 0) },
+                "--credits" => o with { Credits = ParseInt(a, Next(), 0) },
+                "--items" => o with { Items = ParseList(a, Next()) },
                 "--branch" => o with { Branches = Array.ConvertAll(ParseList(a, Next()), x => ParseInt(a, x, 0)) },
                 _ => throw new ArgumentException($"unknown arg '{a}'. Usage: {Usage}"),
             };

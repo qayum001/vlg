@@ -4,7 +4,7 @@ using Vlg.Core.Run;
 
 namespace Vlg.Game;
 
-/// <summary>All XP gems in one MultiMesh: small spinning emissive diamonds.</summary>
+/// <summary>All pickups of one pool in one MultiMesh: small spinning emissive diamonds (XP gems; gold for credits).</summary>
 public sealed class GemRenderer
 {
     const int Stride = 12;
@@ -15,28 +15,35 @@ public sealed class GemRenderer
     readonly MultiMesh _multimesh;
     float[] _buffer = Array.Empty<float>();
 
-    public GemRenderer(Node3D parent)
+    public GemRenderer(Node3D parent) : this(parent, "Gems", new Color(0.3f, 1f, 0.5f), new Color(0.2f, 1f, 0.45f),
+        new SphereMesh { Radius = 0.16f, Height = 0.42f, RadialSegments = 4, Rings = 1 }) { }
+
+    public GemRenderer(Node3D parent, string name, Color albedo, Color emission, Mesh mesh)
     {
         _multimesh = new MultiMesh
         {
             TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
-            Mesh = new SphereMesh { Radius = 0.16f, Height = 0.42f, RadialSegments = 4, Rings = 1 },
+            Mesh = mesh,
             CustomAabb = EnemyRenderer.WorldAabb,
         };
         parent.AddChild(new MultiMeshInstance3D
         {
-            Name = "Gems",
+            Name = name,
             Multimesh = _multimesh,
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
             MaterialOverride = new StandardMaterial3D
             {
-                AlbedoColor = new Color(0.3f, 1f, 0.5f),
+                AlbedoColor = albedo,
                 EmissionEnabled = true,
-                Emission = new Color(0.2f, 1f, 0.45f),
+                Emission = emission,
                 EmissionEnergyMultiplier = 2.5f,
             },
         });
     }
+
+    /// <summary>Gold coin for credit pickups.</summary>
+    public static GemRenderer Coins(Node3D parent) => new(parent, "Coins", new Color(1f, 0.8f, 0.2f), new Color(1f, 0.65f, 0.1f),
+        new CylinderMesh { TopRadius = 0.22f, BottomRadius = 0.22f, Height = 0.06f, RadialSegments = 12, Rings = 1 });
 
     public void SetCullCenter(Vector3 center) => _multimesh.CustomAabb = EnemyRenderer.CullBoxAround(center);
 

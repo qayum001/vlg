@@ -36,6 +36,9 @@ public sealed class SkillVisuals
     static readonly Color BellColor = new(1f, 0.85f, 0.3f);
     static readonly Color FlashColor = new(1f, 0.9f, 1f);
     static readonly Color ShieldColor = new(0.3f, 0.95f, 1f);
+    static readonly Color HolyColor = new(1f, 0.95f, 0.6f);
+    static readonly Color PoisonColor = new(0.4f, 1f, 0.3f);
+    static readonly Color SmokeColor = new(0.55f, 0.55f, 0.6f);
 
     readonly MeshInstance3D[] _discs;
     readonly StandardMaterial3D[] _discMaterials;
@@ -53,6 +56,8 @@ public sealed class SkillVisuals
     readonly MultiMesh _flashes;
     readonly MeshInstance3D _shield;
     readonly StandardMaterial3D _shieldMaterial;
+    readonly MeshInstance3D _smoke;
+    readonly MeshInstance3D _singularity;
     float[] _zoneBuffer = Array.Empty<float>();
     float[] _strikeBuffer = Array.Empty<float>();
     float[] _bellBuffer = Array.Empty<float>();
@@ -132,6 +137,35 @@ public sealed class SkillVisuals
             Visible = false,
         };
         parent.AddChild(_shield);
+        _smoke = new MeshInstance3D
+        {
+            Name = "SmokeCloud",
+            Mesh = new SphereMesh { Radius = 3.5f, Height = 3f, RadialSegments = 16, Rings = 8 },
+            MaterialOverride = new StandardMaterial3D
+            {
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                AlbedoColor = new Color(SmokeColor, 0.45f),
+            },
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Visible = false,
+        };
+        parent.AddChild(_smoke);
+        _singularity = new MeshInstance3D
+        {
+            Name = "Singularity",
+            Mesh = new SphereMesh { Radius = 0.9f, Height = 1.8f, RadialSegments = 16, Rings = 8 },
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.05f, 0f, 0.1f),
+                EmissionEnabled = true,
+                Emission = new Color(0.6f, 0.2f, 1f),
+                EmissionEnergyMultiplier = 1.2f,
+            },
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Visible = false,
+        };
+        parent.AddChild(_singularity);
     }
 
     public void SetCullCenter(Vector3 center)
@@ -175,13 +209,24 @@ public sealed class SkillVisuals
         UpdateBeams(sim.Beams, dt);
         UpdateZones(sim);
         UpdateStrikes(sim.Strikes);
-        UpdateDrones(skills);
+        UpdateDrones(skills, sim.Actives);
         UpdateFlashes(sim.Flashes, dt);
 
         bool shield = false;
         for (int i = 0; i < skills.Count; i++) shield |= skills.ShieldUp[i];
         _shield.Visible = shield;
         if (shield) _shield.Position = new Vector3(hero.X, 0.9f, hero.Y);
+
+        var u = sim.Usables;
+        _smoke.Visible = u.SmokeActive;
+        if (u.SmokeActive) _smoke.Position = new Vector3(u.SmokePoint.X, 0.8f, u.SmokePoint.Y);
+        _singularity.Visible = u.SingularityActive;
+        if (u.SingularityActive)
+        {
+            float k = 1f + 0.15f * MathF.Sin(_spin * 3f);
+            _singularity.Position = new Vector3(u.SingularityPoint.X, 1.2f, u.SingularityPoint.Y);
+            _singularity.Scale = new Vector3(k, k, k);
+        }
     }
 
     void UpdateZones(RunSim sim)
@@ -194,8 +239,12 @@ public sealed class SkillVisuals
             float life = z.StartLife[i] > 0f ? z.Life[i] / z.StartLife[i] : 0f;
             float pump = z.SinceTick[i] >= 0f ? MathF.Exp(-z.SinceTick[i] * 8f) : 0f;
             int slot = z.Slot[i];
+            byte source = z.SourceOf(i);
             var kind = slot >= 0 ? sim.Skills.Form(slot)?.Kind : null;
-            var color = kind == SkillKind.Quake ? CrackColor : PuddleColor;
+            var color = source == RunSim.UsableSource ? HolyColor
+                : source == RunSim.PoisonSource ? PoisonColor
+                : kind == SkillKind.Quake || source == RunSim.UltimateSource ? CrackColor
+                : PuddleColor;
             Write(_zoneBuffer, i * Stride, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(z.Center[i].X, 0.04f, z.Center[i].Y),
                 new Color(color, (0.05f + 0.18f * pump) * MathF.Min(1f, life * 3f)));
         }
@@ -223,18 +272,25 @@ public sealed class SkillVisuals
         _bells.VisibleInstanceCount = strikes.Count;
     }
 
-    void UpdateDrones(SkillSystem skills)
+    /// <summary>Hero drones (Boombox Drone) and item drones (Toy Drone) share one MultiMesh.</summary>
+    void UpdateDrones(SkillSystem skills, SkillSystem actives)
     {
-        int n = skills.DroneCount;
-        for (int i = 0; i < n; i++)
-        {
-            var p = skills.DronePositions[i];
-            float bob = 0.15f * MathF.Sin(_spin * 0.5f + i);
-            float c = MathF.Cos(_spin * 0.2f), s = MathF.Sin(_spin * 0.2f);
-            Write(_droneBuffer, i * Stride, new Vector3(c, 0, -s), new Vector3(0, 1, 0), new Vector3(s, 0, c), new Vector3(p.X, 2.2f + bob, p.Y), Colors.White);
-        }
+        int n = AddDrones(skills, 0);
+        n = AddDrones(actives, n);
         RenderingServer.MultimeshSetBuffer(_drones.GetRid(), _droneBuffer);
         _drones.VisibleInstanceCount = n;
+    }
+
+    int AddDrones(SkillSystem sys, int n)
+    {
+        float c = MathF.Cos(_spin * 0.2f), s = MathF.Sin(_spin * 0.2f);
+        for (int i = 0; i < sys.DroneCount && n < RunConfig.MaxSkills * RunConfig.MaxDrones; i++, n++)
+        {
+            var p = sys.DronePositions[i];
+            float bob = 0.15f * MathF.Sin(_spin * 0.5f + n);
+            Write(_droneBuffer, n * Stride, new Vector3(c, 0, -s), new Vector3(0, 1, 0), new Vector3(s, 0, c), new Vector3(p.X, 2.2f + bob, p.Y), Colors.White);
+        }
+        return n;
     }
 
     void UpdateFlashes(FlashEvents flashes, float dt)

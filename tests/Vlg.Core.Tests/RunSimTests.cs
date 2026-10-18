@@ -33,11 +33,11 @@ public class RunSimTests
     [Fact]
     public void Hero_moves_at_hero_speed_and_long_input_is_normalized()
     {
-        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, 1);
+        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, TestConfig.Items, 1);
         for (int i = 0; i < 20; i++) sim.Step(Dt, new Vector2(1, 0));
         Assert.Equal(sim.Hero.Speed, sim.HeroPosition.X, 3);
 
-        var sim2 = new RunSim(TestConfig.Run, TestConfig.Hero, 1);
+        var sim2 = new RunSim(TestConfig.Run, TestConfig.Hero, TestConfig.Items, 1);
         sim2.Step(Dt, new Vector2(3, 4));
         Assert.Equal(sim2.Hero.Speed * Dt, sim2.HeroPosition.Length(), 4);
         Assert.Equal(0.6f, sim2.HeroPosition.X / sim2.HeroPosition.Length(), 4);
@@ -47,7 +47,7 @@ public class RunSimTests
     public void Touching_walkers_deal_contact_damage_per_second()
     {
         var c = QuietConfig(TestConfig.Run.Walker with { Hp = 1e6f, ContactDps = 40 });
-        var sim = new RunSim(c, TestConfig.Hero, 1);
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1);
         Place(sim, new Vector2(c.Hero.Radius + c.Walker.Radius, 0), 1e6f);
         Place(sim, new Vector2(0, 10), 1e6f); // not touching
 
@@ -61,7 +61,7 @@ public class RunSimTests
     public void Contact_damage_grows_with_the_loop()
     {
         var c = QuietConfig(TestConfig.Run.Walker with { Hp = 1e6f, ContactDps = 40 });
-        var sim = new RunSim(c, TestConfig.Hero, 1);
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1);
         sim.DevSkipStage(); // single-stage loop: skip wraps to loop 2
         Assert.Equal(2, sim.Stages.Loop);
         Place(sim, new Vector2(c.Hero.Radius + c.Walker.Radius, 0), 1e6f);
@@ -76,7 +76,7 @@ public class RunSimTests
     public void Death_wins_over_a_level_up_from_the_same_step()
     {
         var c = QuietConfig(TestConfig.Run.Walker with { Hp = 1e6f, ContactDps = 1e5f });
-        var sim = new RunSim(c, TestConfig.Hero, 1);
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1);
         Place(sim, new Vector2(1, 0), 1e6f);
         sim.Gems.Spawn(Vector2.Zero, c.Leveling.XpBase); // collected this step
 
@@ -90,7 +90,7 @@ public class RunSimTests
     public void Level_up_is_answered_before_a_chest()
     {
         var c = QuietConfig(null, new StageDef { Kind = StageKind.Chest }, Quiet(10));
-        var sim = new RunSim(c, TestConfig.Hero, 1);
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1);
         Assert.Equal(RunPhase.Chest, sim.Phase);
 
         sim.DevGainLevel();
@@ -103,7 +103,7 @@ public class RunSimTests
     public void Zero_hp_ends_the_run_and_freezes_it()
     {
         var c = QuietConfig(TestConfig.Run.Walker with { Hp = 1e6f, ContactDps = 1e5f });
-        var sim = new RunSim(c, TestConfig.Hero, 1);
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1);
         Place(sim, new Vector2(1, 0), 1e6f);
 
         sim.Step(Dt, Vector2.Zero);
@@ -122,7 +122,7 @@ public class RunSimTests
     public void Kill_drops_xp_gem_and_level_up_pauses_until_a_pick()
     {
         var c = QuietConfig(TestConfig.Run.Walker with { Hp = 1, Xp = 5 });
-        var sim = new RunSim(c, TestConfig.Hero, 1);
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1);
         Place(sim, new Vector2(3, 0), 1);
 
         for (int i = 0; i < 60 && sim.Phase == RunPhase.Playing; i++) sim.Step(Dt, Vector2.Zero);
@@ -143,18 +143,22 @@ public class RunSimTests
     }
 
     [Fact]
-    public void Chest_stage_pauses_until_continue()
+    public void Chest_stage_pauses_until_an_item_is_taken()
     {
         var c = QuietConfig(null, Quiet(0.5f), new StageDef { Kind = StageKind.Chest }, Quiet(0.5f));
-        var sim = new RunSim(c, TestConfig.Hero, 1);
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1);
 
         for (int i = 0; i < 40 && sim.Phase == RunPhase.Playing; i++) sim.Step(Dt, Vector2.Zero);
         Assert.Equal(RunPhase.Chest, sim.Phase);
         float time = sim.Time;
         sim.Step(Dt, Vector2.Zero);
         Assert.Equal(time, sim.Time);
+        Assert.Equal(sim.Items.ChestOptions, sim.ChestOffer.Count);
+        Assert.Throws<InvalidOperationException>(sim.ContinueStage); // domain.md: no skip
 
-        sim.ContinueStage();
+        int item = sim.ChestOffer[0];
+        sim.TakeChest(0);
+        Assert.True(sim.Inventory.Owns(item));
         Assert.Equal(RunPhase.Playing, sim.Phase);
         Assert.Equal(2, sim.Stages.Index);
     }
@@ -163,7 +167,7 @@ public class RunSimTests
     public void Shop_stage_fully_heals_and_continue_starts_the_next_loop()
     {
         var c = QuietConfig(TestConfig.Run.Walker with { Hp = 1e6f, ContactDps = 10 }, Quiet(1f), new StageDef { Kind = StageKind.Shop });
-        var sim = new RunSim(c, TestConfig.Hero, 1);
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1);
         Place(sim, new Vector2(1, 0), 1e6f);
 
         float lowest = sim.HeroHp;
@@ -183,7 +187,7 @@ public class RunSimTests
     [Fact]
     public void Answers_outside_their_phase_throw()
     {
-        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, 1);
+        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, TestConfig.Items, 1);
         Assert.Throws<InvalidOperationException>(sim.ContinueStage);
         Assert.Throws<InvalidOperationException>(() => sim.ChooseLevelUp(0));
     }
@@ -191,7 +195,7 @@ public class RunSimTests
     [Fact]
     public void Dev_shortcuts_skip_a_stage_and_add_a_level()
     {
-        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, 1);
+        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, TestConfig.Items, 1);
         sim.DevSkipStage();
         Assert.Equal(StageKind.Horde, sim.Stages.Current.Kind);
         sim.DevGainLevel();
@@ -201,7 +205,7 @@ public class RunSimTests
     [Fact]
     public void Drop_start_sends_a_shockwave_ring_from_the_hero()
     {
-        var sim = new RunSim(QuietConfig(), TestConfig.Hero, 1);
+        var sim = new RunSim(QuietConfig(), TestConfig.Hero, TestConfig.Items, 1);
         var b = sim.Hero.Beat;
         int steps = (int)(sim.Beat.BeatSec * sim.Beat.CycleBeats / Dt) + 10;
         bool seen = false;
@@ -221,17 +225,17 @@ public class RunSimTests
     [Fact]
     public void Loadout_override_sets_slot_order_and_slot_zero_starts_unlocked()
     {
-        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, 1, null, new[] { "vinyl", "distortion" });
+        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, TestConfig.Items, 1, null, new[] { "vinyl", "distortion" });
 
         Assert.Equal(new[] { "vinyl", "distortion" }, Array.ConvertAll(sim.Loadout, s => s.Id));
         Assert.Equal((1, 0), (sim.Progress.SkillLevel(0), sim.Progress.SkillLevel(1)));
-        Assert.Throws<FormatException>(() => new RunSim(TestConfig.Run, TestConfig.Hero, 1, null, new[] { "bogus" }));
+        Assert.Throws<FormatException>(() => new RunSim(TestConfig.Run, TestConfig.Hero, TestConfig.Items, 1, null, new[] { "bogus" }));
     }
 
     [Fact]
     public void Aim_follows_the_camera_yaw()
     {
-        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, 1);
+        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, TestConfig.Items, 1);
         sim.SetView(MathF.PI / 2f, RunSim.DefaultAspect);
         Assert.Equal(CameraMath.Forward(MathF.PI / 2f), sim.Aim);
     }
@@ -239,7 +243,7 @@ public class RunSimTests
     /// <summary>Scripted play through the shipped config: circles, takes the last option, continues chest/shop.</summary>
     static RunSim Play(float seconds, uint seed)
     {
-        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, seed);
+        var sim = new RunSim(TestConfig.Run, TestConfig.Hero, TestConfig.Items, seed);
         int steps = (int)(seconds / Dt);
         for (int i = 0; i < steps && sim.Phase != RunPhase.Dead; i++)
         {

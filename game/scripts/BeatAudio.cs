@@ -87,6 +87,10 @@ public sealed class BeatAudio
         }
         if (u.BeamStartedThisStep) Play(_boom, -2f, 0.7f);
         if (u.Phase == UltimatePhase.Firing && b.BeatTick) Play(_sub, -5f, 0.7f);
+        if (sim.Usables.UsedItem >= 0) Play(_thump, -4f, 0.8f);
+        if (sim.Usables.PoppedThisStep) Play(_boom, -6f, 1.3f);
+        for (int slot = 0; slot < sim.Actives.Count; slot++)
+            if (sim.Actives.FiredThisStep[slot]) Play(_hat, -10f, 0.6f);
     }
 
     void Play(AudioStream stream, float db, float pitch = 1f)

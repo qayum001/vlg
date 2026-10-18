@@ -45,6 +45,10 @@ public sealed class EnemySwarm
     /// <summary>Ramp heat for ramping beams: extra damage fraction, decays 1/s.</summary>
     public readonly float[] Heat;
 
+    /// <summary>Per damage source: vuln applied on every hit (Hex modifier), fraction / seconds.</summary>
+    readonly float[] _hitVuln = new float[256];
+    readonly float[] _hitVulnSec = new float[256];
+
     /// <summary>Health removed since <see cref="ResetDamageDealt"/>, overkill excluded (life steal).</summary>
     public float DamageDealt { get; private set; }
 
@@ -116,9 +120,17 @@ public sealed class EnemySwarm
         DamageDealt += MathF.Min(amount, MathF.Max(0f, hp));
         HitFlash[i] = 1f;
         LastHit[i] = source;
+        if (_hitVulnSec[source] > 0f) ApplyVuln(i, _hitVuln[source], _hitVulnSec[source]);
     }
 
     public void ResetDamageDealt() => DamageDealt = 0f;
+
+    /// <summary>Hits from <paramref name=source/> apply this vuln after their damage; sec 0 = off.</summary>
+    public void SetHitVuln(byte source, float vuln, float sec)
+    {
+        _hitVuln[source] = vuln;
+        _hitVulnSec[source] = sec;
+    }
 
     /// <summary>Stronger slow replaces a weaker one; timer keeps the longer.</summary>
     public void ApplySlow(int i, float fraction, float sec)

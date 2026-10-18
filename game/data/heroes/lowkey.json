@@ -113,7 +113,7 @@
         {
           "id": "boombox_drone", "name": "Boombox Drone", "text": "A flying boombox follows her and shoots sound bolts on every beat.",
           "kind": "drone", "tags": ["summon", "projectile"], "scale": { "count": 0, "cooldown": 0, "radius": 0 },
-          "add": { "count": 1, "cooldown": 1, "speed": 18, "radius": 1.5 },
+          "add": { "count": 1, "cooldown": 1, "speed": 18, "blast": 1.5 },
           "branches": [
             { "id": "drone_squad", "name": "Drone Squad", "text": "3 drones.", "add": { "count": 2 } },
             { "id": "bass_boosted", "name": "Bass Boosted", "text": "Bolts explode on hit.", "flags": ["explodeOnHit"] }

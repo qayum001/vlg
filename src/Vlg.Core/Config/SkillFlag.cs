@@ -29,7 +29,7 @@ public enum SkillFlag
     Crush,
     /// <summary>Speaker: explodes when it expires (x2 radius, x6 damage).</summary>
     Blowout,
-    /// <summary>Drone / projectile: shots explode on hit (radius stat, 60% damage).</summary>
+    /// <summary>Drone / projectile: shots explode on hit (blast stat, 60% damage).</summary>
     ExplodeOnHit,
     /// <summary>Aura: enemies dying inside it explode (1.5 m, x2 tick damage).</summary>
     DeathBurst,

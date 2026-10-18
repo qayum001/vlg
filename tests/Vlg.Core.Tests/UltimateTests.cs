@@ -16,7 +16,7 @@ public class UltimateTests
 
     static RunSim Sim(string ultimate, int level = 1)
     {
-        var sim = new RunSim(Quiet, TestConfig.Hero, 1, null, new[] { "cowbell" }, ultimate);
+        var sim = new RunSim(Quiet, TestConfig.Hero, TestConfig.Items, 1, null, new[] { "cowbell" }, ultimate);
         sim.Progress.DevSetUltimate(level);
         sim.Step(Dt, Vector2.Zero); // sync the level into the system
         return sim;

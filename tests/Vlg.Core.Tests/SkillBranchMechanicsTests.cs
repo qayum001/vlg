@@ -267,7 +267,7 @@ public class SkillBranchMechanicsTests
     [Fact]
     public void Drone_follows_the_hero_and_its_bolts_explode()
     {
-        var w = Make(SkillKind.Drone, new SkillStats { Damage = 5, Cooldown = 1, Count = 1, Speed = 20, Range = 10, Radius = 1.5f }, SkillFlag.ExplodeOnHit);
+        var w = Make(SkillKind.Drone, new SkillStats { Damage = 5, Cooldown = 1, Count = 1, Speed = 20, Range = 10, Blast = 1.5f }, SkillFlag.ExplodeOnHit);
         int a = w.Enemy(new Vector2(0.1f, 6)), b = w.Enemy(new Vector2(1.8f, 6));
         w.Update();
         Assert.Equal(1, w.Skills.DroneCount);
@@ -322,7 +322,7 @@ public class SkillBranchMechanicsTests
             Stages = new[] { new StageDef { Kind = StageKind.Mobs, DurationSec = 1000 } },
             Walker = TestConfig.Run.Walker with { ContactDps = 100 },
         };
-        var sim = new RunSim(c, TestConfig.Hero, 1, null, new[] { "distortion" });
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1, null, new[] { "distortion" });
         sim.Progress.DevSetAllSkills(5);
         sim.ChooseLevelUp(2); // Noise Gate
         sim.Step(0.05f, Vector2.Zero);

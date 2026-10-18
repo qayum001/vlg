@@ -19,4 +19,8 @@ static class TestConfig
     public static string HeroJson => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", "heroes", "lowkey.json"));
 
     public static HeroDef Hero => HeroDef.Parse(HeroJson, Run);
+
+    public static string ItemsJson => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", "items.json"));
+
+    public static ItemsConfig Items => ItemsConfig.Parse(ItemsJson);
 }

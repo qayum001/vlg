@@ -1,0 +1,145 @@
+// Shared item pool (design/items.md). Parsed strictly by Vlg.Core ItemsConfig: unknown or missing keys throw.
+// Times in seconds, distances in meters. All numbers are placeholders.
+{
+  // Each kill drops a credit coin with this chance (picked up like XP gems).
+  "creditDropChance": 0.15,
+  "creditValue": 1,
+  "shop": {
+    "size": 10,
+    "prices": { "common": 15, "uncommon": 30, "rare": 60 },
+    "weights": { "common": 60, "uncommon": 30, "rare": 10 },
+    // Reroll n (0-based) in loop L costs rerollBase + rerollPerLoop * (L - 1) + rerollStep * n.
+    "rerollBase": 5,
+    "rerollStep": 5,
+    "rerollPerLoop": 2
+  },
+  "chestOptions": 3,
+  "activeSlots": 2,
+  "usableSlots": 2,
+  "maxSockets": 3,
+  "items": [
+    // ---- Modifiers: socket into a skill whose current form shares a tag with "fits". scale/add like branches.
+    {
+      "id": "bell_shard", "name": "Bell Shard", "type": "modifier", "rarity": "common",
+      "text": "+25% radius.", "flavor": "From a church bell that rang once too often.",
+      "modifier": { "fits": ["area", "aura", "zone"], "scale": { "radius": 1.25 } }
+    },
+    {
+      "id": "hourglass_sand", "name": "Hourglass Sand", "type": "modifier", "rarity": "common",
+      "text": "+50% duration.", "flavor": "Sand from a desert where time is sold by the pound.",
+      "modifier": { "fits": ["summon", "zone"], "scale": { "duration": 1.5 } }
+    },
+    {
+      "id": "watchtower_lens", "name": "Watchtower Lens", "type": "modifier", "rarity": "common",
+      "text": "+40% length, +15% damage.", "flavor": "The guard saw everything coming. Except that.",
+      "modifier": { "fits": ["beam", "aimed"], "scale": { "range": 1.4, "damage": 1.15 } }
+    },
+    {
+      "id": "split_arrowhead", "name": "Split Arrowhead", "type": "modifier", "rarity": "uncommon",
+      "text": "+1 projectile or orbiting object, -10% damage each.", "flavor": "Elven work. The elves want it back.",
+      "modifier": { "fits": ["projectile", "orbit"], "scale": { "damage": 0.9 }, "add": { "count": 1 } }
+    },
+    {
+      "id": "hex_needle", "name": "Hex Needle", "type": "modifier", "rarity": "uncommon",
+      "text": "Hits apply Hex: +10% damage taken for 3 s.", "flavor": "Grandma's knitting was never just knitting.",
+      "modifier": { "fits": ["orbit", "aura", "area"], "hexVuln": 0.1, "hexSec": 3 }
+    },
+    {
+      "id": "overclock_chip", "name": "Overclock Chip", "type": "modifier", "rarity": "uncommon",
+      "text": "-15% cooldown.", "flavor": "Warranty void. So is the user.",
+      "modifier": { "fits": ["projectile", "area", "beam", "chain", "summon", "orbit"], "scale": { "cooldown": 0.85 } }
+    },
+    {
+      "id": "copper_coil", "name": "Copper Coil", "type": "modifier", "rarity": "rare",
+      "text": "Shots jump to 1 more enemy on hit; chain skills jump 2 more.", "flavor": "Still humming. Don't lick it.",
+      "modifier": { "fits": ["projectile", "chain"], "add": { "bounces": 1 }, "chainAdd": { "bounces": 1 } }
+    },
+    {
+      "id": "plague_flask", "name": "Plague Flask", "type": "modifier", "rarity": "rare",
+      "text": "Kills leave a poison puddle for 2 s.", "flavor": "Smells like the undead town. Everything does.",
+      "modifier": { "fits": ["area", "zone", "aura"], "poisonDamage": 4, "poisonRadius": 1.5, "poisonSec": 2, "poisonInterval": 0.5 }
+    },
+
+    // ---- Active items: fire on their own like a skill (no beat, cooldown in seconds). Stat meaning: SkillStats.cs.
+    {
+      "id": "haunted_lantern", "name": "Haunted Lantern", "type": "active", "rarity": "common",
+      "text": "Every 3 s a wisp flies at an enemy and pops.", "flavor": "The ghost inside pays no rent.",
+      "active": { "kind": "projectile", "stats": { "damage": 12, "cooldown": 3, "count": 1, "speed": 10, "range": 16, "blast": 1.8 }, "flags": ["explodeOnHit"] }
+    },
+    {
+      "id": "toy_drone", "name": "Toy Drone", "type": "active", "rarity": "uncommon",
+      "text": "Hovers next to you and shoots the nearest enemy twice per second.", "flavor": "Batteries not included. Nobody knows what it runs on.",
+      "active": { "kind": "drone", "stats": { "damage": 4, "cooldown": 0.5, "count": 1, "speed": 22, "range": 11 } }
+    },
+    {
+      "id": "old_mortar", "name": "Old Mortar", "type": "active", "rarity": "rare",
+      "text": "Every 4 s lobs a shell at the densest enemy group.", "flavor": "Found in a trench. The war ended. The mortar didn't hear.",
+      "active": { "kind": "bellDrop", "stats": { "damage": 25, "cooldown": 4, "count": 1, "radius": 3, "range": 16 } }
+    },
+    {
+      "id": "tesla_backpack", "name": "Tesla Backpack", "type": "active", "rarity": "rare",
+      "text": "Every 3 s lightning chains through 5 enemies.", "flavor": "Hair styling included.",
+      "active": { "kind": "chain", "stats": { "damage": 14, "cooldown": 3, "count": 5, "range": 9, "radius": 5 } }
+    },
+
+    // ---- Usable items: pressed (Q / E, LB / RB), effect for "duration", cooldown from the press.
+    {
+      "id": "energy_drink", "name": "Energy Drink", "type": "usable", "rarity": "common",
+      "text": "3 s: skills +40% faster, move +30%. Then 2 s crash: move -20%.", "flavor": "Contains 400% of the daily value of regret.",
+      "usable": { "kind": "rush", "cooldown": 40, "duration": 3, "rateBonus": 0.4, "moveBonus": 0.3, "crashSec": 2, "crashMove": 0.2 }
+    },
+    {
+      "id": "smoke_bomb", "name": "Smoke Bomb", "type": "usable", "rarity": "uncommon",
+      "text": "3 s: enemies lose track of you, move +30%.", "flavor": "Ninjas vanish. You mostly cough.",
+      "usable": { "kind": "smoke", "cooldown": 30, "duration": 3, "moveBonus": 0.3 }
+    },
+    {
+      "id": "holy_water", "name": "Holy Water", "type": "usable", "rarity": "rare",
+      "text": "Thrown where the camera looks: 3 s burning pool, double damage to undead.", "flavor": "Blessed by a priest. Bottled by a gas station.",
+      "usable": { "kind": "holyWater", "cooldown": 25, "duration": 3, "range": 6, "radius": 3, "damage": 8, "interval": 0.5, "undeadFactor": 2 }
+    },
+    {
+      "id": "pocket_singularity", "name": "Pocket Singularity", "type": "usable", "rarity": "rare",
+      "text": "Pulls every enemy within 15 m to a point in front of you for 3 s, then pops.", "flavor": "Do not fold.",
+      "usable": { "kind": "singularity", "cooldown": 50, "duration": 3, "range": 5, "radius": 15, "pull": 12, "damage": 30, "popRadius": 5 }
+    },
+
+    // ---- Passive items: global stats; buying another copy adds up.
+    {
+      "id": "whetstone", "name": "Whetstone", "type": "passive", "rarity": "common",
+      "text": "+8% damage.", "flavor": "Sharpens anything. Even jokes.", "passive": { "damage": 0.08 }
+    },
+    {
+      "id": "knockoff_sneakers", "name": "Knockoff Sneakers", "type": "passive", "rarity": "common",
+      "text": "+8% move speed.", "flavor": "Bought in an alley. Run before he wants them back.", "passive": { "moveSpeed": 0.08 }
+    },
+    {
+      "id": "herbal_tea", "name": "Herbal Tea", "type": "passive", "rarity": "common",
+      "text": "+0.5 HP per second.", "flavor": "Grandma's recipe. Same grandma as the needle.", "passive": { "regen": 0.5 }
+    },
+    {
+      "id": "horseshoe_magnet", "name": "Horseshoe Magnet", "type": "passive", "rarity": "common",
+      "text": "+30% pickup radius.", "flavor": "Lucky and attractive.", "passive": { "pickup": 0.3 }
+    },
+    {
+      "id": "vampire_tooth", "name": "Vampire Tooth", "type": "passive", "rarity": "uncommon",
+      "text": "1.5% life steal.", "flavor": "The rest of the vampire is still looking for it.", "passive": { "lifeSteal": 0.015 }
+    },
+    {
+      "id": "knights_pauldron", "name": "Knight's Pauldron", "type": "passive", "rarity": "uncommon",
+      "text": "-8% damage taken.", "flavor": "One shoulder of a very brave knight.", "passive": { "armor": 0.08 }
+    },
+    {
+      "id": "gold_tooth", "name": "Gold Tooth", "type": "passive", "rarity": "uncommon",
+      "text": "+20% credits from pickups.", "flavor": "Pried from the richest zombie in town.", "passive": { "credits": 0.2 }
+    },
+    {
+      "id": "clockwork_heart", "name": "Clockwork Heart", "type": "passive", "rarity": "rare",
+      "text": "-8% cooldowns for skills and active items.", "flavor": "Ticks. Loudly. At night.", "passive": { "cooldown": 0.08 }
+    },
+    {
+      "id": "grim_ledger", "name": "Grim Ledger", "type": "passive", "rarity": "rare",
+      "text": "Every 200 kills: +1% damage for this run, no cap.", "flavor": "Someone has to keep the count.", "passive": { "ledgerKills": 200, "ledgerDamage": 0.01 }
+    }
+  ]
+}

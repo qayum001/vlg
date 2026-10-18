@@ -10,7 +10,7 @@ namespace Vlg.Core.Run;
 /// branch level queues a branch pick for it, answered before the next level-up pick. The ultimate is one more
 /// level-up option once the hero level reaches its next entry in leveling.ultimateLevels.
 /// </summary>
-public sealed class HeroProgress
+public sealed class HeroProgress : ISkillLevels
 {
     readonly LevelingSettings _s;
     readonly SkillDef[]? _defs;

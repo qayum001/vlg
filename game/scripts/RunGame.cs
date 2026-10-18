@@ -28,6 +28,7 @@ public partial class RunGame : Node3D
     /// <summary>5x5 prop tiles: props reach past the farthest visible point of the lower, farther run camera.</summary>
     const int PropTiles = 5;
     const string HeroPath = "res://data/heroes/lowkey.json";
+    const float DevCredits = 100f;
 
     /// <summary>Never equals a real (phase, pending) pair: forces SyncPanel to rebuild after a pick.</summary>
     static readonly (RunPhase, int) PanelStale = (RunPhase.Playing, -1);
@@ -38,6 +39,7 @@ public partial class RunGame : Node3D
     LaunchOptions _options = null!;
     RunConfig _config = null!;
     HeroDef _heroDef = null!;
+    ItemsConfig _items = null!;
     QualityPreset _preset = null!;
     WorkerPool _workers = null!;
     RunSim _sim = null!;
@@ -45,6 +47,7 @@ public partial class RunGame : Node3D
     EnemyRenderer _enemies = null!;
     ProjectileRenderer _projectiles = null!;
     GemRenderer _gems = null!;
+    GemRenderer _coins = null!;
     SkillVisuals _skillVisuals = null!;
     VfxSystem _vfx = null!;
     OrbitCamera _camera = null!;
@@ -52,6 +55,7 @@ public partial class RunGame : Node3D
     StandardMaterial3D _heroMaterial = null!;
     RunHud _hud = null!;
     ChoicePanel _panel = null!;
+    ShopPanel _shop = null!;
     BeatAudio _audio = null!;
     BeatOverlay _overlay = null!;
 
@@ -83,11 +87,15 @@ public partial class RunGame : Node3D
             throw new ArgumentException("--stress/--bench open the stress test via the boot scene (main scene), not run.tscn");
         _config = RunConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/run.json"));
         _heroDef = HeroDef.Parse(Godot.FileAccess.GetFileAsString(HeroPath), _config);
+        _items = ItemsConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/items.json"));
         _preset = StressConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/stress.json")).GetPreset(_options.Preset);
         _workers = new WorkerPool(_options.Threads ?? _config.Sim.WorkerThreads, _config.Sim.ParallelMinCount);
-        _sim = new RunSim(_config, _heroDef, _options.Seed, _workers, _options.Loadout, _options.Ultimate);
+        _sim = new RunSim(_config, _heroDef, _items, _options.Seed, _workers, _options.Loadout, _options.Ultimate);
         if (_options.SkillLevel is { } level) _sim.Progress.DevSetAllSkills(level);
         if (_options.UltimateLevel is { } ultLevel) _sim.Progress.DevSetUltimate(ultLevel);
+        if (_options.Credits is { } credits) _sim.DevAddCredits(credits);
+        foreach (string id in _options.Items ?? Array.Empty<string>()) _sim.DevGrant(id);
+        if (_options.Stage is { } stage) _sim.DevJumpToStage(stage);
         foreach (int pick in _options.Branches ?? Array.Empty<int>())
         {
             if (!_sim.Progress.PendingBranch) throw new ArgumentException("--branch: more picks than queued branch choices");
@@ -98,6 +106,7 @@ public partial class RunGame : Node3D
         _enemies = new EnemyRenderer(this, GD.Load<Shader>("res://shaders/enemy_vat.gdshader"));
         _projectiles = new ProjectileRenderer(this);
         _gems = new GemRenderer(this);
+        _coins = GemRenderer.Coins(this);
         _skillVisuals = new SkillVisuals(this, _sim.Loadout.Length);
         var cam = _config.Camera;
         _camera = new OrbitCamera(this, cam.TiltDeg, cam.Distance, cam.FovDeg, cam.FollowRate);
@@ -119,6 +128,7 @@ public partial class RunGame : Node3D
         _overlay = new BeatOverlay(this);
         _hud = new RunHud(this);
         _panel = new ChoicePanel(this);
+        _shop = new ShopPanel(this, _panel);
         _audio = new BeatAudio(this);
 
         QualityApplier.Apply(_preset, GetViewport(), _arena, _enemies, _vfx);
@@ -166,11 +176,13 @@ public partial class RunGame : Node3D
             _enemies.SetCullCenter(cull);
             _projectiles.SetCullCenter(cull);
             _gems.SetCullCenter(cull);
+            _coins.SetCullCenter(cull);
             _skillVisuals.SetCullCenter(cull);
         }
         _enemies.Update(_sim.Enemies, _workers);
         _projectiles.Update(_sim.Projectiles);
         _gems.Update(_sim.Gems, _time);
+        _coins.Update(_sim.Coins, _time);
         _skillVisuals.Update(_sim, stepped ? dt : 0f);
         _audio.Update(_sim, stepped);
         _overlay.Update(beat, _sim.Ultimate, stepped, dt);
@@ -199,8 +211,14 @@ public partial class RunGame : Node3D
         }
         if (e is InputEventJoypadButton { Pressed: true } pad)
         {
-            if (pad.ButtonIndex == JoyButton.Start) TogglePauseMenu();
-            else if (pad.ButtonIndex == JoyButton.Y) PressUltimate();
+            switch (pad.ButtonIndex)
+            {
+                case JoyButton.Start: TogglePauseMenu(); break;
+                case JoyButton.Y: PressUltimate(); break;
+                case JoyButton.LeftShoulder: UseItem(0); break;
+                case JoyButton.RightShoulder: UseItem(1); break;
+                case JoyButton.X: UseItem(2); break;
+            }
             return;
         }
         if (e is not InputEventKey { Pressed: true, Echo: false } key) return;
@@ -215,7 +233,13 @@ public partial class RunGame : Node3D
             case Key.F2: _sim.DevSkipStage(); break;
             case Key.F3: _sim.DevGainLevel(); break;
             case Key.F4: _sim.DevFillUltimate(); break;
+            case Key.F5: _sim.DevAddCredits(DevCredits); break;
             case Key.Space: PressUltimate(); break;
+            case Key.Q: UseItem(0); break;
+            case Key.E: UseItem(1); break;
+            case Key.R: UseItem(2); break;
+            case Key.F: UseItem(3); break;
+            case Key.G: UseItem(4); break;
             case Key.F11:
                 DisplayServer.WindowSetMode(DisplayServer.WindowGetMode() == DisplayServer.WindowMode.Windowed
                     ? DisplayServer.WindowMode.Fullscreen
@@ -230,6 +254,11 @@ public partial class RunGame : Node3D
     void PressUltimate()
     {
         if (!_pauseMenu) _sim.PressUltimate();
+    }
+
+    void UseItem(int slot)
+    {
+        if (!_pauseMenu) _sim.UseItem(slot);
     }
 
     NVec2 ReadMove(float dt)
@@ -279,17 +308,18 @@ public partial class RunGame : Node3D
         {
             case RunPhase.Playing:
                 _panel.Hide();
+                _shop.Hide();
                 break;
             case RunPhase.LevelUp:
+                _shop.Hide();
                 ShowLevelUp();
                 break;
             case RunPhase.Chest:
-                _panel.Show("Chest", "Rare items (pick 1 of 3) arrive with the item system.\nNothing to take yet.",
-                    new[] { "Continue" }, _ => ContinueStage());
+                ShowChest();
                 break;
             case RunPhase.Shop:
-                _panel.Show("Shop", "Fully healed.\nItems and rerolls arrive with the item system.",
-                    new[] { "Continue" }, _ => ContinueStage());
+                _panel.Hide();
+                _shop.Show(_sim, ContinueStage);
                 break;
             case RunPhase.Dead:
                 var st = _sim.Stages;
@@ -337,6 +367,28 @@ public partial class RunGame : Node3D
         _shown = PanelStale;
     }
 
+    /// <summary>Pick 1 of the chest's rare items (no skip); a modifier then asks for a socket.</summary>
+    void ShowChest()
+    {
+        var offer = _sim.ChestOffer;
+        if (offer.Count == 0)
+        {
+            _panel.Show("Chest", "Empty: nothing left you can take.", new[] { "Continue" }, _ => ContinueStage());
+            return;
+        }
+        var items = _items.Items;
+        var labels = new List<string>(offer.Count);
+        foreach (int item in offer) labels.Add(ItemText.Card(items[item]));
+        _panel.Show("Chest", "Pick one rare item.", labels, i =>
+        {
+            int item = offer[i];
+            _sim.TakeChest(i);
+            if (items[item].Type == ItemType.Modifier)
+                ShopPanel.AskSocket(_sim, _panel, _sim.Inventory.Stash.Count - 1, () => _shown = PanelStale);
+            else _shown = PanelStale;
+        });
+    }
+
     string Describe(LevelUpOption o)
     {
         if (o.Kind == LevelUpKind.Bonus)
@@ -352,7 +404,14 @@ public partial class RunGame : Node3D
         if (o.Kind == LevelUpKind.Branch)
         {
             var b = p.BranchOptions(o.Slot, p.PendingBranchPoint)[o.Choice];
-            return $"{b.Name}  ·  {b.Text}";
+            string warn = "";
+            if (b.Tags != null)
+            {
+                var lost = new List<string>();
+                foreach (int item in _sim.Inventory.WouldUnfit(o.Slot, b.Tags)) lost.Add(_items.Items[item].Name);
+                if (lost.Count > 0) warn = $"\n      moves {string.Join(", ", lost)} to the stash (doesn't fit the new form)";
+            }
+            return $"{b.Name}  ·  {b.Text}{warn}";
         }
         var form = def.Resolve(o.NewLevel, p.Path(o.Slot), p.BranchLevels);
         string head = o.Kind == LevelUpKind.Unlock ? $"Unlock {def.Name}" : $"{form.Name}  {o.NewLevel - 1} → {o.NewLevel}";

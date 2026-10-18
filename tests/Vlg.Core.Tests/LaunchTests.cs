@@ -61,6 +61,9 @@ public class LaunchTests
         Assert.Equal(4, LaunchOptions.Parse(new[] { "--skill-level", "4" }).SkillLevel);
         Assert.Throws<ArgumentException>(() => LaunchOptions.Parse(new[] { "--skill-level", "0" }));
         Assert.Equal(new[] { 2, 0, 1 }, LaunchOptions.Parse(new[] { "--branch", "2,0,1" }).Branches);
+        var o = LaunchOptions.Parse(new[] { "--ultimate", "encore", "--ultimate-level", "2", "--stage", "4", "--credits", "300" });
+        Assert.Equal(("encore", 2, 4, 300), (o.Ultimate, o.UltimateLevel, o.Stage, o.Credits));
+        Assert.Equal(new[] { "whetstone", "toy_drone" }, LaunchOptions.Parse(new[] { "--items", "whetstone,toy_drone" }).Items);
     }
 
     [Fact]

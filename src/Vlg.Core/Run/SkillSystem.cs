@@ -6,8 +6,8 @@ using Vlg.Core.Sim;
 namespace Vlg.Core.Run;
 
 /// <summary>
-/// Fires unlocked loadout skills in their current form (level + branch choices, re-resolved when
-/// <see cref="HeroProgress.Version"/> changes). With a beat clock, cooldown and duration are in beats, a ready
+/// Fires unlocked loadout skills in their current form (level + branch choices + modifiers, re-resolved when
+/// the levels' or the modifier's Version changes). With a beat clock, cooldown and duration are in beats, a ready
 /// skill waits for the next half-beat tick, beat-driven parts (speaker pulses, scratches, zones) follow beat ticks,
 /// and the Drop scales damage and area. Without one (item actives later) they are seconds and fire when ready.
 /// Writes enemy health: single thread only.
@@ -65,7 +65,9 @@ public sealed class SkillSystem
     readonly int[] _targets;
     readonly float[] _targetD2;
     readonly Vector2[] _expired = new Vector2[RunConfig.MaxSummonsPerSkill];
+    readonly int[] _chain = new int[RunConfig.MaxProjectilesPerCast];
     int _formsVersion = -1;
+    int _modifierVersion = -1;
     float _dmgMul = 1f;
     double _units;
     XorShift32 _rng;
@@ -92,6 +94,8 @@ public sealed class SkillSystem
     public bool BlockedThisStep { get; private set; }
     /// <summary>Cooldowns run this many times as fast (Encore, items). 1 = normal.</summary>
     public float RateMultiplier { get; set; } = 1f;
+    /// <summary>Applied to every resolved form (socketed modifiers); null = none.</summary>
+    public IFormModifier? Modifier { get; set; }
 
     /// <param name="sourceBase">Damage source of slot 0; slot i uses sourceBase + i.</param>
     public SkillSystem(SkillDef[] defs, SkillWorld world, BeatClock? beat, byte sourceBase, uint seed)
@@ -139,24 +143,27 @@ public sealed class SkillSystem
     /// <summary>Seconds per cooldown/duration unit.</summary>
     public float UnitSec => _beat?.BeatSec ?? 1f;
 
-    /// <summary>Re-resolves forms when the progress changed (also called by Update).</summary>
-    public void Refresh(HeroProgress progress)
+    /// <summary>Re-resolves forms when levels or modifiers changed (also called by Update).</summary>
+    public void Refresh(ISkillLevels levels)
     {
-        if (progress.Version == _formsVersion) return;
-        _formsVersion = progress.Version;
+        int modVersion = Modifier?.Version ?? 0;
+        if (levels.Version == _formsVersion && modVersion == _modifierVersion) return;
+        _formsVersion = levels.Version;
+        _modifierVersion = modVersion;
         for (int slot = 0; slot < _defs.Length; slot++)
         {
-            int level = progress.SkillLevel(slot);
+            int level = levels.SkillLevel(slot);
             var before = _forms[slot]?.Kind;
-            _forms[slot] = level == 0 ? null : _defs[slot].Resolve(level, progress.Path(slot), progress.BranchLevels);
+            var form = level == 0 ? null : _defs[slot].Resolve(level, levels.Path(slot), levels.BranchLevels);
+            _forms[slot] = form != null && Modifier != null ? Modifier.Apply(slot, form) : form;
             if (before != _forms[slot]?.Kind) ResetSlot(slot);
         }
     }
 
     /// <param name="damageMult">Global damage multiplier (level-up bonus, items).</param>
-    public void Update(float dt, HeroProgress progress, float damageMult)
+    public void Update(float dt, ISkillLevels levels, float damageMult)
     {
-        Refresh(progress);
+        Refresh(levels);
         BladeCount = 0;
         DroneCount = 0;
         BlockedThisStep = false;
@@ -311,6 +318,7 @@ public sealed class SkillSystem
                 _sweepBase[slot] = Angle(_w.Facing) - st.Arc * (MathF.PI / 180f) * 0.5f;
                 return true;
             case SkillKind.Boomerang: return CastBoomerangs(form, damage, source);
+            case SkillKind.Chain: return CastChain(slot, st, damage, source);
             default: throw new InvalidOperationException($"unknown skill kind {form.Kind}");
         }
     }
@@ -356,6 +364,8 @@ public sealed class SkillSystem
             Bounces = st.BounceAmount,
             Falloff = st.Falloff,
             BurstOnBounce = form.Has(SkillFlag.BurstOnBounce),
+            ExplodeRadius = form.Has(SkillFlag.ExplodeOnHit) ? st.Blast : 0f,
+            ExplodeFactor = DroneExplodeFactor,
         };
         for (int k = 0; k < st.Amount; k++)
         {
@@ -708,7 +718,7 @@ public sealed class SkillSystem
             Life = st.Range / st.Speed,
             Damage = damage,
             Source = source,
-            ExplodeRadius = form.Has(SkillFlag.ExplodeOnHit) ? st.Radius : 0f,
+            ExplodeRadius = form.Has(SkillFlag.ExplodeOnHit) ? st.Blast : 0f,
             ExplodeFactor = DroneExplodeFactor,
         };
         for (int d = droneStart; d < DroneCount; d++)
@@ -722,6 +732,44 @@ public sealed class SkillSystem
             any = true;
         }
         return any;
+    }
+
+    /// <summary>Nearest enemy in range, then hops to the nearest unhit enemy within radius. False = none in range.</summary>
+    bool CastChain(int slot, SkillStats st, float damage, byte source)
+    {
+        var e = _w.Enemies;
+        if (NearestInRange(_w.Hero, st.Range, 1) == 0) return false;
+        int cur = _targets[0];
+        var from = _w.Hero;
+        int hit = 0;
+        while (true)
+        {
+            e.Damage(cur, damage, source);
+            _w.Hits.Add(e.Position[cur]);
+            var off = e.Position[cur] - from;
+            float len = off.Length();
+            if (len > 1e-3f) _w.Beams.Add(from, off / len, len, 0.15f, slot);
+            _chain[hit++] = cur;
+            if (hit >= st.Amount) break;
+            from = e.Position[cur];
+            int n = Around(from, st.Radius + _w.EnemyRadius, _query);
+            int next = -1;
+            float best = float.MaxValue;
+            for (int k = 0; k < n; k++)
+            {
+                int j = _query[k];
+                if (Array.IndexOf(_chain, j, 0, hit) >= 0) continue;
+                float d2 = Vector2.DistanceSquared(e.Position[j], from);
+                if (d2 < best)
+                {
+                    best = d2;
+                    next = j;
+                }
+            }
+            if (next < 0) break;
+            cur = next;
+        }
+        return true;
     }
 
     // ---- Shared helpers ----

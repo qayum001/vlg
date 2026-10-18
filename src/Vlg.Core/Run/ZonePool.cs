@@ -45,6 +45,8 @@ public sealed class ZonePool
         _query = new int[queryCapacity];
     }
 
+    public byte SourceOf(int i) => _shot[i].Source;
+
     /// <summary>Full pool (fallback): overwrites slots round-robin.</summary>
     public void Spawn(in ZoneShot s)
     {

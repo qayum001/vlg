@@ -39,4 +39,6 @@ public enum Stat
     Heal,
     /// <summary>Ultimate charge needed: seconds, kills or Drops.</summary>
     Charge,
+    /// <summary>Explosion radius of shots with ExplodeOnHit, m.</summary>
+    Blast,
 }

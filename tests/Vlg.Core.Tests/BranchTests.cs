@@ -151,7 +151,7 @@ public class BranchTests
     public void Branch_pick_in_a_run_changes_how_the_skill_plays()
     {
         var c = TestConfig.Run with { Stages = new[] { new StageDef { Kind = StageKind.Mobs, DurationSec = 1000 } } };
-        var sim = new RunSim(c, TestConfig.Hero, 1);
+        var sim = new RunSim(c, TestConfig.Hero, TestConfig.Items, 1);
         sim.Progress.DevSetAllSkills(5);
         Assert.Equal(RunPhase.LevelUp, sim.Phase);
         // Cowbell first: option 2 = Cowbell Rain.

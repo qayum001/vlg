@@ -27,4 +27,6 @@ public enum SkillKind
     Sweep,
     /// <summary>Projectiles that fly out to range and return to the hero, hitting both ways.</summary>
     Boomerang,
+    /// <summary>Lightning: nearest enemy in range, then jumps to the nearest unhit enemy within radius, count targets.</summary>
+    Chain,
 }
