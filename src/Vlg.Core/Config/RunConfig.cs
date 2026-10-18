@@ -24,8 +24,10 @@ public sealed record RunConfig
     public const int MaxBlades = 32;
     /// <summary>Upper bound for Projectile count (target buffer).</summary>
     public const int MaxProjectilesPerCast = 256;
-    /// <summary>Upper bound for alive speakers per skill (summon pool sizing).</summary>
+    /// <summary>Upper bound for alive speakers / bells per cast per skill (pool sizing).</summary>
     public const int MaxSummonsPerSkill = 16;
+    public const int MaxBeamDirections = 8;
+    public const int MaxDrones = 8;
     /// <summary>Widest supported screen (21:9). Despawn radii must lie beyond the view at this aspect.</summary>
     public const float MaxAspect = 21f / 9f;
     /// <summary>Top screen edge at least this far below the horizon, else the view reaches very far.</summary>
@@ -43,7 +45,7 @@ public sealed record RunConfig
     {
         var s = Sim;
         Require(s.MaxStepSec > 0, "sim.maxStepSec must be > 0");
-        Require(s.EnemyCapacity > 0 && s.ProjectileCapacity > 0 && s.GemCapacity > 0 && s.RingCapacity > 0, "sim capacities must be > 0");
+        Require(s.EnemyCapacity > 0 && s.ProjectileCapacity > 0 && s.GemCapacity > 0 && s.RingCapacity > 0 && s.ZoneCapacity > 0, "sim capacities must be > 0");
         Require(s.GridDim > 0 && s.GridCellSize > 0, "sim grid must be > 0");
         Require(s.ProjectileRadius > 0, "sim.projectileRadius must be > 0");
         Require(s.WorkerThreads >= -1 && s.ParallelMinCount >= 1, "sim.workerThreads must be >= -1, parallelMinCount >= 1");
@@ -75,6 +77,9 @@ public sealed record RunConfig
         Require(l.XpBase > 0 && l.XpPerLevel >= 0, "leveling xpBase must be > 0, xpPerLevel >= 0");
         Require(l.LevelDivisor >= 1 && l.MaxSkillLevel >= 1, "leveling levelDivisor/maxSkillLevel must be >= 1");
         Require(l.MaxedBonusDamage >= 0, "leveling.maxedBonusDamage must be >= 0");
+        for (int i = 0; i < l.BranchLevels.Length; i++)
+            Require(l.BranchLevels[i] >= 2 && l.BranchLevels[i] <= l.MaxSkillLevel && (i == 0 || l.BranchLevels[i] > l.BranchLevels[i - 1]),
+                "leveling.branchLevels must ascend within 2..maxSkillLevel");
 
         var ls = LoopScaling;
         Require(ls.HpPerLoop >= 0 && ls.DamagePerLoop >= 0 && ls.SpawnPerLoop >= 0, "loopScaling values must be >= 0");

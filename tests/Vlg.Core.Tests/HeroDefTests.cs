@@ -96,4 +96,13 @@ public class HeroDefTests
         Assert.Equal(2, def.StatsAt(3).Amount);
         Assert.Equal(5, def.StatsAt(10).Amount);
     }
+
+    [Fact]
+    public void With_expression_copies_stats_instead_of_sharing_them()
+    {
+        var a = new SkillStats { Damage = 1, Range = 5 };
+        var b = a with { Damage = 2 };
+        Assert.Equal((1f, 5f), (a.Damage, a.Range));
+        Assert.Equal((2f, 5f), (b.Damage, b.Range));
+    }
 }

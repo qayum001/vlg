@@ -39,7 +39,7 @@ public class RingPoolTests
         int mid = w.Enemy(new Vector2(3, 0));
         int edge = w.Enemy(new Vector2(0, -5.4f)); // near edge 4.95 <= 5
         int outside = w.Enemy(new Vector2(6, 0));
-        w.Rings.Spawn(Vector2.Zero, 5f, 10f, 7f, 0f, 9);
+        w.Rings.Spawn(new RingShot { MaxRadius = 5f, Speed = 10f, Damage = 7f, Source = 9 });
 
         w.Step(0.1f);
         Assert.Equal(93f, w.Enemies.Health[center]);
@@ -58,7 +58,7 @@ public class RingPoolTests
     {
         var w = new World();
         int e = w.Enemy(new Vector2(0, 2));
-        w.Rings.Spawn(Vector2.Zero, 5f, 10f, 1f, 6f, 1);
+        w.Rings.Spawn(new RingShot { MaxRadius = 5f, Speed = 10f, Damage = 1f, Knockback = 6f, Source = 1 });
 
         for (int i = 0; i < 4; i++) w.Step(0.1f);
 

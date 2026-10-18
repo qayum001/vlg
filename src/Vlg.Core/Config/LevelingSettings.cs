@@ -11,4 +11,6 @@ public sealed record LevelingSettings
     public required int MaxSkillLevel { get; init; }
     /// <summary>Damage bonus per level-up when no skill can be unlocked or raised.</summary>
     public required float MaxedBonusDamage { get; init; }
+    /// <summary>Skill levels that open a branch pick, ascending (domain.md: 5 and 10).</summary>
+    public required int[] BranchLevels { get; init; }
 }

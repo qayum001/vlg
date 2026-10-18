@@ -14,7 +14,10 @@ public sealed class SkillWorld
     public readonly ProjectilePool Projectiles;
     public readonly RingPool Rings;
     public readonly SummonPool Summons;
+    public readonly ZonePool Zones;
+    public readonly StrikePool Strikes;
     public readonly BeamEvents Beams;
+    public readonly FlashEvents Flashes;
     public readonly PointBuffer Hits;
     public readonly float HeroRadius;
     public readonly float EnemyRadius;
@@ -22,18 +25,23 @@ public sealed class SkillWorld
     public Vector2 Hero;
     /// <summary>Unit camera forward on the ground (aimed skills).</summary>
     public Vector2 Aim = new(0f, -1f);
+    /// <summary>Unit direction the hero last moved in (front-facing skills); starts as camera forward.</summary>
+    public Vector2 Facing = new(0f, -1f);
     /// <summary>Max enemy movement since the grid build.</summary>
     public float QueryPad;
 
     public SkillWorld(EnemySwarm enemies, SpatialGrid grid, ProjectilePool projectiles, RingPool rings, SummonPool summons,
-        BeamEvents beams, PointBuffer hits, float heroRadius, float enemyRadius)
+        ZonePool zones, StrikePool strikes, BeamEvents beams, FlashEvents flashes, PointBuffer hits, float heroRadius, float enemyRadius)
     {
         Enemies = enemies;
         Grid = grid;
         Projectiles = projectiles;
         Rings = rings;
         Summons = summons;
+        Zones = zones;
+        Strikes = strikes;
         Beams = beams;
+        Flashes = flashes;
         Hits = hits;
         HeroRadius = heroRadius;
         EnemyRadius = enemyRadius;

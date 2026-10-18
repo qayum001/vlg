@@ -16,6 +16,17 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+### Lowkey skill forms (branches at skill level 5 and 10)
+Added: 2026-10-18 | Confirmed: -
+What: every Lowkey skill now changes form. At skill level 5 you pick 1 of 3 forms, and at level 10 1 of 2 follow-ups of that form: 54 forms in total, as in `design/heroes/lowkey.md`. Some forms deepen the skill (more notes, pierce, bounces, extra rings). Others change what it is: falling cowbells, ground cracks, a flying boombox, a shield, a sweeping beam, records thrown like frisbees. The HUD and the level-up cards show the form name ("Cowbell · Ricochet · Pinball").
+How to test:
+1. Normal play: raise a skill to level 5 (F3 for levels). Right after the "4 → 5" card, a "Cowbell: choose a form" card shows 3 options with a one-line description each. At level 10 it shows 2 follow-ups of the chosen form.
+2. Quick look at many forms (`LAUNCH.md` → Options): `-- --skill-level 10 --branch 2,0,2,1,2,1,2,0` gives Cowbell Rain + Cathedral (big golden bells drop on groups and stun), Earthquake + Aftershock (orange crack circles that hurt on every beat, with an eruption every 4th bar), Boombox Drone + Bass Boosted (a cyan box floating next to you, shooting exploding bolts on every beat), and Sweep + Full Circle (the beam spins around you each bar).
+3. Second set: `-- --loadout distortion,vinyl,slap,speaker_stack --skill-level 10 --branch 1,0,1,0,0,1,1,1` gives Fuzz Trail + Static Storm (walk around: purple puddles behind you zap nearby walkers), Frisbee + Rebound (records fly out, bounce between walkers, come back), Slap & Pop + Pop Shot (beams forward and back, ends explode), and Subwoofer + Blowout (one big speaker pulls walkers in, then explodes when it expires).
+4. Try Noise Gate (`--loadout distortion,cowbell --skill-level 5 --branch 2`): a cyan bubble around you. The first walker that touches you sets off a blast, and you take no damage for a moment. The bubble comes back 2 bars later.
+5. Try any other combination. The last digit of each pair picks the level-10 form; skills listed in `--loadout` are asked in that order.
+Expected: no errors in the console, every form plays as its card text says, and form choices never repeat for the same skill. A wrong `--branch` count stops the game with an error.
+
 ### Lowkey base kit + The Drop (beat clock)
 Added: 2026-10-18 | Confirmed: -
 What: the placeholder skills are gone. The hero is now Lowkey (`game/data/heroes/lowkey.json`, design: `design/heroes/lowkey.md`) with 90 HP and speed 7. She has a pool of 6 skills, and 4 of them are in the loadout. Her skills fire on a 130 BPM beat. Every 8 bars a 1-bar build-up leads into a 2-bar Drop (+30% damage, +20% area) that starts with a shockwave. A placeholder groove plays on the beat (kick, clap, hats, riser, drop boom, plus a sound for each skill cast). Skill branches, ultimates and items come next.

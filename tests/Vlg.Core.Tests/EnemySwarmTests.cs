@@ -213,4 +213,19 @@ public class EnemySwarmTests
         Assert.Equal((id, 0.4f, new Vector2(0, 3)), (swarm.Id[0], swarm.Slow[0], swarm.Push[0]));
         Assert.NotEqual(0u, id);
     }
+
+    [Fact]
+    public void Burn_ticks_health_down_for_its_duration_and_heat_decays()
+    {
+        var (swarm, grid) = Make(new Vector2(10, 0));
+        float hp = swarm.Health[0];
+        swarm.ApplyBurn(0, 4f, 0.5f, 6);
+        swarm.Heat[0] = 1f;
+
+        Step(swarm, grid, Vector2.Zero, 60);
+
+        Assert.Equal(hp - 2f, swarm.Health[0], 2);
+        Assert.Equal(6, swarm.LastHit[0]);
+        Assert.Equal(0f, swarm.Heat[0], 4);
+    }
 }

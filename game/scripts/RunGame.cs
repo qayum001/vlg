@@ -87,6 +87,11 @@ public partial class RunGame : Node3D
         _workers = new WorkerPool(_options.Threads ?? _config.Sim.WorkerThreads, _config.Sim.ParallelMinCount);
         _sim = new RunSim(_config, _heroDef, _options.Seed, _workers, _options.Loadout);
         if (_options.SkillLevel is { } level) _sim.Progress.DevSetAllSkills(level);
+        foreach (int pick in _options.Branches ?? Array.Empty<int>())
+        {
+            if (!_sim.Progress.PendingBranch) throw new ArgumentException("--branch: more picks than queued branch choices");
+            _sim.ChooseLevelUp(pick);
+        }
 
         _arena = new Arena(this, GD.Load<Shader>("res://shaders/ground.gdshader"), _options.Seed, PropTiles);
         _enemies = new EnemyRenderer(this, GD.Load<Shader>("res://shaders/enemy_vat.gdshader"));
@@ -257,7 +262,7 @@ public partial class RunGame : Node3D
     void SyncPanel()
     {
         if (_pauseMenu) return;
-        var want = (_sim.Phase, _sim.Progress.PendingLevelUps);
+        var want = (_sim.Phase, _sim.Progress.PendingPicks);
         if (want == _shown) return;
         _shown = want;
         var inv = CultureInfo.InvariantCulture;
@@ -296,15 +301,25 @@ public partial class RunGame : Node3D
         var options = _sim.LevelUpOptions();
         var labels = new List<string>(options.Count);
         foreach (var o in options) labels.Add(Describe(o));
-        string pending = p.PendingLevelUps > 1 ? $" ({p.PendingLevelUps} picks)" : "";
-        var l = _config.Leveling;
-        _panel.Show($"Level {p.Level}{pending}",
-            $"Skill level cap {p.SkillCap} (hero level / {l.LevelDivisor}, rounded up, max {l.MaxSkillLevel})",
-            labels, i =>
-            {
-                _sim.ChooseLevelUp(i);
-                _shown = PanelStale;
-            });
+        string title, body;
+        if (p.PendingBranch)
+        {
+            int slot = options[0].Slot;
+            title = $"{_sim.Loadout[slot].Name}: choose a form";
+            body = $"Skill level {p.SkillLevel(slot)} reached. The choice is final for this run.";
+        }
+        else
+        {
+            string pending = p.PendingPicks > 1 ? $" ({p.PendingPicks} picks)" : "";
+            var l = _config.Leveling;
+            title = $"Level {p.Level}{pending}";
+            body = $"Skill level cap {p.SkillCap} (hero level / {l.LevelDivisor}, rounded up, max {l.MaxSkillLevel}) · forms at {string.Join(" and ", l.BranchLevels)}";
+        }
+        _panel.Show(title, body, labels, i =>
+        {
+            _sim.ChooseLevelUp(i);
+            _shown = PanelStale;
+        });
     }
 
     void ContinueStage()
@@ -317,17 +332,26 @@ public partial class RunGame : Node3D
     {
         if (o.Kind == LevelUpKind.Bonus)
             return string.Create(CultureInfo.InvariantCulture, $"+{_config.Leveling.MaxedBonusDamage * 100f:0.#}% damage to all skills");
+        var p = _sim.Progress;
         var def = _sim.Loadout[o.Slot];
-        string head = o.Kind == LevelUpKind.Unlock ? $"Unlock {def.Name}" : $"{def.Name}  {o.NewLevel - 1} → {o.NewLevel}";
-        return $"{head}\n      {SkillText(def, o.NewLevel)}";
+        if (o.Kind == LevelUpKind.Branch)
+        {
+            var b = p.BranchOptions(o.Slot, p.PendingBranchPoint)[o.Choice];
+            return $"{b.Name}  ·  {b.Text}";
+        }
+        var form = def.Resolve(o.NewLevel, p.Path(o.Slot), p.BranchLevels);
+        string head = o.Kind == LevelUpKind.Unlock ? $"Unlock {def.Name}" : $"{form.Name}  {o.NewLevel - 1} → {o.NewLevel}";
+        int point = Array.IndexOf(_config.Leveling.BranchLevels, o.NewLevel);
+        string formNext = point >= 0 && def.OptionsAt(p.Path(o.Slot), point).Count > 0 ? "  ·  new form!" : "";
+        return $"{head}{formNext}\n      {SkillText(form)}";
     }
 
-    static string SkillText(SkillDef def, int level)
+    static string SkillText(SkillForm f)
     {
-        var s = def.StatsAt(level);
+        var s = f.Stats;
         var inv = CultureInfo.InvariantCulture;
         string every = string.Create(inv, $"every {s.Cooldown:0.##} beats");
-        return def.Kind switch
+        return f.Kind switch
         {
             SkillKind.Projectile => string.Create(inv, $"{s.Amount} note(s) at nearest · {s.Damage:0.#} dmg · {every} · range {s.Range:0.#} m"),
             SkillKind.Ring => string.Create(inv, $"bass ring · {s.Damage:0.#} dmg · {every} · radius {s.Radius:0.#} m · pushes back"),
@@ -335,7 +359,13 @@ public partial class RunGame : Node3D
             SkillKind.Aura => string.Create(inv, $"{s.Damage:0.#} dmg per beat · radius {s.Radius:0.#} m · Distorted +{s.Vuln * 100f:0}% damage taken"),
             SkillKind.Beam => string.Create(inv, $"beam where the camera looks · {s.Damage:0.#} dmg · {every} · {s.Range:0.#} m long"),
             SkillKind.Orbit => string.Create(inv, $"{s.Amount} records · {s.Damage:0.#} dmg per hit · orbit {s.Range:0.#} m"),
-            _ => def.Kind.ToString(),
+            SkillKind.BellDrop => string.Create(inv, $"{s.Amount} bell(s) on enemy groups · {s.Damage:0.#} dmg · {every} · radius {s.Radius:0.#} m"),
+            SkillKind.Quake => string.Create(inv, $"cracks · {s.Damage:0.#} dmg per beat · {every} · radius {s.Radius:0.#} m · last {s.Duration:0.#} beats"),
+            SkillKind.Drone => string.Create(inv, $"{s.Amount} drone(s) · {s.Damage:0.#} dmg per bolt · {every} · range {s.Range:0.#} m"),
+            SkillKind.Shield => string.Create(inv, $"blocks a hit {every} · blast {s.Damage:0.#} dmg · radius {s.Radius:0.#} m"),
+            SkillKind.Sweep => string.Create(inv, $"sweeps {s.Arc:0} degrees · {s.Damage:0.#} dmg · {every} · {s.Range:0.#} m long"),
+            SkillKind.Boomerang => string.Create(inv, $"{s.Amount} record(s) out and back · {s.Damage:0.#} dmg · {every} · range {s.Range:0.#} m"),
+            _ => f.Kind.ToString(),
         };
     }
 

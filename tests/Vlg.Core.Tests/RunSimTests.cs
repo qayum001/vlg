@@ -212,7 +212,7 @@ public class RunSimTests
             seen = true;
             int k = Array.IndexOf(sim.Rings.Source, RunSim.DropShockSource, 0, sim.Rings.Count);
             Assert.True(k >= 0);
-            Assert.Equal((b.ShockRadius, b.ShockSpeed, b.ShockKnockback), (sim.Rings.MaxRadius[k], sim.Rings.Speed[k], sim.Rings.Knockback[k]));
+            Assert.Equal((b.ShockRadius, b.ShockSpeed, b.ShockKnockback), (sim.Rings.MaxRadius[k], sim.Rings.Shot(k).Speed, sim.Rings.Shot(k).Knockback));
         }
         Assert.True(seen);
         Assert.Equal(1, sim.Beat.Drops);

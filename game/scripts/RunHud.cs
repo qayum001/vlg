@@ -69,11 +69,15 @@ public sealed class RunHud
         hint.Text = Hint;
         hint.Modulate = new Color(1, 1, 1, 0.7f);
 
-        _skills = AddLabel(20, HorizontalAlignment.Left);
+        // Form names get long ("Speaker Stack · Boombox Drone · Bass Boosted"): wrap upward over two lines.
+        _skills = AddLabel(17, HorizontalAlignment.Left);
         _skills.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomWide);
         _skills.OffsetLeft = 16;
-        _skills.OffsetTop = -74;
+        _skills.OffsetRight = -16;
+        _skills.OffsetTop = -100;
         _skills.OffsetBottom = -44;
+        _skills.VerticalAlignment = VerticalAlignment.Bottom;
+        _skills.AutowrapMode = TextServer.AutowrapMode.WordSmart;
 
         // Beat row under the stage line: 4 beat squares, cycle bar toward the next Drop, status text.
         var beatRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
@@ -139,7 +143,7 @@ public sealed class RunHud
         for (int i = 0; i < sim.Loadout.Length; i++)
         {
             int level = p.SkillLevel(i);
-            _sb.Append(sim.Loadout[i].Name).Append(' ').Append(level > 0 ? level.ToString(inv) : "–").Append("     ");
+            _sb.Append(sim.Skills.Form(i)?.Name ?? sim.Loadout[i].Name).Append(' ').Append(level > 0 ? level.ToString(inv) : "–").Append("     ");
         }
         _sb.Append("skill cap ").Append(p.SkillCap.ToString(inv));
         if (p.BonusCount > 0) _sb.Append("   bonus +").Append(((p.DamageMultiplier - 1f) * 100f).ToString("0.#", inv)).Append("% damage");

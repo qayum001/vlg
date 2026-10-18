@@ -14,7 +14,7 @@ public class ProjectilePoolTests
         var rng = new XorShift32(3);
         enemies.Spawn(new Vector2(0, 5), t.EnemyHealth, ref rng);
         var grid = new SpatialGrid(32, t.GridCellSize, 4);
-        var pool = new ProjectilePool(4);
+        var pool = new ProjectilePool(4, TestConfig.Sim.ProjectileRadius);
         pool.Spawn(Vector2.Zero, new Vector2(0, t.ProjectileSpeed), t.ProjectileLife, t.ProjectileDamage);
         var hits = new PointBuffer(8);
 
@@ -23,7 +23,7 @@ public class ProjectilePoolTests
         {
             hits.Clear();
             grid.Build(enemies.Position, enemies.Count, Vector2.Zero);
-            pool.Update(1f / 60f, enemies, grid, hits, t.ProjectileRadius + t.EnemyRadius, t.EnemySpeed * EnemySwarm.MaxSpeedFactor);
+            pool.Update(1f / 60f, enemies, grid, hits, t.EnemyRadius, t.EnemySpeed * EnemySwarm.MaxSpeedFactor);
             totalHits += hits.Count;
         }
 
@@ -39,7 +39,7 @@ public class ProjectilePoolTests
         var t = TestConfig.Sim;
         var enemies = new EnemySwarm(1);
         var grid = new SpatialGrid(8, 1f, 1);
-        var pool = new ProjectilePool(2);
+        var pool = new ProjectilePool(2, TestConfig.Sim.ProjectileRadius);
         pool.Spawn(Vector2.Zero, new Vector2(1, 0), 0.5f, t.ProjectileDamage);
         pool.Spawn(Vector2.Zero, new Vector2(1, 0), 2f, t.ProjectileDamage);
         var hits = new PointBuffer(1);
@@ -47,7 +47,7 @@ public class ProjectilePoolTests
         for (int f = 0; f < 40; f++) // 0.67 s
         {
             grid.Build(enemies.Position, 0, Vector2.Zero);
-            pool.Update(1f / 60f, enemies, grid, hits, t.ProjectileRadius + t.EnemyRadius, t.EnemySpeed * EnemySwarm.MaxSpeedFactor);
+            pool.Update(1f / 60f, enemies, grid, hits, t.EnemyRadius, t.EnemySpeed * EnemySwarm.MaxSpeedFactor);
         }
 
         Assert.Equal(1, pool.Count);
@@ -64,11 +64,11 @@ public class ProjectilePoolTests
         enemies.Health[0] = 0;
         var grid = new SpatialGrid(8, 1f, 1);
         grid.Build(enemies.Position, 1, Vector2.Zero);
-        var pool = new ProjectilePool(1);
+        var pool = new ProjectilePool(1, TestConfig.Sim.ProjectileRadius);
         pool.Spawn(Vector2.Zero, Vector2.Zero, 1f, t.ProjectileDamage);
         var hits = new PointBuffer(1);
 
-        pool.Update(1f / 60f, enemies, grid, hits, t.ProjectileRadius + t.EnemyRadius, t.EnemySpeed * EnemySwarm.MaxSpeedFactor);
+        pool.Update(1f / 60f, enemies, grid, hits, t.EnemyRadius, t.EnemySpeed * EnemySwarm.MaxSpeedFactor);
 
         Assert.Equal(0, hits.Count);
         Assert.Equal(1, pool.Count);
@@ -83,10 +83,10 @@ public class ProjectilePoolTests
         enemies.Spawn(new Vector2(0, 0.1f), 100f, ref rng);
         var grid = new SpatialGrid(8, 1f, 1);
         grid.Build(enemies.Position, 1, Vector2.Zero);
-        var pool = new ProjectilePool(1);
+        var pool = new ProjectilePool(1, TestConfig.Sim.ProjectileRadius);
         pool.Spawn(Vector2.Zero, Vector2.Zero, 1f, 7f);
 
-        pool.Update(1f / 60f, enemies, grid, new PointBuffer(1), t.ProjectileRadius + t.EnemyRadius, t.EnemySpeed);
+        pool.Update(1f / 60f, enemies, grid, new PointBuffer(1), t.EnemyRadius, t.EnemySpeed);
 
         Assert.Equal(93f, enemies.Health[0]);
     }

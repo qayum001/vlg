@@ -9,92 +9,22 @@ namespace Vlg.Core.Tests;
 
 public class SkillSystemTests
 {
-    const float HeroRadius = 0.5f, EnemyRadius = 0.45f;
-    /// <summary>120 BPM: beat 0.5 s, half-beat 0.25 s. Steps of 1/16 s land exactly on boundaries.</summary>
-    const float Dt = 0.0625f;
+    const float HeroRadius = SkillTestWorld.HeroRadius;
 
-    static BeatSettings Beat(int dropBars = 0, float dropDamage = 0f, float dropArea = 0f) => new()
-    {
-        Bpm = 120, CycleBars = 1, BuildBars = 0, DropBars = dropBars, DropDamage = dropDamage, DropArea = dropArea,
-        ShockDamage = 0, ShockRadius = 1, ShockSpeed = 1, ShockKnockback = 0,
-    };
-
-    static SkillDef Skill(SkillKind kind, SkillStats stats, SkillStats perLevel = default) => new()
-    {
-        Id = kind.ToString(), Name = kind.ToString(), Kind = kind, Tags = new[] { SkillTag.Area }, Base = stats, PerLevel = perLevel,
-    };
-
-    static readonly SkillDef Notes = Skill(SkillKind.Projectile,
+    static readonly SkillDef Notes = SkillTestWorld.Skill(SkillKind.Projectile,
         new SkillStats { Damage = 6, Cooldown = 2, Count = 1, Speed = 20, Range = 10 }, new SkillStats { Count = 0.5f });
-    static readonly SkillDef Ring = Skill(SkillKind.Ring, new SkillStats { Damage = 5, Cooldown = 2, Radius = 6, Speed = 12, Knockback = 6 });
-    static readonly SkillDef Speaker = Skill(SkillKind.Speaker,
+    static readonly SkillDef Ring = SkillTestWorld.Skill(SkillKind.Ring, new SkillStats { Damage = 5, Cooldown = 2, Radius = 6, Speed = 12, Knockback = 6 });
+    static readonly SkillDef Speaker = SkillTestWorld.Skill(SkillKind.Speaker,
         new SkillStats { Damage = 4, Cooldown = 2, Count = 1, Duration = 4, Radius = 2, Range = 12 });
-    static readonly SkillDef Aura = Skill(SkillKind.Aura, new SkillStats { Damage = 3, Cooldown = 1, Radius = 2.5f, Vuln = 0.5f });
-    static readonly SkillDef Beam = Skill(SkillKind.Beam, new SkillStats { Damage = 10, Cooldown = 2, Range = 10, Width = 1 });
-    static readonly SkillDef Orbit = Skill(SkillKind.Orbit,
+    static readonly SkillDef Aura = SkillTestWorld.Skill(SkillKind.Aura, new SkillStats { Damage = 3, Cooldown = 1, Radius = 2.5f, Vuln = 0.5f });
+    static readonly SkillDef Beam = SkillTestWorld.Skill(SkillKind.Beam, new SkillStats { Damage = 10, Cooldown = 2, Range = 10, Width = 1, Count = 1 });
+    static readonly SkillDef Orbit = SkillTestWorld.Skill(SkillKind.Orbit,
         new SkillStats { Damage = 5, Cooldown = 0.5f, Count = 3, Speed = 2, Range = 3, Radius = 0.6f });
-
-    sealed class World
-    {
-        public readonly SkillSystem Skills;
-        public readonly HeroProgress Progress;
-        public readonly BeatClock Clock;
-        public readonly EnemySwarm Enemies = new(64);
-        public readonly SpatialGrid Grid = new(32, 2f, 64);
-        public readonly ProjectilePool Projectiles = new(256);
-        public readonly RingPool Rings = new(16, 64);
-        public readonly SummonPool Summons = new(32);
-        public readonly BeamEvents Beams = new(8);
-        public readonly PointBuffer Hits = new(256);
-        public readonly SkillWorld Ctx;
-        XorShift32 _rng = new(5);
-
-        public World(BeatSettings beat, int divisor, params SkillDef[] defs)
-        {
-            Clock = new BeatClock(beat);
-            Ctx = new SkillWorld(Enemies, Grid, Projectiles, Rings, Summons, Beams, Hits, HeroRadius, EnemyRadius);
-            Skills = new SkillSystem(defs, Ctx, Clock, 1, 7);
-            Progress = new HeroProgress(new LevelingSettings
-            {
-                XpBase = 5, XpPerLevel = 0, LevelDivisor = divisor, MaxSkillLevel = 10, MaxedBonusDamage = 0.02f,
-            }, defs.Length);
-        }
-
-        public World(params SkillDef[] defs) : this(Beat(), 3, defs) { }
-
-        public int Enemy(Vector2 p, float hp = 100f)
-        {
-            Enemies.Spawn(p, hp, ref _rng);
-            return Enemies.Count - 1;
-        }
-
-        public void Update(float dt = Dt)
-        {
-            Hits.Clear();
-            Beams.Clear();
-            Clock.Advance(dt);
-            Grid.Build(Enemies.Position, Enemies.Count, Vector2.Zero);
-            Skills.Update(dt, Progress, Progress.DamageMultiplier);
-        }
-
-        public void Raise(int slot, int times)
-        {
-            for (int i = 0; i < times; i++)
-            {
-                Progress.DevGainLevel();
-                var options = Progress.Options();
-                int pick = -1;
-                for (int k = 0; k < options.Count; k++)
-                    if (options[k].Slot == slot) pick = k;
-                Progress.Choose(pick);
-            }
-        }
-    }
 
     [Fact]
     public void Projectile_fires_at_the_nearest_enemy_with_its_damage_range_and_source()
     {
-        var w = new World(Notes);
+        var w = new SkillTestWorld(Notes);
         w.Enemy(new Vector2(0, 8));
         w.Enemy(new Vector2(5, 0));
 
@@ -112,7 +42,7 @@ public class SkillSystemTests
     [Fact]
     public void Projectile_without_a_target_in_range_waits_and_fires_when_one_arrives()
     {
-        var w = new World(Notes);
+        var w = new SkillTestWorld(Notes);
         w.Enemy(new Vector2(0, 11));
         for (int i = 0; i < 8; i++) w.Update();
         Assert.Equal(0, w.Projectiles.Count);
@@ -126,7 +56,7 @@ public class SkillSystemTests
     [Fact]
     public void Projectile_level_three_fires_two_at_the_two_nearest()
     {
-        var w = new World(Beat(), 1, Notes);
+        var w = new SkillTestWorld(SkillTestWorld.Beat(), 1, Notes);
         w.Raise(0, 2);
         Assert.Equal(3, w.Progress.SkillLevel(0));
         w.Enemy(new Vector2(-4, 0));
@@ -143,7 +73,7 @@ public class SkillSystemTests
     [Fact]
     public void Cooldown_in_beats_paces_casts_on_the_beat()
     {
-        var w = new World(Ring);
+        var w = new SkillTestWorld(Ring);
         int casts = 0;
         for (int i = 0; i < 160; i++) // 10 s at 120 BPM
         {
@@ -160,8 +90,8 @@ public class SkillSystemTests
     [Fact]
     public void Ready_skill_waits_for_the_next_half_beat()
     {
-        var fast = Skill(SkillKind.Ring, new SkillStats { Damage = 1, Cooldown = 0.1f, Radius = 1, Speed = 5 });
-        var w = new World(fast);
+        var fast = SkillTestWorld.Skill(SkillKind.Ring, new SkillStats { Damage = 1, Cooldown = 0.1f, Radius = 1, Speed = 5 });
+        var w = new SkillTestWorld(fast);
         int casts = 0, ticks = 0;
         for (int i = 0; i < 32; i++)
         {
@@ -180,7 +110,7 @@ public class SkillSystemTests
     [Fact]
     public void Drop_scales_damage_and_area()
     {
-        var w = new World(Beat(dropBars: 1, dropDamage: 0.5f, dropArea: 0.2f), 1, Notes, Aura);
+        var w = new SkillTestWorld(SkillTestWorld.Beat(dropBars: 1, dropDamage: 0.5f, dropArea: 0.2f), 1, Notes, Aura);
         w.Raise(1, 1);
         w.Enemy(new Vector2(3, 0));
 
@@ -194,20 +124,21 @@ public class SkillSystemTests
     [Fact]
     public void Ring_skill_spawns_a_ring_at_the_hero_with_its_stats()
     {
-        var w = new World(Ring);
+        var w = new SkillTestWorld(Ring);
         w.Ctx.Hero = new Vector2(2, 3);
 
         w.Update();
 
         Assert.Equal(1, w.Rings.Count);
         Assert.Equal(new Vector2(2, 3), w.Rings.Center[0]);
-        Assert.Equal((6f, 12f, 5f, 6f), (w.Rings.MaxRadius[0], w.Rings.Speed[0], w.Rings.Damage[0], w.Rings.Knockback[0]));
+        var shot = w.Rings.Shot(0);
+        Assert.Equal((6f, 12f, 5f, 6f), (w.Rings.MaxRadius[0], shot.Speed, shot.Damage, shot.Knockback));
     }
 
     [Fact]
     public void Speaker_lands_on_the_crowd_pulses_on_beats_and_expires()
     {
-        var w = new World(Speaker);
+        var w = new SkillTestWorld(Speaker);
         var crowd = new Vector2(6, 0);
         for (int i = 0; i < 5; i++) w.Enemy(crowd + new Vector2(0.3f * i, 0));
         w.Enemy(new Vector2(-6, 0));
@@ -236,7 +167,7 @@ public class SkillSystemTests
     [Fact]
     public void Speaker_at_the_cap_waits_and_none_without_enemies_in_range()
     {
-        var w = new World(Speaker);
+        var w = new SkillTestWorld(Speaker);
         for (int i = 0; i < 8; i++) w.Update();
         Assert.Equal(0, w.Summons.Count);
 
@@ -248,7 +179,7 @@ public class SkillSystemTests
     [Fact]
     public void Aura_hits_enemies_in_radius_and_makes_them_take_more_damage()
     {
-        var w = new World(Aura);
+        var w = new SkillTestWorld(Aura);
         int inside = w.Enemy(new Vector2(2.9f, 0)); // 2.9 <= 2.5 + 0.45
         int outside = w.Enemy(new Vector2(0, 3.0f));
 
@@ -264,7 +195,7 @@ public class SkillSystemTests
     [Fact]
     public void Beam_hits_the_line_along_the_aim_only()
     {
-        var w = new World(Beam);
+        var w = new SkillTestWorld(Beam);
         w.Ctx.Aim = new Vector2(1, 0);
         int onLine = w.Enemy(new Vector2(6, 0.8f));  // within width / 2 + enemy radius = 0.95
         int far = w.Enemy(new Vector2(11.5f, 0));    // past length + enemy radius
@@ -282,7 +213,7 @@ public class SkillSystemTests
     [Fact]
     public void Orbit_objects_circle_at_range_and_hit_only_near_one()
     {
-        var w = new World(Orbit);
+        var w = new SkillTestWorld(Orbit);
         int nearBlade = w.Enemy(new Vector2(0, 3)); // object 0 starts at angle 0 → (sin 0, cos 0) * 3
         int center = w.Enemy(Vector2.Zero);
 
@@ -296,7 +227,7 @@ public class SkillSystemTests
     [Fact]
     public void Locked_skills_do_nothing()
     {
-        var w = new World(Notes, Ring);
+        var w = new SkillTestWorld(Notes, Ring);
         w.Update(); // no enemies: notes can't fire, ring is locked
 
         Assert.Equal(0, w.Projectiles.Count);
@@ -307,7 +238,7 @@ public class SkillSystemTests
     [Fact]
     public void Damage_bonus_multiplies_skill_damage()
     {
-        var w = new World(Beat(), 10, Notes);
+        var w = new SkillTestWorld(SkillTestWorld.Beat(), 10, Notes);
         w.Progress.DevGainLevel();
         Assert.Equal(LevelUpKind.Bonus, w.Progress.Options()[0].Kind);
         w.Progress.Choose(0);
@@ -321,7 +252,7 @@ public class SkillSystemTests
     [Fact]
     public void Dead_enemies_are_not_targeted()
     {
-        var w = new World(Notes);
+        var w = new SkillTestWorld(Notes);
         w.Enemy(new Vector2(2, 0));
         w.Enemy(new Vector2(0, 6));
         w.Enemies.Health[0] = 0f;
@@ -338,7 +269,7 @@ public class SkillSystemTests
         var spots = new List<Vector2>();
         for (int run = 0; run < 2; run++)
         {
-            var w = new World(Speaker);
+            var w = new SkillTestWorld(Speaker);
             for (int i = 0; i < 12; i++) w.Enemy(new Vector2(i - 6, i % 3));
             w.Update();
             spots.Add(w.Summons.Position[0]);

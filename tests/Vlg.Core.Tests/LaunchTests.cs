@@ -60,6 +60,7 @@ public class LaunchTests
         Assert.Throws<ArgumentException>(() => LaunchOptions.Parse(new[] { "--loadout", " , " }));
         Assert.Equal(4, LaunchOptions.Parse(new[] { "--skill-level", "4" }).SkillLevel);
         Assert.Throws<ArgumentException>(() => LaunchOptions.Parse(new[] { "--skill-level", "0" }));
+        Assert.Equal(new[] { 2, 0, 1 }, LaunchOptions.Parse(new[] { "--branch", "2,0,1" }).Branches);
     }
 
     [Fact]

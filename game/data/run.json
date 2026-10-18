@@ -7,6 +7,7 @@
     "projectileCapacity": 4096,
     "gemCapacity": 4096,
     "ringCapacity": 256,
+    "zoneCapacity": 512,
     "gridDim": 64,
     "gridCellSize": 2.0,
     "projectileRadius": 0.25,
@@ -42,7 +43,9 @@
     "xpPerLevel": 5,
     "levelDivisor": 3,
     "maxSkillLevel": 10,
-    "maxedBonusDamage": 0.02
+    "maxedBonusDamage": 0.02,
+    // Skill levels where the player picks a branch (domain.md).
+    "branchLevels": [5, 10]
   },
   "loopScaling": { "hpPerLoop": 0.3, "damagePerLoop": 0.2, "spawnPerLoop": 0.25 },
   // One loop. Chest and Shop wait for the player (placeholder screens until items exist).

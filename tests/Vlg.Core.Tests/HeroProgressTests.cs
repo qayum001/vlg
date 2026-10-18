@@ -10,7 +10,7 @@ public class HeroProgressTests
 {
     static LevelingSettings Settings(int divisor = 3, int maxSkill = 10) => new()
     {
-        XpBase = 5, XpPerLevel = 5, LevelDivisor = divisor, MaxSkillLevel = maxSkill, MaxedBonusDamage = 0.02f,
+        XpBase = 5, XpPerLevel = 5, LevelDivisor = divisor, MaxSkillLevel = maxSkill, MaxedBonusDamage = 0.02f, BranchLevels = new[] { 5, 10 },
     };
 
     static (LevelUpKind, int, int)[] Shape(HeroProgress p) =>

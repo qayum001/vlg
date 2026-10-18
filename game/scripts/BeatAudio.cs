@@ -62,7 +62,7 @@ public sealed class BeatAudio
         for (int slot = 0; slot < skills.Count; slot++)
         {
             if (!skills.FiredThisStep[slot]) continue;
-            switch (skills.Def(slot).Kind)
+            switch (skills.Form(slot)?.Kind)
             {
                 case SkillKind.Projectile:
                     Play(_cowbell, -12f, MathF.Pow(2f, Riff[_riffStep++ % Riff.Length] / 12f));
@@ -70,8 +70,14 @@ public sealed class BeatAudio
                 case SkillKind.Ring: Play(_sub, -8f); break;
                 case SkillKind.Beam: Play(_slap, -9f); break;
                 case SkillKind.Speaker: Play(_thump, -6f); break;
+                case SkillKind.BellDrop: Play(_cowbell, -8f, 0.6f); break;
+                case SkillKind.Quake: Play(_sub, -9f, 0.8f); break;
+                case SkillKind.Drone: Play(_slap, -16f, 1.8f); break;
+                case SkillKind.Sweep: Play(_slap, -10f, 0.8f); break;
+                case SkillKind.Boomerang: Play(_slap, -12f, 1.4f); break;
             }
         }
+        if (skills.BlockedThisStep) Play(_boom, -10f, 1.5f);
     }
 
     void Play(AudioStream stream, float db, float pitch = 1f)

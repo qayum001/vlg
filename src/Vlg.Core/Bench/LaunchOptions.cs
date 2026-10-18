@@ -30,13 +30,15 @@ public sealed record LaunchOptions
     public string[]? Loadout { get; init; }
     /// <summary>Dev: every loadout skill starts at this level (ignores the level cap).</summary>
     public int? SkillLevel { get; init; }
+    /// <summary>Dev: answers the queued branch picks at start, in order (option index, 0-based).</summary>
+    public int[]? Branches { get; init; }
 
     public bool WantsStressTest => Stress || Bench != null;
 
     public const string Usage =
         "--stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
         "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>  " +
-        "--loadout <id,id,...>  --skill-level <n>";
+        "--loadout <id,id,...>  --skill-level <n>  --branch <i,i,...>";
 
     public static LaunchOptions Parse(string[] args)
     {
@@ -62,6 +64,7 @@ public sealed record LaunchOptions
                 "--threads" => o with { Threads = ParseInt(a, Next(), 0) },
                 "--loadout" => o with { Loadout = ParseList(a, Next()) },
                 "--skill-level" => o with { SkillLevel = ParseInt(a, Next(), 1) },
+                "--branch" => o with { Branches = Array.ConvertAll(ParseList(a, Next()), x => ParseInt(a, x, 0)) },
                 _ => throw new ArgumentException($"unknown arg '{a}'. Usage: {Usage}"),
             };
         }

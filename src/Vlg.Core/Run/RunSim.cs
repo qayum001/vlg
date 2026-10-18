@@ -9,7 +9,7 @@ namespace Vlg.Core.Run;
 
 /// <summary>
 /// One level run: hero, stage loop, walkers, skills, XP gems, level-ups. Godot-free.
-/// Step only clears last step's events (Hits, Deaths, HeroHurt, Beams) unless <see cref="Phase"/> is Playing;
+/// Step only clears last step's events (Hits, Deaths, HeroHurt, Beams, Flashes) unless <see cref="Phase"/> is Playing;
 /// the adapter answers LevelUp/Chest/Shop/Dead.
 /// Ground plane: Vector2(x, y) = world (x, z).
 /// </summary>
@@ -18,6 +18,8 @@ public sealed class RunSim
     /// <summary>Damage source ids (EnemySwarm.LastHit): hero skill slot i = HeroSkillSource + i.</summary>
     public const byte HeroSkillSource = 1;
     public const byte DropShockSource = 20;
+    /// <summary>After a shield block, contact damage is ignored this long.</summary>
+    public const float BlockSec = 0.5f;
 
     public readonly RunConfig Config;
     public readonly HeroDef Hero;
@@ -26,13 +28,18 @@ public sealed class RunSim
     public readonly BeatClock Beat;
     public readonly RingPool Rings;
     public readonly SummonPool Summons;
+    public readonly ZonePool Zones;
+    public readonly StrikePool Strikes;
     public readonly BeamEvents Beams;
+    public readonly FlashEvents Flashes;
     public readonly EnemySwarm Enemies;
     public readonly ProjectilePool Projectiles;
     public readonly GemPool Gems;
     public readonly SpatialGrid Grid;
     public readonly PointBuffer Hits;
     public readonly PointBuffer Deaths;
+    /// <summary>Kill credit per death this step (same index as Deaths).</summary>
+    public readonly byte[] DeathSources;
     public readonly HeroProgress Progress;
     public readonly StageLoop Stages;
     public readonly SkillSystem Skills;
@@ -50,6 +57,7 @@ public sealed class RunSim
     readonly WalkerSpawner _spawner = new();
     readonly WorkerPool? _workers;
     readonly int[] _contacts;
+    float _blockTimer;
     XorShift32 _rng;
     ViewFootprint _view;
 
@@ -68,19 +76,24 @@ public sealed class RunSim
         _swarm = config.Walker.ToSwarm(config.Hero.Radius);
         var s = config.Sim;
         Enemies = new EnemySwarm(s.EnemyCapacity);
-        Projectiles = new ProjectilePool(s.ProjectileCapacity);
+        Projectiles = new ProjectilePool(s.ProjectileCapacity, s.ProjectileRadius, s.EnemyCapacity);
         Gems = new GemPool(s.GemCapacity);
         Grid = new SpatialGrid(s.GridDim, s.GridCellSize, s.EnemyCapacity);
         Hits = new PointBuffer(s.EnemyCapacity);
         // Every death drops a gem: never drop death events.
         Deaths = new PointBuffer(s.EnemyCapacity);
+        DeathSources = new byte[s.EnemyCapacity];
         Rings = new RingPool(s.RingCapacity, s.EnemyCapacity);
         Summons = new SummonPool(RunConfig.MaxSkills * RunConfig.MaxSummonsPerSkill);
-        Beams = new BeamEvents(64);
+        Zones = new ZonePool(s.ZoneCapacity, s.EnemyCapacity);
+        Strikes = new StrikePool(RunConfig.MaxSkills * RunConfig.MaxSummonsPerSkill * 2, s.EnemyCapacity);
+        Beams = new BeamEvents(256);
+        Flashes = new FlashEvents(128);
         Beat = new BeatClock(hero.Beat);
-        Progress = new HeroProgress(config.Leveling, Loadout.Length);
+        Progress = new HeroProgress(config.Leveling, Loadout.Length, Loadout);
         Stages = new StageLoop(config.Stages);
-        _world = new SkillWorld(Enemies, Grid, Projectiles, Rings, Summons, Beams, Hits, config.Hero.Radius, config.Walker.Radius);
+        _world = new SkillWorld(Enemies, Grid, Projectiles, Rings, Summons, Zones, Strikes, Beams, Flashes, Hits,
+            config.Hero.Radius, config.Walker.Radius);
         Skills = new SkillSystem(Loadout, _world, Beat, HeroSkillSource, seed ^ 0x5EEDu);
         _contacts = new int[s.EnemyCapacity];
         HeroHp = hero.MaxHp;
@@ -106,7 +119,7 @@ public sealed class RunSim
 
     public RunPhase Phase =>
         HeroHp <= 0f ? RunPhase.Dead
-        : Progress.PendingLevelUps > 0 ? RunPhase.LevelUp
+        : Progress.HasPendingPick ? RunPhase.LevelUp
         : Stages.Current.Kind == StageKind.Chest ? RunPhase.Chest
         : Stages.Current.Kind == StageKind.Shop ? RunPhase.Shop
         : RunPhase.Playing;
@@ -120,6 +133,7 @@ public sealed class RunSim
         Hits.Clear();
         Deaths.Clear();
         Beams.Clear();
+        Flashes.Clear();
         HeroHurt = false;
         if (Phase != RunPhase.Playing) return;
 
@@ -128,6 +142,7 @@ public sealed class RunSim
         float len2 = move.LengthSquared();
         if (len2 > 1f) move /= MathF.Sqrt(len2);
         HeroPosition += move * Hero.Speed * dt;
+        if (len2 > 1e-4f) _world.Facing = Vector2.Normalize(move);
 
         if (Stages.Update(dt)) OnStageEntered();
         if (!Stages.Current.IsTimed) return;
@@ -145,14 +160,26 @@ public sealed class RunSim
         if (Beat.DropStarted)
         {
             var b = Hero.Beat;
-            Rings.Spawn(hero, b.ShockRadius, b.ShockSpeed, b.ShockDamage * Progress.DamageMultiplier, b.ShockKnockback, DropShockSource);
+            Rings.Spawn(new RingShot
+            {
+                Center = hero,
+                MaxRadius = b.ShockRadius,
+                Speed = b.ShockSpeed,
+                Damage = b.ShockDamage * Progress.DamageMultiplier,
+                Knockback = b.ShockKnockback,
+                Source = DropShockSource,
+            });
         }
+        float er = Config.Walker.Radius;
         Skills.Update(dt, Progress, Progress.DamageMultiplier);
-        Rings.Update(dt, Enemies, Grid, Hits, Config.Walker.Radius, pad);
-        Projectiles.Update(dt, Enemies, Grid, Hits, Config.Sim.ProjectileRadius + Config.Walker.Radius, enemyMaxSpeed);
+        Strikes.Update(dt, Enemies, Grid, Hits, er, pad, Flashes);
+        Zones.Update(dt, Beat.BeatTick, Enemies, Grid, Hits, er, pad, Beams);
+        Rings.Update(dt, Enemies, Grid, Hits, er, pad);
+        Projectiles.Update(dt, Enemies, Grid, Hits, er, enemyMaxSpeed, hero, Flashes);
         ApplyContactDamage(dt, pad);
 
-        Kills += Enemies.RemoveDead(Deaths);
+        Kills += Enemies.RemoveDead(Deaths, DeathSources);
+        Skills.OnDeaths(Deaths);
         for (int i = 0; i < Deaths.Count; i++) Gems.Spawn(Deaths.Items[i], Config.Walker.Xp);
 
         var p = Config.Pickups;
@@ -195,9 +222,13 @@ public sealed class RunSim
         if (Stages.Current.Kind == StageKind.Shop) HeroHp = HeroMaxHp;
     }
 
-    /// <summary>Each living walker touching the hero deals contactDps (scaled per loop).</summary>
+    /// <summary>
+    /// Each living walker touching the hero deals contactDps (scaled per loop), unless a shield blocks:
+    /// the block covers <see cref="BlockSec"/> of contact.
+    /// </summary>
     void ApplyContactDamage(float dt, float pad)
     {
+        _blockTimer = MathF.Max(0f, _blockTimer - dt);
         float reach = Config.Hero.Radius + Config.Walker.Radius + Config.Hero.ContactMargin;
         float reach2 = reach * reach;
         int n = Grid.Query(HeroPosition, reach + pad, _contacts, Enemies.Position);
@@ -207,7 +238,12 @@ public sealed class RunSim
             int j = _contacts[k];
             if (Enemies.Health[j] > 0f && Vector2.DistanceSquared(Enemies.Position[j], HeroPosition) <= reach2) touching++;
         }
-        if (touching == 0) return;
+        if (touching == 0 || _blockTimer > 0f) return;
+        if (Skills.TryBlock())
+        {
+            _blockTimer = BlockSec;
+            return;
+        }
         HeroHp -= touching * Config.Walker.ContactDps * Config.LoopScaling.Damage(Stages.Loop) * dt;
         HeroHurt = true;
     }

@@ -46,16 +46,23 @@ public sealed class SummonPool
         return n;
     }
 
-    /// <summary>Ages summons of <paramref name="slot"/> by <paramref name="units"/>; removes expired ones.</summary>
-    public void Age(int slot, float units, float dt)
+    /// <summary>
+    /// Ages summons of <paramref name="slot"/> by <paramref name="units"/>; removes expired ones and writes
+    /// their positions to <paramref name="expired"/> (up to its length). Returns the expired count written.
+    /// </summary>
+    public int Age(int slot, float units, float dt, Vector2[] expired)
     {
+        int n = 0;
         for (int i = Count - 1; i >= 0; i--)
         {
             if (Slot[i] != slot) continue;
             Life[i] -= units;
             if (SincePulse[i] >= 0f) SincePulse[i] += dt;
-            if (Life[i] <= 0f) RemoveAt(i);
+            if (Life[i] > 0f) continue;
+            if (n < expired.Length) expired[n++] = Position[i];
+            RemoveAt(i);
         }
+        return n;
     }
 
     void RemoveAt(int i)

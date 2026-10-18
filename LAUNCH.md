@@ -63,7 +63,14 @@ Work for both. Combine freely.
 | `--preset medium` | after `--` | Start quality preset: `very_low`, `low` (default), `medium`, `high`. |
 | `--seed 7` | after `--` | Other random props and spawns. Default 1; same seed + same input = same run. |
 | `--loadout vinyl,distortion,slap,cowbell` | after `--` | Game run only. Hero skills in slot order (first starts unlocked). Ids: `cowbell`, `low_end`, `speaker_stack`, `distortion`, `slap`, `vinyl`. Default: `cowbell,low_end,speaker_stack,slap`. |
-| `--skill-level 5` | after `--` | Game run only (dev). Every loadout skill starts at this level, so you see them all at once. |
+| `--skill-level 5` | after `--` | Game run only (dev). Every loadout skill starts at this level, so you see them all at once. At 5 or 10 the game first asks for each skill's form. |
+| `--branch 2,0,1,1` | after `--` | Game run only (dev). Answers those form picks in order: first skill's level-5 form, its level-10 form, then the next skill. 0 = first option on the card. |
+
+Example: default loadout at level 10 with Cowbell Rain + Cathedral, Earthquake + Aftershock, Boombox Drone + Bass Boosted, Sweep + Full Circle:
+
+```powershell
+& "C:\Projects\Games\Godot\engine\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe" --path C:\Projects\Games\vlg\game -- --skill-level 10 --branch 2,0,2,1,2,1,2,0
+```
 
 Example: all six of Lowkey's skills at level 3:
 

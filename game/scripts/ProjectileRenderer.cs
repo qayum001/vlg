@@ -56,9 +56,12 @@ public sealed class ProjectileRenderer
             float len = v.Length();
             float sin = len > 1e-4f ? v.X / len : 0f, cos = len > 1e-4f ? v.Y / len : 1f;
             var p = pool.Position[i];
-            b[o] = cos; b[o + 1] = 0f; b[o + 2] = sin; b[o + 3] = p.X;
-            b[o + 4] = 0f; b[o + 5] = 1f; b[o + 6] = 0f; b[o + 7] = Height;
-            b[o + 8] = -sin; b[o + 9] = 0f; b[o + 10] = cos; b[o + 11] = p.Y;
+            // Bigger hit radius (Big Disc) draws bigger.
+            float k = pool.Radius[i] / pool.DefaultRadius;
+            float c = cos * k, s = sin * k;
+            b[o] = c; b[o + 1] = 0f; b[o + 2] = s; b[o + 3] = p.X;
+            b[o + 4] = 0f; b[o + 5] = k; b[o + 6] = 0f; b[o + 7] = Height;
+            b[o + 8] = -s; b[o + 9] = 0f; b[o + 10] = c; b[o + 11] = p.Y;
         }
         RenderingServer.MultimeshSetBuffer(_multimesh.GetRid(), b);
         _multimesh.VisibleInstanceCount = pool.Count;

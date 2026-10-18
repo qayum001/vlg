@@ -2,13 +2,15 @@ using System;
 using Godot;
 using Vlg.Core.Config;
 using Vlg.Core.Run;
+using Vlg.Core.Sim;
 using NVec2 = System.Numerics.Vector2;
 
 namespace Vlg.Game;
 
 /// <summary>
 /// Placeholder visuals for non-projectile skills: aura discs, vinyl records (orbit), expanding rings,
-/// speakers with pulse discs, beam flashes. Neon phonk palette, additive unshaded.
+/// speakers with pulse discs, beam flashes, ground zones, falling bells, drones, impact flashes, shield bubble.
+/// Neon phonk palette, additive unshaded.
 /// </summary>
 public sealed class SkillVisuals
 {
@@ -20,12 +22,20 @@ public sealed class SkillVisuals
     const float BeamFadeSec = 0.18f;
     const int BeamSlots = 32;
     const int SpeakerCap = RunConfig.MaxSkills * RunConfig.MaxSummonsPerSkill;
+    const int FlashSlots = 64;
+    const float FlashSec = 0.3f;
+    const float BellDropHeight = 9f;
 
     static readonly Color AuraColor = new(0.75f, 0.3f, 1f);
     static readonly Color RingColor = new(1f, 0.25f, 0.75f);
     static readonly Color ShockColor = new(1f, 0.85f, 1f);
     static readonly Color PulseColor = new(0.3f, 0.95f, 1f);
     static readonly Color BeamColor = new(1f, 0.35f, 0.8f);
+    static readonly Color CrackColor = new(1f, 0.45f, 0.2f);
+    static readonly Color PuddleColor = new(0.6f, 0.2f, 1f);
+    static readonly Color BellColor = new(1f, 0.85f, 0.3f);
+    static readonly Color FlashColor = new(1f, 0.9f, 1f);
+    static readonly Color ShieldColor = new(0.3f, 0.95f, 1f);
 
     readonly MeshInstance3D[] _discs;
     readonly StandardMaterial3D[] _discMaterials;
@@ -36,6 +46,22 @@ public sealed class SkillVisuals
     readonly MultiMesh _speakers;
     readonly MultiMesh _speakerPulses;
     readonly MultiMesh _beams;
+    readonly MultiMesh _zones;
+    readonly MultiMesh _strikeMarks;
+    readonly MultiMesh _bells;
+    readonly MultiMesh _drones;
+    readonly MultiMesh _flashes;
+    readonly MeshInstance3D _shield;
+    readonly StandardMaterial3D _shieldMaterial;
+    float[] _zoneBuffer = Array.Empty<float>();
+    float[] _strikeBuffer = Array.Empty<float>();
+    float[] _bellBuffer = Array.Empty<float>();
+    readonly float[] _droneBuffer = new float[RunConfig.MaxSkills * RunConfig.MaxDrones * Stride];
+    readonly float[] _flashBuffer = new float[FlashSlots * Stride];
+    readonly NVec2[] _flashPos = new NVec2[FlashSlots];
+    readonly float[] _flashRadius = new float[FlashSlots];
+    readonly float[] _flashAge = new float[FlashSlots];
+    int _nextFlash;
     readonly float[] _vinylBuffer = new float[RunConfig.MaxBlades * RunConfig.MaxSkills * Stride];
     readonly float[] _labelBuffer = new float[RunConfig.MaxBlades * RunConfig.MaxSkills * Stride];
     readonly float[] _speakerBuffer = new float[SpeakerCap * Stride];
@@ -88,6 +114,24 @@ public sealed class SkillVisuals
             }, SpeakerCap);
         _speakerPulses = AddMultiMesh(parent, "SpeakerPulses", disc, Glow(Colors.White, true), SpeakerCap);
         _beams = AddMultiMesh(parent, "Beams", new PlaneMesh { Size = Vector2.One }, Glow(Colors.White, true), BeamSlots);
+        _zones = AddMultiMesh(parent, "Zones", disc, Glow(Colors.White, true), 0);
+        _strikeMarks = AddMultiMesh(parent, "StrikeMarks", Annulus(0.8f, 48), Glow(Colors.White, true), 0);
+        _bells = AddMultiMesh(parent, "Bells", new CylinderMesh { TopRadius = 0.25f, BottomRadius = 0.75f, Height = 1.1f, RadialSegments = 12, Rings = 1 },
+            new StandardMaterial3D { AlbedoColor = BellColor, Metallic = 0.8f, Roughness = 0.25f, EmissionEnabled = true, Emission = BellColor, EmissionEnergyMultiplier = 0.6f }, 0);
+        _drones = AddMultiMesh(parent, "Drones", new BoxMesh { Size = new Vector3(0.7f, 0.4f, 0.35f) },
+            new StandardMaterial3D { AlbedoColor = new Color(0.1f, 0.05f, 0.15f), EmissionEnabled = true, Emission = new Color(0.3f, 0.95f, 1f), EmissionEnergyMultiplier = 1.5f },
+            RunConfig.MaxSkills * RunConfig.MaxDrones);
+        _flashes = AddMultiMesh(parent, "Flashes", Annulus(0.75f, 48), Glow(Colors.White, true), FlashSlots);
+        _shieldMaterial = Glow(new Color(ShieldColor, 0.2f), false);
+        _shield = new MeshInstance3D
+        {
+            Name = "ShieldBubble",
+            Mesh = new SphereMesh { Radius = 1.2f, Height = 2.4f, RadialSegments = 24, Rings = 12 },
+            MaterialOverride = _shieldMaterial,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Visible = false,
+        };
+        parent.AddChild(_shield);
     }
 
     public void SetCullCenter(Vector3 center)
@@ -99,6 +143,11 @@ public sealed class SkillVisuals
         _speakers.CustomAabb = box;
         _speakerPulses.CustomAabb = box;
         _beams.CustomAabb = box;
+        _zones.CustomAabb = box;
+        _strikeMarks.CustomAabb = box;
+        _bells.CustomAabb = box;
+        _drones.CustomAabb = box;
+        _flashes.CustomAabb = box;
     }
 
     /// <param name="dt">0 while the sim is paused: per-step flags and events are stale.</param>
@@ -124,6 +173,109 @@ public sealed class SkillVisuals
         UpdateRings(sim.Rings);
         UpdateSpeakers(sim);
         UpdateBeams(sim.Beams, dt);
+        UpdateZones(sim);
+        UpdateStrikes(sim.Strikes);
+        UpdateDrones(skills);
+        UpdateFlashes(sim.Flashes, dt);
+
+        bool shield = false;
+        for (int i = 0; i < skills.Count; i++) shield |= skills.ShieldUp[i];
+        _shield.Visible = shield;
+        if (shield) _shield.Position = new Vector3(hero.X, 0.9f, hero.Y);
+    }
+
+    void UpdateZones(RunSim sim)
+    {
+        var z = sim.Zones;
+        _zoneBuffer = Fit(_zones, _zoneBuffer, z.Capacity);
+        for (int i = 0; i < z.Count; i++)
+        {
+            float r = z.Radius[i];
+            float life = z.StartLife[i] > 0f ? z.Life[i] / z.StartLife[i] : 0f;
+            float pump = z.SinceTick[i] >= 0f ? MathF.Exp(-z.SinceTick[i] * 8f) : 0f;
+            int slot = z.Slot[i];
+            var kind = slot >= 0 ? sim.Skills.Form(slot)?.Kind : null;
+            var color = kind == SkillKind.Quake ? CrackColor : PuddleColor;
+            Write(_zoneBuffer, i * Stride, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(z.Center[i].X, 0.04f, z.Center[i].Y),
+                new Color(color, (0.05f + 0.18f * pump) * MathF.Min(1f, life * 3f)));
+        }
+        RenderingServer.MultimeshSetBuffer(_zones.GetRid(), _zoneBuffer);
+        _zones.VisibleInstanceCount = z.Count;
+    }
+
+    void UpdateStrikes(StrikePool strikes)
+    {
+        _strikeBuffer = Fit(_strikeMarks, _strikeBuffer, strikes.Capacity);
+        _bellBuffer = Fit(_bells, _bellBuffer, strikes.Capacity);
+        for (int i = 0; i < strikes.Count; i++)
+        {
+            var p = strikes.Position[i];
+            float r = strikes.Radius[i];
+            float left = strikes.StartDelay[i] > 0f ? MathF.Max(0f, strikes.Delay[i] / strikes.StartDelay[i]) : 0f;
+            Write(_strikeBuffer, i * Stride, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(p.X, 0.06f, p.Y),
+                new Color(BellColor, 0.2f + 0.6f * (1f - left)));
+            float k = MathF.Max(1f, r * 0.6f);
+            Write(_bellBuffer, i * Stride, new Vector3(k, 0, 0), new Vector3(0, k, 0), new Vector3(0, 0, k), new Vector3(p.X, 0.55f * k + BellDropHeight * left, p.Y), Colors.White);
+        }
+        RenderingServer.MultimeshSetBuffer(_strikeMarks.GetRid(), _strikeBuffer);
+        RenderingServer.MultimeshSetBuffer(_bells.GetRid(), _bellBuffer);
+        _strikeMarks.VisibleInstanceCount = strikes.Count;
+        _bells.VisibleInstanceCount = strikes.Count;
+    }
+
+    void UpdateDrones(SkillSystem skills)
+    {
+        int n = skills.DroneCount;
+        for (int i = 0; i < n; i++)
+        {
+            var p = skills.DronePositions[i];
+            float bob = 0.15f * MathF.Sin(_spin * 0.5f + i);
+            float c = MathF.Cos(_spin * 0.2f), s = MathF.Sin(_spin * 0.2f);
+            Write(_droneBuffer, i * Stride, new Vector3(c, 0, -s), new Vector3(0, 1, 0), new Vector3(s, 0, c), new Vector3(p.X, 2.2f + bob, p.Y), Colors.White);
+        }
+        RenderingServer.MultimeshSetBuffer(_drones.GetRid(), _droneBuffer);
+        _drones.VisibleInstanceCount = n;
+    }
+
+    void UpdateFlashes(FlashEvents flashes, float dt)
+    {
+        if (dt > 0f)
+        {
+            for (int i = 0; i < flashes.Count; i++)
+            {
+                int k = _nextFlash;
+                _nextFlash = (_nextFlash + 1) % FlashSlots;
+                _flashPos[k] = flashes.Position[i];
+                _flashRadius[k] = flashes.Radius[i];
+                _flashAge[k] = 0f;
+            }
+        }
+        int n = 0;
+        for (int k = 0; k < FlashSlots; k++)
+        {
+            if (_flashRadius[k] <= 0f) continue;
+            _flashAge[k] += dt;
+            if (_flashAge[k] >= FlashSec)
+            {
+                _flashRadius[k] = 0f;
+                continue;
+            }
+            float t = _flashAge[k] / FlashSec;
+            float r = _flashRadius[k] * (0.6f + 0.5f * t);
+            Write(_flashBuffer, n * Stride, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(_flashPos[k].X, 0.1f, _flashPos[k].Y),
+                new Color(FlashColor, 1f - t));
+            n++;
+        }
+        RenderingServer.MultimeshSetBuffer(_flashes.GetRid(), _flashBuffer);
+        _flashes.VisibleInstanceCount = n;
+    }
+
+    /// <summary>Grows the instance count and buffer to <paramref name="capacity"/> once.</summary>
+    static float[] Fit(MultiMesh mm, float[] buffer, int capacity)
+    {
+        if (mm.InstanceCount == capacity) return buffer;
+        mm.InstanceCount = capacity;
+        return new float[capacity * Stride];
     }
 
     void UpdateVinyls(RunSim sim)
@@ -217,7 +369,7 @@ public sealed class SkillVisuals
             float len = _beamLength[k], w = _beamWidth[k] * (1f + _beamAge[k] * 2f);
             var mid = _beamOrigin[k] + d * (len * 0.5f);
             Write(_beamBuffer, n * Stride, new Vector3(-d.Y * w, 0, d.X * w), new Vector3(0, 1, 0), new Vector3(d.X * len, 0, d.Y * len),
-                new Vector3(mid.X, 0.6f, mid.Y), new Color(BeamColor, 1f - _beamAge[k] / BeamFadeSec));
+                new Vector3(mid.X, 0.6f, mid.Y), new Color(BeamColor, 0.6f * (1f - _beamAge[k] / BeamFadeSec)));
             n++;
         }
         RenderingServer.MultimeshSetBuffer(_beams.GetRid(), _beamBuffer);
