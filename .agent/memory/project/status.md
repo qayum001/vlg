@@ -7,7 +7,7 @@ Related: [overview](overview.md), [open questions](open-questions.md), [concept]
 - Game domain confirmed 2026-10-17 (`design/domain.md`): hub + storylines, stage loop, enemies, heroes, skills/branching, items, pickups, meta. Built via `grill-me` skill. Deferred items listed in the doc.
 - Blender MCPs: both load natively in Code sessions and work against the same Blender (official 9876, community 9877). Exception: official screenshot tools return black, so visuals go through community `look` (see [tooling](tooling.md)).
 - Modeling paused (user, 2026-10-14): agent-made models were not what the user wants; Meshy looked good but is paid. Toolkit, models and art files were removed (code is in git history before the removal commit). Since 2026-10-18 (R11): user models all humanoids; agent resumes the rest (items, props, VFX, non-humanoid monsters, ComfyUI icons).
-- Content phase started 2026-10-18: first hero (modern-era bassist, phonk) kit + shared item pool as design proposals for user review, then implementation + assets. Hub (portals to levels, meta-upgrade NPC) queued after.
+- Content phase started 2026-10-18: first hero kit `design/heroes/lowkey.md` (bassist, phonk, beat-clock passive) + shared item pool `design/items.md` (25 items, mechanic skill tags). Both are proposals awaiting user keep/adjust; then implementation + assets. Hub (portals to levels, meta-upgrade NPC) queued after.
 - Engine decided 2026-10-16: Godot 4.7 + C#, min spec 8 GB / 2 GB ([decision](../decisions/engine.md)).
 - Godot project + horde stress test done 2026-10-16 ([stress test](../architecture/stress-test.md)), confirmed and merged to master 2026-10-17. Results in `design/engine.md` §7.
 - Default renderer Mobile (2026-10-16).
