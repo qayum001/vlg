@@ -10,6 +10,10 @@ Play vlg from source. PowerShell, full paths: paste into any PowerShell window o
 dotnet build C:\Projects\Games\vlg\game\Vlg.csproj
 ```
 
+## Start (hub)
+
+The game now opens in the hub (The Crossroads): walk to the portal and press E / A to start a run, Setlist desk = loadout, The Fixer = meta upgrades. Add `-- --run` (or any run option below) to skip the hub.
+
 ## Game run
 
 ```powershell

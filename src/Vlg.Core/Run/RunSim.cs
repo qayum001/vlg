@@ -8,7 +8,7 @@ using Vlg.Core.Sim;
 namespace Vlg.Core.Run;
 
 /// <summary>
-/// One level run: hero, stage loop, walkers, skills, ultimate, items, XP gems, credits, level-ups. Godot-free.
+/// One level run: hero, stage loop, walkers, skills, ultimate, items, XP gems, credits, meta credits, level-ups. Godot-free.
 /// Step only clears last step's events (Hits, Deaths, HeroHurt, Beams, Flashes) unless <see cref="Phase"/> is Playing;
 /// the adapter answers LevelUp/Chest/Shop/Dead. Ultimate and usable presses are queued and applied inside the next
 /// Step after the grid build.
@@ -31,6 +31,9 @@ public sealed class RunSim
     public readonly RunConfig Config;
     public readonly HeroDef Hero;
     public readonly ItemsConfig Items;
+    /// <summary>Meta credit drops and loop rewards; null = none (tests, dev runs without a hub).</summary>
+    public readonly MetaConfig? Meta;
+    public readonly MetaBonuses MetaBonuses;
     /// <summary>Loadout skills in slot order.</summary>
     public readonly SkillDef[] Loadout;
     public readonly BeatClock Beat;
@@ -45,6 +48,8 @@ public sealed class RunSim
     public readonly GemPool Gems;
     /// <summary>Credit pickups; same magnet rules as XP gems.</summary>
     public readonly GemPool Coins;
+    /// <summary>Meta credit pickups (rare orbs).</summary>
+    public readonly GemPool MetaOrbs;
     public readonly SpatialGrid Grid;
     public readonly PointBuffer Hits;
     public readonly PointBuffer Deaths;
@@ -66,6 +71,8 @@ public sealed class RunSim
     /// <summary>Hero took contact damage in the last step.</summary>
     public bool HeroHurt { get; private set; }
     public int Kills { get; private set; }
+    /// <summary>Meta credits gathered this run (orbs + loop rewards); the hub banks them when the run ends.</summary>
+    public float MetaCreditsEarned { get; private set; }
     /// <summary>Seconds of play (paused phases don't count).</summary>
     public float Time { get; private set; }
     /// <summary>Rare items offered by the current chest (empty outside the Chest phase).</summary>
@@ -79,6 +86,7 @@ public sealed class RunSim
     readonly bool[] _useQueued = new bool[ItemsConfig.MaxSlots];
     List<int> _chest = new();
     int _hexVersion = -1;
+    int _rewardedLoops;
     float _blockTimer;
     bool _pressQueued;
     XorShift32 _rng;
@@ -90,12 +98,15 @@ public sealed class RunSim
     /// <param name="workers">Shared pool for the enemy update; null = single thread. Same result either way.</param>
     /// <param name="loadout">Skill ids; null = the hero's default loadout.</param>
     /// <param name="ultimate">Ultimate id; null = the hero's default.</param>
+    /// <param name="meta">Meta drops/rewards config; null = none.</param>
     public RunSim(RunConfig config, HeroDef hero, ItemsConfig items, uint seed, WorkerPool? workers = null,
-        IReadOnlyList<string>? loadout = null, string? ultimate = null)
+        IReadOnlyList<string>? loadout = null, string? ultimate = null, MetaConfig? meta = null, MetaBonuses metaBonuses = default)
     {
         Config = config;
         Hero = hero;
         Items = items;
+        Meta = meta;
+        MetaBonuses = metaBonuses;
         Loadout = hero.LoadoutSkills(loadout);
         _workers = workers;
         _rng = new XorShift32(seed);
@@ -105,6 +116,7 @@ public sealed class RunSim
         Projectiles = new ProjectilePool(s.ProjectileCapacity, s.ProjectileRadius, s.EnemyCapacity);
         Gems = new GemPool(s.GemCapacity);
         Coins = new GemPool(s.GemCapacity);
+        MetaOrbs = new GemPool(s.GemCapacity);
         Grid = new SpatialGrid(s.GridDim, s.GridCellSize, s.EnemyCapacity);
         Hits = new PointBuffer(s.EnemyCapacity);
         // Every death drops a gem: never drop death events.
@@ -121,7 +133,8 @@ public sealed class RunSim
         Stages = new StageLoop(config.Stages);
         _world = new SkillWorld(Enemies, Grid, Projectiles, Rings, Summons, Zones, Strikes, Beams, Flashes, Hits,
             config.Hero.Radius, config.Walker.Radius);
-        Inventory = new Inventory(items, Loadout.Length);
+        Inventory = new Inventory(items, Loadout.Length, metaBonuses.ActiveSlots, metaBonuses.UsableSlots);
+        Inventory.AddCredits(metaBonuses.StartCredits);
         Shop = new Shop(items, seed ^ 0x5409u);
         Skills = new SkillSystem(Loadout, _world, Beat, HeroSkillSource, seed ^ 0x5EEDu) { Modifier = Inventory };
         Ultimate = new UltimateSystem(hero.UltimateById(ultimate), _world, Beat, UltimateSource);
@@ -129,12 +142,12 @@ public sealed class RunSim
         Actives = new SkillSystem(OwnedActives.Defs, _world, null, ActiveSource, seed ^ 0xAC71u);
         Usables = new UsableSystem(Inventory, _world, UsableSource);
         _contacts = new int[s.EnemyCapacity];
-        HeroHp = hero.MaxHp;
+        HeroHp = HeroMaxHp;
         SetView(0f, DefaultAspect);
         OnStageEntered();
     }
 
-    public float HeroMaxHp => Hero.MaxHp;
+    public float HeroMaxHp => Hero.MaxHp * (1f + MetaBonuses.MaxHp);
 
     /// <summary>Unit camera forward on the ground: aimed skills fire along it.</summary>
     public Vector2 Aim => _world.Aim;
@@ -142,8 +155,9 @@ public sealed class RunSim
     /// <summary>Ground area the camera sees, relative to the hero. Spawns and recycles land outside it.</summary>
     public ViewFootprint View => _view;
 
-    /// <summary>Level-up bonus x passive damage x ledger.</summary>
-    public float DamageMultiplier => Progress.DamageMultiplier * (1f + Inventory.Totals.Damage + Inventory.LedgerBonus(Kills));
+    /// <summary>Level-up bonus x (passive damage + ledger + meta damage).</summary>
+    public float DamageMultiplier =>
+        Progress.DamageMultiplier * (1f + Inventory.Totals.Damage + Inventory.LedgerBonus(Kills) + MetaBonuses.Damage);
 
     public float HeroSpeed => Hero.Speed * (1f + Inventory.Totals.MoveSpeed) * Usables.MoveMultiplier;
 
@@ -280,9 +294,10 @@ public sealed class RunSim
         OnDeathsItems();
 
         var p = Config.Pickups;
-        float pickup = Hero.PickupRadius * (1f + t.Pickup);
+        float pickup = Hero.PickupRadius * (1f + t.Pickup + MetaBonuses.Pickup);
         Progress.AddXp(Gems.Update(dt, hero, pickup, p.MagnetSpeed, p.CollectRadius, p.DespawnRadius));
         Inventory.AddCredits(Coins.Update(dt, hero, pickup, p.MagnetSpeed, p.CollectRadius, p.DespawnRadius) * (1f + t.Credits));
+        MetaCreditsEarned += MetaOrbs.Update(dt, hero, pickup, p.MagnetSpeed, p.CollectRadius, p.DespawnRadius);
     }
 
     public void ChooseLevelUp(int index)
@@ -383,6 +398,9 @@ public sealed class RunSim
 
     void OnStageEntered()
     {
+        // domain.md: meta credits for loops survived, more for each loop.
+        for (; _rewardedLoops < Stages.Loop - 1; _rewardedLoops++)
+            if (Meta != null) MetaCreditsEarned += Meta.LoopReward(_rewardedLoops + 1);
         var kind = Stages.Current.Kind;
         // domain.md Healing: full heal at the shop stage.
         if (kind == StageKind.Shop)
@@ -413,6 +431,7 @@ public sealed class RunSim
             var at = Deaths.Items[i];
             Gems.Spawn(at, Config.Walker.Xp);
             if (_rng.NextFloat() < Items.CreditDropChance) Coins.Spawn(at, Items.CreditValue);
+            if (Meta != null && _rng.NextFloat() < Meta.CreditDropChance) MetaOrbs.Spawn(at, Meta.CreditValue);
             int slot = DeathSources[i] - HeroSkillSource;
             if ((uint)slot >= (uint)Loadout.Length) continue;
             var poison = Inventory.Poison(slot);

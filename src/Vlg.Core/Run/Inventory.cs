@@ -27,14 +27,15 @@ public sealed class Inventory : IFormModifier
     public int UsableSlots { get; }
     public PassiveTotals Totals { get; private set; } = PassiveTotals.None;
 
-    public Inventory(ItemsConfig items, int skillCount)
+    /// <param name="extraActive">Meta upgrade slots on top of the data's starting slots (total capped at 5).</param>
+    public Inventory(ItemsConfig items, int skillCount, int extraActive = 0, int extraUsable = 0)
     {
         _c = items;
         _passiveCount = new int[items.Items.Length];
         _sockets = new List<int>[skillCount];
         for (int i = 0; i < skillCount; i++) _sockets[i] = new List<int>();
-        ActiveSlots = items.ActiveSlots;
-        UsableSlots = items.UsableSlots;
+        ActiveSlots = Math.Min(ItemsConfig.MaxSlots, items.ActiveSlots + extraActive);
+        UsableSlots = Math.Min(ItemsConfig.MaxSlots, items.UsableSlots + extraUsable);
     }
 
     public ItemsConfig Config => _c;

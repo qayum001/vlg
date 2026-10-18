@@ -8,13 +8,15 @@ using NVec2 = System.Numerics.Vector2;
 namespace Vlg.Game;
 
 /// <summary>
-/// Placeholder visuals for non-projectile skills: aura discs, vinyl records (orbit), expanding rings,
-/// speakers with pulse discs, beam flashes, ground zones, falling bells, drones, impact flashes, shield bubble.
-/// Neon phonk palette, additive unshaded.
+/// Visuals for non-projectile skills and items: aura discs, vinyl records (orbit), expanding rings, speakers /
+/// subwoofers with pulse discs, beam flashes, ground zones, falling cowbells / mortar shells, boombox / toy drones,
+/// impact flashes, shield bubble. Props are agent-made models (<see cref="ModelMeshes"/>); effects are additive unshaded.
 /// </summary>
 public sealed class SkillVisuals
 {
     const int Stride = 16;
+    /// <summary>Zones also carry custom data (pattern) after the color.</summary>
+    const int ZoneStride = 20;
     const float DiscAlpha = 0.16f;
     const float PulseAlpha = 0.3f;
     const float PulseDecay = 6f;
@@ -41,18 +43,20 @@ public sealed class SkillVisuals
     static readonly Color SmokeColor = new(0.55f, 0.55f, 0.6f);
 
     readonly MeshInstance3D[] _discs;
-    readonly StandardMaterial3D[] _discMaterials;
+    readonly ShaderMaterial[] _discMaterials;
     readonly float[] _pulse;
     readonly MultiMesh _vinyls;
-    readonly MultiMesh _labels;
     readonly MultiMesh _rings;
     readonly MultiMesh _speakers;
+    readonly MultiMesh _subwoofers;
     readonly MultiMesh _speakerPulses;
     readonly MultiMesh _beams;
     readonly MultiMesh _zones;
     readonly MultiMesh _strikeMarks;
     readonly MultiMesh _bells;
+    readonly MultiMesh _shells;
     readonly MultiMesh _drones;
+    readonly MultiMesh _toyDrones;
     readonly MultiMesh _flashes;
     readonly MeshInstance3D _shield;
     readonly StandardMaterial3D _shieldMaterial;
@@ -61,15 +65,17 @@ public sealed class SkillVisuals
     float[] _zoneBuffer = Array.Empty<float>();
     float[] _strikeBuffer = Array.Empty<float>();
     float[] _bellBuffer = Array.Empty<float>();
+    float[] _shellBuffer = Array.Empty<float>();
     readonly float[] _droneBuffer = new float[RunConfig.MaxSkills * RunConfig.MaxDrones * Stride];
+    readonly float[] _toyDroneBuffer = new float[RunConfig.MaxSkills * RunConfig.MaxDrones * Stride];
     readonly float[] _flashBuffer = new float[FlashSlots * Stride];
     readonly NVec2[] _flashPos = new NVec2[FlashSlots];
     readonly float[] _flashRadius = new float[FlashSlots];
     readonly float[] _flashAge = new float[FlashSlots];
     int _nextFlash;
     readonly float[] _vinylBuffer = new float[RunConfig.MaxBlades * RunConfig.MaxSkills * Stride];
-    readonly float[] _labelBuffer = new float[RunConfig.MaxBlades * RunConfig.MaxSkills * Stride];
     readonly float[] _speakerBuffer = new float[SpeakerCap * Stride];
+    readonly float[] _subwooferBuffer = new float[SpeakerCap * Stride];
     readonly float[] _pulseBuffer = new float[SpeakerCap * Stride];
     readonly float[] _beamBuffer = new float[BeamSlots * Stride];
     float[] _ringBuffer = Array.Empty<float>();
@@ -85,12 +91,15 @@ public sealed class SkillVisuals
     public SkillVisuals(Node3D parent, int skillCount)
     {
         _discs = new MeshInstance3D[skillCount];
-        _discMaterials = new StandardMaterial3D[skillCount];
+        _discMaterials = new ShaderMaterial[skillCount];
         _pulse = new float[skillCount];
-        var disc = new CylinderMesh { TopRadius = 1f, BottomRadius = 1f, Height = 0.04f, RadialSegments = 48, Rings = 1 };
+        // Effects draw on flat quads: radius 1 = scale 1 (fx shaders mask the circle).
+        var disc = new PlaneMesh { Size = new Vector2(2f, 2f) };
+        var ringShader = GD.Load<Shader>("res://shaders/fx_ring.gdshader");
+        var zoneShader = GD.Load<Shader>("res://shaders/fx_zone.gdshader");
         for (int i = 0; i < skillCount; i++)
         {
-            _discMaterials[i] = Glow(new Color(AuraColor, DiscAlpha), false);
+            _discMaterials[i] = Fx(zoneShader, ("pattern", 0f), ("cells", 3f), ("tint", new Color(AuraColor, DiscAlpha)));
             _discs[i] = new MeshInstance3D
             {
                 Name = $"AuraDisc{i}",
@@ -102,31 +111,19 @@ public sealed class SkillVisuals
             parent.AddChild(_discs[i]);
         }
 
-        _vinyls = AddMultiMesh(parent, "Vinyls", new CylinderMesh { TopRadius = 1f, BottomRadius = 1f, Height = 0.06f, RadialSegments = 24, Rings = 1 },
-            new StandardMaterial3D { AlbedoColor = new Color(0.04f, 0.03f, 0.06f), Metallic = 0.5f, Roughness = 0.15f },
-            RunConfig.MaxBlades * RunConfig.MaxSkills);
-        _labels = AddMultiMesh(parent, "VinylLabels", new CylinderMesh { TopRadius = 0.4f, BottomRadius = 0.4f, Height = 0.08f, RadialSegments = 16, Rings = 1 },
-            new StandardMaterial3D { AlbedoColor = new Color(1f, 0.3f, 0.75f), EmissionEnabled = true, Emission = new Color(1f, 0.2f, 0.7f), EmissionEnergyMultiplier = 2f },
-            RunConfig.MaxBlades * RunConfig.MaxSkills);
-        _rings = AddMultiMesh(parent, "Rings", Annulus(0.9f, 64), Glow(Colors.White, true), 0);
-        _speakers = AddMultiMesh(parent, "Speakers", new BoxMesh { Size = new Vector3(0.9f, 1.3f, 0.8f) },
-            new StandardMaterial3D
-            {
-                AlbedoColor = new Color(0.12f, 0.06f, 0.2f),
-                EmissionEnabled = true,
-                Emission = new Color(0.55f, 0.2f, 1f),
-                EmissionEnergyMultiplier = 0.8f,
-            }, SpeakerCap);
-        _speakerPulses = AddMultiMesh(parent, "SpeakerPulses", disc, Glow(Colors.White, true), SpeakerCap);
-        _beams = AddMultiMesh(parent, "Beams", new PlaneMesh { Size = Vector2.One }, Glow(Colors.White, true), BeamSlots);
-        _zones = AddMultiMesh(parent, "Zones", disc, Glow(Colors.White, true), 0);
-        _strikeMarks = AddMultiMesh(parent, "StrikeMarks", Annulus(0.8f, 48), Glow(Colors.White, true), 0);
-        _bells = AddMultiMesh(parent, "Bells", new CylinderMesh { TopRadius = 0.25f, BottomRadius = 0.75f, Height = 1.1f, RadialSegments = 12, Rings = 1 },
-            new StandardMaterial3D { AlbedoColor = BellColor, Metallic = 0.8f, Roughness = 0.25f, EmissionEnabled = true, Emission = BellColor, EmissionEnergyMultiplier = 0.6f }, 0);
-        _drones = AddMultiMesh(parent, "Drones", new BoxMesh { Size = new Vector3(0.7f, 0.4f, 0.35f) },
-            new StandardMaterial3D { AlbedoColor = new Color(0.1f, 0.05f, 0.15f), EmissionEnabled = true, Emission = new Color(0.3f, 0.95f, 1f), EmissionEnergyMultiplier = 1.5f },
-            RunConfig.MaxSkills * RunConfig.MaxDrones);
-        _flashes = AddMultiMesh(parent, "Flashes", Annulus(0.75f, 48), Glow(Colors.White, true), FlashSlots);
+        _vinyls = AddMultiMesh(parent, "Vinyls", ModelMeshes.Get("vinyl"), null, RunConfig.MaxBlades * RunConfig.MaxSkills);
+        _rings = AddMultiMesh(parent, "Rings", disc, Fx(ringShader, ("thickness", 0.07f), ("halo", 0.25f)), 0);
+        _speakers = AddMultiMesh(parent, "Speakers", ModelMeshes.Get("speaker"), null, SpeakerCap);
+        _subwoofers = AddMultiMesh(parent, "Subwoofers", ModelMeshes.Get("subwoofer"), null, SpeakerCap);
+        _speakerPulses = AddMultiMesh(parent, "SpeakerPulses", disc, Fx(ringShader, ("thickness", 0.22f), ("halo", 0.45f), ("fill", 0.4f)), SpeakerCap);
+        _beams = AddMultiMesh(parent, "Beams", new PlaneMesh { Size = Vector2.One }, Fx(GD.Load<Shader>("res://shaders/fx_beam.gdshader")), BeamSlots);
+        _zones = AddMultiMesh(parent, "Zones", disc, Fx(zoneShader, ("cells", 4f)), 0, customData: true);
+        _strikeMarks = AddMultiMesh(parent, "StrikeMarks", disc, Fx(ringShader, ("thickness", 0.06f), ("fill", 0.5f)), 0);
+        _bells = AddMultiMesh(parent, "Bells", ModelMeshes.Get("cowbell"), null, 0);
+        _shells = AddMultiMesh(parent, "MortarShells", ModelMeshes.Get("mortar_shell"), null, 0);
+        _drones = AddMultiMesh(parent, "Boomboxes", ModelMeshes.Get("boombox"), null, RunConfig.MaxSkills * RunConfig.MaxDrones);
+        _toyDrones = AddMultiMesh(parent, "ToyDrones", ModelMeshes.Get("toy_drone"), null, RunConfig.MaxSkills * RunConfig.MaxDrones);
+        _flashes = AddMultiMesh(parent, "Flashes", disc, Fx(ringShader, ("thickness", 0.18f), ("halo", 0.35f), ("fill", 0.6f)), FlashSlots);
         _shieldMaterial = Glow(new Color(ShieldColor, 0.2f), false);
         _shield = new MeshInstance3D
         {
@@ -172,15 +169,17 @@ public sealed class SkillVisuals
     {
         var box = EnemyRenderer.CullBoxAround(center);
         _vinyls.CustomAabb = box;
-        _labels.CustomAabb = box;
         _rings.CustomAabb = box;
         _speakers.CustomAabb = box;
+        _subwoofers.CustomAabb = box;
         _speakerPulses.CustomAabb = box;
         _beams.CustomAabb = box;
         _zones.CustomAabb = box;
         _strikeMarks.CustomAabb = box;
         _bells.CustomAabb = box;
+        _shells.CustomAabb = box;
         _drones.CustomAabb = box;
+        _toyDrones.CustomAabb = box;
         _flashes.CustomAabb = box;
     }
 
@@ -200,7 +199,7 @@ public sealed class SkillVisuals
             _pulse[i] = MathF.Max(0f, _pulse[i] - PulseDecay * dt);
             _discs[i].Position = new Vector3(hero.X, 0.03f, hero.Y);
             _discs[i].Scale = new Vector3(r, 1f, r);
-            _discMaterials[i].AlbedoColor = new Color(AuraColor, DiscAlpha + PulseAlpha * _pulse[i]);
+            _discMaterials[i].SetShaderParameter("tint", new Color(AuraColor, DiscAlpha + PulseAlpha * _pulse[i]));
         }
 
         UpdateVinyls(sim);
@@ -232,7 +231,11 @@ public sealed class SkillVisuals
     void UpdateZones(RunSim sim)
     {
         var z = sim.Zones;
-        _zoneBuffer = Fit(_zones, _zoneBuffer, z.Capacity);
+        if (_zones.InstanceCount != z.Capacity)
+        {
+            _zones.InstanceCount = z.Capacity;
+            _zoneBuffer = new float[z.Capacity * ZoneStride];
+        }
         for (int i = 0; i < z.Count; i++)
         {
             float r = z.Radius[i];
@@ -241,12 +244,16 @@ public sealed class SkillVisuals
             int slot = z.Slot[i];
             byte source = z.SourceOf(i);
             var kind = slot >= 0 ? sim.Skills.Form(slot)?.Kind : null;
-            var color = source == RunSim.UsableSource ? HolyColor
-                : source == RunSim.PoisonSource ? PoisonColor
-                : kind == SkillKind.Quake || source == RunSim.UltimateSource ? CrackColor
-                : PuddleColor;
-            Write(_zoneBuffer, i * Stride, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(z.Center[i].X, 0.04f, z.Center[i].Y),
-                new Color(color, (0.05f + 0.18f * pump) * MathF.Min(1f, life * 3f)));
+            bool cracks = kind == SkillKind.Quake || source == RunSim.UltimateSource;
+            bool bubbles = source is RunSim.UsableSource or RunSim.PoisonSource;
+            var color = source == RunSim.UsableSource ? HolyColor : source == RunSim.PoisonSource ? PoisonColor : cracks ? CrackColor : PuddleColor;
+            int o = i * ZoneStride;
+            Write(_zoneBuffer, o, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(z.Center[i].X, 0.04f, z.Center[i].Y),
+                new Color(color, (0.3f + 0.4f * pump) * MathF.Min(1f, life * 3f)));
+            _zoneBuffer[o + 16] = cracks ? 1f : bubbles ? 2f : 0f;
+            _zoneBuffer[o + 17] = 0f;
+            _zoneBuffer[o + 18] = 0f;
+            _zoneBuffer[o + 19] = 0f;
         }
         RenderingServer.MultimeshSetBuffer(_zones.GetRid(), _zoneBuffer);
         _zones.VisibleInstanceCount = z.Count;
@@ -256,6 +263,8 @@ public sealed class SkillVisuals
     {
         _strikeBuffer = Fit(_strikeMarks, _strikeBuffer, strikes.Capacity);
         _bellBuffer = Fit(_bells, _bellBuffer, strikes.Capacity);
+        _shellBuffer = Fit(_shells, _shellBuffer, strikes.Capacity);
+        int bells = 0, shells = 0;
         for (int i = 0; i < strikes.Count; i++)
         {
             var p = strikes.Position[i];
@@ -264,31 +273,40 @@ public sealed class SkillVisuals
             Write(_strikeBuffer, i * Stride, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(p.X, 0.06f, p.Y),
                 new Color(BellColor, 0.2f + 0.6f * (1f - left)));
             float k = MathF.Max(1f, r * 0.6f);
-            Write(_bellBuffer, i * Stride, new Vector3(k, 0, 0), new Vector3(0, k, 0), new Vector3(0, 0, k), new Vector3(p.X, 0.55f * k + BellDropHeight * left, p.Y), Colors.White);
+            // Item strikes (Old Mortar) drop shells nose down; hero strikes drop cowbells.
+            if (strikes.SourceOf(i) >= RunSim.ActiveSource)
+                Write(_shellBuffer, shells++ * Stride, new Vector3(k, 0, 0), new Vector3(0, -k, 0), new Vector3(0, 0, -k),
+                    new Vector3(p.X, 0.8f * k + BellDropHeight * left, p.Y), Colors.White);
+            else
+                Write(_bellBuffer, bells++ * Stride, new Vector3(k, 0, 0), new Vector3(0, k, 0), new Vector3(0, 0, k),
+                    new Vector3(p.X, BellDropHeight * left, p.Y), Colors.White);
         }
         RenderingServer.MultimeshSetBuffer(_strikeMarks.GetRid(), _strikeBuffer);
         RenderingServer.MultimeshSetBuffer(_bells.GetRid(), _bellBuffer);
+        RenderingServer.MultimeshSetBuffer(_shells.GetRid(), _shellBuffer);
         _strikeMarks.VisibleInstanceCount = strikes.Count;
-        _bells.VisibleInstanceCount = strikes.Count;
+        _bells.VisibleInstanceCount = bells;
+        _shells.VisibleInstanceCount = shells;
     }
 
-    /// <summary>Hero drones (Boombox Drone) and item drones (Toy Drone) share one MultiMesh.</summary>
+    /// <summary>Hero drones are boomboxes (Boombox Drone), item drones are toy quadcopters (Toy Drone).</summary>
     void UpdateDrones(SkillSystem skills, SkillSystem actives)
     {
-        int n = AddDrones(skills, 0);
-        n = AddDrones(actives, n);
+        _drones.VisibleInstanceCount = AddDrones(skills, _droneBuffer);
+        _toyDrones.VisibleInstanceCount = AddDrones(actives, _toyDroneBuffer);
         RenderingServer.MultimeshSetBuffer(_drones.GetRid(), _droneBuffer);
-        _drones.VisibleInstanceCount = n;
+        RenderingServer.MultimeshSetBuffer(_toyDrones.GetRid(), _toyDroneBuffer);
     }
 
-    int AddDrones(SkillSystem sys, int n)
+    int AddDrones(SkillSystem sys, float[] buffer)
     {
+        int n = 0;
         float c = MathF.Cos(_spin * 0.2f), s = MathF.Sin(_spin * 0.2f);
         for (int i = 0; i < sys.DroneCount && n < RunConfig.MaxSkills * RunConfig.MaxDrones; i++, n++)
         {
             var p = sys.DronePositions[i];
             float bob = 0.15f * MathF.Sin(_spin * 0.5f + n);
-            Write(_droneBuffer, n * Stride, new Vector3(c, 0, -s), new Vector3(0, 1, 0), new Vector3(s, 0, c), new Vector3(p.X, 2.2f + bob, p.Y), Colors.White);
+            Write(buffer, n * Stride, new Vector3(c, 0, -s), new Vector3(0, 1, 0), new Vector3(s, 0, c), new Vector3(p.X, 2.0f + bob, p.Y), Colors.White);
         }
         return n;
     }
@@ -344,13 +362,10 @@ public sealed class SkillVisuals
             var p = skills.BladePositions[k];
             float r = skills.CurrentRadius[skills.BladeSlot[k]];
             float c = MathF.Cos(_spin) * r, s = MathF.Sin(_spin) * r;
-            Write(b, o, new Vector3(c, 0, -s), new Vector3(0, 1, 0), new Vector3(s, 0, c), new Vector3(p.X, VinylHeight, p.Y), Colors.White);
-            Write(_labelBuffer, o, new Vector3(c, 0, -s), new Vector3(0, 1, 0), new Vector3(s, 0, c), new Vector3(p.X, VinylHeight + 0.01f, p.Y), Colors.White);
+            Write(b, o, new Vector3(c, 0, -s), new Vector3(0, r, 0), new Vector3(s, 0, c), new Vector3(p.X, VinylHeight, p.Y), Colors.White);
         }
         RenderingServer.MultimeshSetBuffer(_vinyls.GetRid(), b);
-        RenderingServer.MultimeshSetBuffer(_labels.GetRid(), _labelBuffer);
         _vinyls.VisibleInstanceCount = n;
-        _labels.VisibleInstanceCount = n;
     }
 
     void UpdateRings(RingPool rings)
@@ -378,21 +393,26 @@ public sealed class SkillVisuals
     void UpdateSpeakers(RunSim sim)
     {
         var s = sim.Summons;
-        int n = s.Count;
+        int n = s.Count, speakers = 0, subs = 0;
         for (int i = 0, o = 0; i < n; i++, o += Stride)
         {
             var p = s.Position[i];
             float since = s.SincePulse[i];
             float pump = since >= 0f ? MathF.Exp(-since * 10f) : 0f;
             float k = 1f + 0.25f * pump;
-            Write(_speakerBuffer, o, new Vector3(k, 0, 0), new Vector3(0, k, 0), new Vector3(0, 0, k), new Vector3(p.X, 0.65f * k, p.Y), Colors.White);
+            // Subwoofer form = the speaker branch with crowd scaling.
+            bool sub = sim.Skills.Form(s.Slot[i])?.Has(SkillFlag.CrowdScaling) == true;
+            Write(sub ? _subwooferBuffer : _speakerBuffer, (sub ? subs++ : speakers++) * Stride,
+                new Vector3(k, 0, 0), new Vector3(0, k, 0), new Vector3(0, 0, k), new Vector3(p.X, 0f, p.Y), Colors.White);
             float r = sim.Skills.CurrentRadius[s.Slot[i]];
             Write(_pulseBuffer, o, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(p.X, 0.05f, p.Y),
                 new Color(PulseColor, 0.06f + 0.3f * pump));
         }
         RenderingServer.MultimeshSetBuffer(_speakers.GetRid(), _speakerBuffer);
+        RenderingServer.MultimeshSetBuffer(_subwoofers.GetRid(), _subwooferBuffer);
         RenderingServer.MultimeshSetBuffer(_speakerPulses.GetRid(), _pulseBuffer);
-        _speakers.VisibleInstanceCount = n;
+        _speakers.VisibleInstanceCount = speakers;
+        _subwoofers.VisibleInstanceCount = subs;
         _speakerPulses.VisibleInstanceCount = n;
     }
 
@@ -451,13 +471,21 @@ public sealed class SkillVisuals
         VertexColorUseAsAlbedo = vertexColor,
     };
 
-    /// <summary>Instance colors on; materials without vertex color ignore them.</summary>
-    static MultiMesh AddMultiMesh(Node3D parent, string name, Mesh mesh, Material material, int count)
+    static ShaderMaterial Fx(Shader shader, params (string Name, Variant Value)[] parameters)
+    {
+        var m = new ShaderMaterial { Shader = shader };
+        foreach (var (name, value) in parameters) m.SetShaderParameter(name, value);
+        return m;
+    }
+
+    /// <summary>Instance colors on; materials without vertex color ignore them. Null material = the mesh's own.</summary>
+    static MultiMesh AddMultiMesh(Node3D parent, string name, Mesh mesh, Material? material, int count, bool customData = false)
     {
         var mm = new MultiMesh
         {
             TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
             UseColors = true,
+            UseCustomData = customData,
             Mesh = mesh,
             CustomAabb = EnemyRenderer.WorldAabb,
             InstanceCount = count,
@@ -471,25 +499,5 @@ public sealed class SkillVisuals
             MaterialOverride = material,
         });
         return mm;
-    }
-
-    /// <summary>Flat ring in XZ, outer radius 1.</summary>
-    static ArrayMesh Annulus(float inner, int segments)
-    {
-        var st = new SurfaceTool();
-        st.Begin(Mesh.PrimitiveType.Triangles);
-        for (int i = 0; i < segments; i++)
-        {
-            float a0 = MathF.Tau * i / segments, a1 = MathF.Tau * (i + 1) / segments;
-            var o0 = new Vector3(MathF.Cos(a0), 0, MathF.Sin(a0));
-            var o1 = new Vector3(MathF.Cos(a1), 0, MathF.Sin(a1));
-            st.AddVertex(o0 * inner);
-            st.AddVertex(o0);
-            st.AddVertex(o1);
-            st.AddVertex(o0 * inner);
-            st.AddVertex(o1);
-            st.AddVertex(o1 * inner);
-        }
-        return st.Commit();
     }
 }

@@ -29,6 +29,7 @@ public partial class RunGame : Node3D
     const int PropTiles = 5;
     const string HeroPath = "res://data/heroes/lowkey.json";
     const float DevCredits = 100f;
+    const string HubScene = "res://scenes/hub.tscn";
 
     /// <summary>Never equals a real (phase, pending) pair: forces SyncPanel to rebuild after a pick.</summary>
     static readonly (RunPhase, int) PanelStale = (RunPhase.Playing, -1);
@@ -48,6 +49,7 @@ public partial class RunGame : Node3D
     ProjectileRenderer _projectiles = null!;
     GemRenderer _gems = null!;
     GemRenderer _coins = null!;
+    GemRenderer _metaOrbs = null!;
     SkillVisuals _skillVisuals = null!;
     VfxSystem _vfx = null!;
     OrbitCamera _camera = null!;
@@ -66,6 +68,7 @@ public partial class RunGame : Node3D
     float _hudTimer;
     float _time;
     bool _screenshotDone;
+    bool _banked;
     Vector3 _cullCenter;
 
     public override void _Ready()
@@ -90,7 +93,9 @@ public partial class RunGame : Node3D
         _items = ItemsConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/items.json"));
         _preset = StressConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/stress.json")).GetPreset(_options.Preset);
         _workers = new WorkerPool(_options.Threads ?? _config.Sim.WorkerThreads, _config.Sim.ParallelMinCount);
-        _sim = new RunSim(_config, _heroDef, _items, _options.Seed, _workers, _options.Loadout, _options.Ultimate);
+        var save = GameSession.Save;
+        _sim = new RunSim(_config, _heroDef, _items, _options.Seed, _workers, _options.Loadout ?? save.Loadout,
+            _options.Ultimate ?? save.Ultimate, GameSession.Shop.Config, GameSession.Shop.Bonuses());
         if (_options.SkillLevel is { } level) _sim.Progress.DevSetAllSkills(level);
         if (_options.UltimateLevel is { } ultLevel) _sim.Progress.DevSetUltimate(ultLevel);
         if (_options.Credits is { } credits) _sim.DevAddCredits(credits);
@@ -107,6 +112,7 @@ public partial class RunGame : Node3D
         _projectiles = new ProjectileRenderer(this);
         _gems = new GemRenderer(this);
         _coins = GemRenderer.Coins(this);
+        _metaOrbs = GemRenderer.MetaOrbs(this);
         _skillVisuals = new SkillVisuals(this, _sim.Loadout.Length);
         var cam = _config.Camera;
         _camera = new OrbitCamera(this, cam.TiltDeg, cam.Distance, cam.FovDeg, cam.FollowRate);
@@ -143,7 +149,27 @@ public partial class RunGame : Node3D
         _arena.Follow(HeroWorld());
     }
 
-    public override void _ExitTree() => _workers?.Dispose();
+    public override void _ExitTree()
+    {
+        Bank();
+        _workers?.Dispose();
+    }
+
+    /// <summary>Once per run: meta credits earned and the loop reached go into the save (domain.md: kept on death).</summary>
+    void Bank()
+    {
+        if (_banked || _sim == null) return;
+        _banked = true;
+        GameSession.Save.AddRun(_sim.MetaCreditsEarned, _sim.Stages.Loop);
+        GameSession.Persist();
+    }
+
+    void BackToHub()
+    {
+        Bank();
+        Input.MouseMode = Input.MouseModeEnum.Captured;
+        GetTree().ChangeSceneToFile(HubScene);
+    }
 
     public override void _Process(double delta)
     {
@@ -177,12 +203,14 @@ public partial class RunGame : Node3D
             _projectiles.SetCullCenter(cull);
             _gems.SetCullCenter(cull);
             _coins.SetCullCenter(cull);
+            _metaOrbs.SetCullCenter(cull);
             _skillVisuals.SetCullCenter(cull);
         }
         _enemies.Update(_sim.Enemies, _workers);
         _projectiles.Update(_sim.Projectiles);
         _gems.Update(_sim.Gems, _time);
         _coins.Update(_sim.Coins, _time);
+        _metaOrbs.Update(_sim.MetaOrbs, _time);
         _skillVisuals.Update(_sim, stepped ? dt : 0f);
         _audio.Update(_sim, stepped);
         _overlay.Update(beat, _sim.Ultimate, stepped, dt);
@@ -285,12 +313,13 @@ public partial class RunGame : Node3D
         }
         if (_sim.Phase != RunPhase.Playing) return;
         _pauseMenu = true;
-        _panel.Show("Paused", "", new[] { "Resume", "Restart run", "Quit" }, i =>
+        _panel.Show("Paused", MetaLine(), new[] { "Resume", "Back to hub", "Restart run", "Quit" }, i =>
         {
             switch (i)
             {
                 case 0: TogglePauseMenu(); break;
-                case 1: Restart(); break;
+                case 1: BackToHub(); break;
+                case 2: Restart(); break;
                 default: GetTree().Quit(); break;
             }
         });
@@ -324,10 +353,11 @@ public partial class RunGame : Node3D
             case RunPhase.Dead:
                 var st = _sim.Stages;
                 _panel.Show("You died", string.Create(inv,
-                    $"Loop {st.Loop} · {RunHud.StageName(st.Current.Kind)} · {(int)_sim.Time / 60}:{(int)_sim.Time % 60:D2}\nLevel {_sim.Progress.Level} · {_sim.Kills} kills"),
-                    new[] { "Restart run", "Quit" }, i =>
+                    $"Loop {st.Loop} · {RunHud.StageName(st.Current.Kind)} · {(int)_sim.Time / 60}:{(int)_sim.Time % 60:D2}\nLevel {_sim.Progress.Level} · {_sim.Kills} kills\n{MetaLine()}"),
+                    new[] { "Back to hub", "Restart run", "Quit" }, i =>
                     {
-                        if (i == 0) Restart();
+                        if (i == 0) BackToHub();
+                        else if (i == 1) Restart();
                         else GetTree().Quit();
                     });
                 break;
@@ -354,11 +384,19 @@ public partial class RunGame : Node3D
             title = $"Level {p.Level}{pending}";
             body = $"Skill level cap {p.SkillCap} (hero level / {l.LevelDivisor}, rounded up, max {l.MaxSkillLevel}) · forms at {string.Join(" and ", l.BranchLevels)}";
         }
+        var icons = new List<Texture2D?>(options.Count);
+        foreach (var o in options)
+            icons.Add(o.Kind switch
+            {
+                LevelUpKind.Bonus => Icons.Skill("the_drop"),
+                LevelUpKind.Ultimate => Icons.Skill(_sim.Ultimate.Def.Id),
+                _ => Icons.Skill(_sim.Loadout[o.Slot].Id),
+            });
         _panel.Show(title, body, labels, i =>
         {
             _sim.ChooseLevelUp(i);
             _shown = PanelStale;
-        });
+        }, icons);
     }
 
     void ContinueStage()
@@ -378,7 +416,12 @@ public partial class RunGame : Node3D
         }
         var items = _items.Items;
         var labels = new List<string>(offer.Count);
-        foreach (int item in offer) labels.Add(ItemText.Card(items[item]));
+        var icons = new List<Texture2D?>(offer.Count);
+        foreach (int item in offer)
+        {
+            labels.Add(ItemText.Card(items[item]));
+            icons.Add(Icons.Item(items[item].Id));
+        }
         _panel.Show("Chest", "Pick one rare item.", labels, i =>
         {
             int item = offer[i];
@@ -386,7 +429,7 @@ public partial class RunGame : Node3D
             if (items[item].Type == ItemType.Modifier)
                 ShopPanel.AskSocket(_sim, _panel, _sim.Inventory.Stash.Count - 1, () => _shown = PanelStale);
             else _shown = PanelStale;
-        });
+        }, icons);
     }
 
     string Describe(LevelUpOption o)
@@ -463,8 +506,11 @@ public partial class RunGame : Node3D
         };
     }
 
+    string MetaLine() => string.Create(CultureInfo.InvariantCulture, $"{MathF.Floor(_sim.MetaCreditsEarned):0} meta credits this run (kept on death)");
+
     void Restart()
     {
+        Bank();
         Input.MouseMode = Input.MouseModeEnum.Captured;
         GetTree().ReloadCurrentScene();
     }

@@ -12,7 +12,6 @@ public sealed class Arena
 {
     const int PropsPerTile = 44;
     const float PropTile = 60f;
-    const float PropClearRadius = 6f;
 
     readonly MeshInstance3D _ground;
 
@@ -21,7 +20,8 @@ public sealed class Arena
     public MultiMeshInstance3D Props { get; }
 
     /// <param name="propTiles">Odd tile count per side; props are guaranteed within (propTiles / 2) * 60 m of the follow target.</param>
-    public Arena(Node3D parent, Shader groundShader, uint seed, int propTiles = 3)
+    /// <param name="propClearRadius">No props this close to each tile center (start area, hub plaza). Below 30 m (half a tile).</param>
+    public Arena(Node3D parent, Shader groundShader, uint seed, int propTiles = 3, float propClearRadius = 6f)
     {
         if (propTiles < 1 || propTiles % 2 == 0) throw new ArgumentException($"propTiles must be odd and >= 1, got {propTiles}");
         int tiles = propTiles * propTiles;
@@ -48,7 +48,7 @@ public sealed class Arena
         {
             Vector3 p;
             do p = new Vector3(rng.Range(-half, half), 0.3f, rng.Range(-half, half));
-            while (p.Length() < PropClearRadius);
+            while (p.Length() < propClearRadius);
             var basis = new Basis(Vector3.Up, rng.Range(0, MathF.Tau)).Scaled(Vector3.One * rng.Range(0.6f, 1.8f));
             for (int t = 0; t < tiles; t++)
             {

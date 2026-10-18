@@ -41,6 +41,10 @@ public sealed class GemRenderer
         });
     }
 
+    /// <summary>Violet orb for meta credit pickups.</summary>
+    public static GemRenderer MetaOrbs(Node3D parent) => new(parent, "MetaOrbs", new Color(0.75f, 0.4f, 1f), new Color(0.7f, 0.3f, 1f),
+        new SphereMesh { Radius = 0.3f, Height = 0.6f, RadialSegments = 12, Rings = 6 });
+
     /// <summary>Gold coin for credit pickups.</summary>
     public static GemRenderer Coins(Node3D parent) => new(parent, "Coins", new Color(1f, 0.8f, 0.2f), new Color(1f, 0.65f, 0.1f),
         new CylinderMesh { TopRadius = 0.22f, BottomRadius = 0.22f, Height = 0.06f, RadialSegments = 12, Rings = 1 });

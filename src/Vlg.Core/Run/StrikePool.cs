@@ -37,6 +37,8 @@ public sealed class StrikePool
         _query = new int[queryCapacity];
     }
 
+    public byte SourceOf(int i) => _source[i];
+
     public bool Spawn(Vector2 position, float radius, float delay, float damage, float stun, byte source, int slot)
     {
         if (Count == Capacity) return false;

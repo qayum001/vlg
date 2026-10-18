@@ -26,6 +26,10 @@ public sealed class RunHud
     readonly Label _skills;
     readonly Label _stats;
     readonly Label _items;
+    readonly HBoxContainer _skillIcons;
+    readonly HBoxContainer _itemIcons;
+    int _itemIconsVersion = -1;
+    const int IconSize = 44;
     readonly ColorRect[] _beats = new ColorRect[BeatClock.BeatsPerBar];
     readonly ProgressBar _cycle;
     readonly StyleBoxFlat _cycleFill;
@@ -83,6 +87,23 @@ public sealed class RunHud
         _skills.OffsetBottom = -44;
         _skills.VerticalAlignment = VerticalAlignment.Bottom;
         _skills.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+
+        // Icon rows: skills above the skill names (bottom left), usables + actives above the item text (bottom right).
+        _skillIcons = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        _skillIcons.AddThemeConstantOverride("separation", 8);
+        _skillIcons.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomLeft);
+        _skillIcons.OffsetLeft = 16;
+        _skillIcons.OffsetTop = -156;
+        _skillIcons.OffsetBottom = -156 + IconSize;
+        _root.AddChild(_skillIcons);
+        _itemIcons = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore, Alignment = BoxContainer.AlignmentMode.End };
+        _itemIcons.AddThemeConstantOverride("separation", 6);
+        _itemIcons.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomRight);
+        _itemIcons.OffsetLeft = -560;
+        _itemIcons.OffsetRight = -16;
+        _itemIcons.OffsetTop = -290;
+        _itemIcons.OffsetBottom = -290 + IconSize;
+        _root.AddChild(_itemIcons);
 
         // Items: bottom right, above the ultimate bar.
         _items = AddLabel(16, HorizontalAlignment.Right);
@@ -208,10 +229,11 @@ public sealed class RunHud
             _ultText.Text = string.Create(inv, $"{u.Def.Name} {u.Level} · {state}");
         }
 
+        UpdateIcons(sim);
         var invt = sim.Inventory;
         var defs = invt.Config.Items;
         _sb.Clear();
-        _sb.Append(string.Create(inv, $"{MathF.Floor(invt.Credits):0} credits"));
+        _sb.Append(string.Create(inv, $"{MathF.Floor(invt.Credits):0} credits · {MathF.Floor(sim.MetaCreditsEarned):0} meta"));
         for (int i = 0; i < invt.Usables.Count; i++)
         {
             int item = invt.Usables[i];
@@ -229,6 +251,31 @@ public sealed class RunHud
         _stats.Text = string.Create(inv,
             $"time {(int)sim.Time / 60}:{(int)sim.Time % 60:D2} · kills {sim.Kills} · enemies {sim.Enemies.Count} · {fps:F0} fps");
     }
+
+    /// <summary>Skill icons dim while locked; item icons rebuilt when the inventory changes.</summary>
+    void UpdateIcons(RunSim sim)
+    {
+        if (_skillIcons.GetChildCount() != sim.Loadout.Length)
+            foreach (var def in sim.Loadout) _skillIcons.AddChild(IconRect(Icons.Skill(def.Id)));
+        for (int i = 0; i < sim.Loadout.Length; i++)
+            ((TextureRect)_skillIcons.GetChild(i)).Modulate = sim.Progress.SkillLevel(i) > 0 ? Colors.White : new Color(1, 1, 1, 0.3f);
+
+        var inv = sim.Inventory;
+        if (inv.Version == _itemIconsVersion) return;
+        _itemIconsVersion = inv.Version;
+        foreach (var child in _itemIcons.GetChildren()) child.QueueFree();
+        foreach (int item in inv.Usables) _itemIcons.AddChild(IconRect(Icons.Item(inv.Config.Items[item].Id)));
+        foreach (int item in inv.Actives) _itemIcons.AddChild(IconRect(Icons.Item(inv.Config.Items[item].Id)));
+    }
+
+    static TextureRect IconRect(Texture2D? texture) => new()
+    {
+        Texture = texture,
+        CustomMinimumSize = new Vector2(IconSize, IconSize),
+        ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+        StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+        MouseFilter = Control.MouseFilterEnum.Ignore,
+    };
 
     public static string StageName(StageKind kind) => kind switch
     {

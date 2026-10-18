@@ -101,14 +101,17 @@ public sealed class ShopPanel
         var inv = sim.Inventory;
         int item = inv.Stash[stashIndex];
         var labels = new List<string>();
+        var icons = new List<Texture2D?>();
         var slots = new List<int>();
         for (int slot = 0; slot < sim.Loadout.Length; slot++)
         {
             if (!sim.CanSocket(item, slot)) continue;
             slots.Add(slot);
             labels.Add($"{sim.Skills.Form(slot)!.Name}  ({inv.Sockets(slot).Count}/{sim.SocketCount(slot)} sockets used)");
+            icons.Add(Icons.Skill(sim.Loadout[slot].Id));
         }
         labels.Add("Keep in stash");
+        icons.Add(Icons.Item(inv.Config.Items[item].Id));
         var it = inv.Config.Items[item];
         string body = slots.Count == 0
             ? $"{it.Text}\nNo unlocked skill with a free socket fits it right now (fits {string.Join(", ", it.Modifier!.Fits)})."
@@ -117,7 +120,7 @@ public sealed class ShopPanel
         {
             if (i < slots.Count) sim.Socket(stashIndex, slots[i]);
             done();
-        });
+        }, icons);
     }
 
     void Refresh()
@@ -140,6 +143,8 @@ public sealed class ShopPanel
             bool room = inv.CanTake(o.Item);
             string state = o.Sold ? "SOLD" : !room ? "no free slot" : string.Create(inv0, $"{o.Price:0} cr");
             var b = Button(_offers, $"{state}  ·  {ItemText.Card(it)}", () => Buy(index));
+            b.Icon = Icons.Item(it.Id);
+            b.AddThemeConstantOverride("icon_max_width", 72);
             b.CustomMinimumSize = new Vector2(0, 96);
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             b.AutowrapMode = TextServer.AutowrapMode.WordSmart;
@@ -190,11 +195,13 @@ public sealed class ShopPanel
             for (int k = 0; k < socketed.Count; k++)
             {
                 int s = slot, i = k;
-                Button(row, $"[{items[socketed[k]].Name}]", () =>
+                var sb2 = Button(row, $"[{items[socketed[k]].Name}]", () =>
                 {
                     _sim.Unsocket(s, i);
                     Refresh();
                 });
+                sb2.Icon = Icons.Item(items[socketed[k]].Id);
+                sb2.AddThemeConstantOverride("icon_max_width", 28);
             }
             for (int k = socketed.Count; k < sockets; k++) Label(row, 17).Text = "[ empty ]";
         }
@@ -208,7 +215,9 @@ public sealed class ShopPanel
             for (int k = 0; k < inv.Stash.Count; k++)
             {
                 int i = k;
-                Button(row, items[inv.Stash[k]].Name, () => AskSocket(_sim, _picker, i, AfterPick));
+                var stashButton = Button(row, items[inv.Stash[k]].Name, () => AskSocket(_sim, _picker, i, AfterPick));
+                stashButton.Icon = Icons.Item(items[inv.Stash[k]].Id);
+                stashButton.AddThemeConstantOverride("icon_max_width", 28);
             }
         }
 

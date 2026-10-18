@@ -16,6 +16,15 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+### Hub, meta-progression, icons, props, effects
+Added: 2026-10-18 | Confirmed: -
+What: the game opens in The Crossroads hub. Portal = start the endless Undead Town run. Setlist desk = pick 4 skills + 1 ultimate (saved). The Fixer (capsule placeholder) = meta upgrades: slots, damage, HP, pickup, start credits. Runs drop rare violet meta orbs and pay meta credits per finished loop, kept on death (save: `%APPDATA%\Godotpp_userdatalg\save.json`). Also: 35 icons on cards, shop and HUD; 3D props (speaker, subwoofer, vinyl, cowbell, boombox, toy drone, mortar shell); new ring/beam/zone effects.
+How to test:
+1. Play from source without args: the hub opens. Walk to The Fixer, press E, buy with F5 meta credits. Walk to Setlist, press E, pick 4 skills and an ultimate. Walk into the portal, press E: the run starts with that setlist.
+2. In the run, Esc → "Back to hub": meta credits earned are added. The death panel offers the same.
+3. Level-up cards, chest, shop and HUD show icons. Speakers, records, falling cowbells and drones are models; rings, beams and ground zones glow.
+Expected: no errors; upgrades and setlist survive a restart of the game.
+
 ### Items: credits, shop, chest, 25 items
 Added: 2026-10-18 | Confirmed: -
 What: the item pool from `design/items.md` is in the game (`game/data/items.json`):

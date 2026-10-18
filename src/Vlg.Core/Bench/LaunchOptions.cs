@@ -26,6 +26,8 @@ public sealed record LaunchOptions
     public int? Threads { get; init; }
     /// <summary>Open the stress test instead of the game run. --bench implies it.</summary>
     public bool Stress { get; init; }
+    /// <summary>Open the level run directly instead of the hub. Any run dev arg implies it.</summary>
+    public bool Run { get; init; }
     /// <summary>Hero skill ids for the run loadout; null = the hero's default.</summary>
     public string[]? Loadout { get; init; }
     /// <summary>Dev: every loadout skill starts at this level (ignores the level cap).</summary>
@@ -45,8 +47,12 @@ public sealed record LaunchOptions
 
     public bool WantsStressTest => Stress || Bench != null;
 
+    /// <summary>Skip the hub: --run or any run-only arg (loadout, levels, stage, items...).</summary>
+    public bool WantsRun => Run || Loadout != null || SkillLevel != null || Branches != null || Ultimate != null
+        || UltimateLevel != null || Stage != null || Credits != null || Items != null;
+
     public const string Usage =
-        "--stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
+        "--run  --stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
         "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>  " +
         "--loadout <id,id,...>  --skill-level <n>  --branch <i,i,...>  --ultimate <id>  --ultimate-level <n>  --stage <n>  --credits <n>  --items <id,id,...>";
 
@@ -67,6 +73,7 @@ public sealed record LaunchOptions
                 "--exit-after" => o with { ExitAfterSec = ParseFloat(a, Next()) },
                 "--windowed" => o with { Windowed = true },
                 "--stress" => o with { Stress = true },
+                "--run" => o with { Run = true },
                 "--seed" => o with { Seed = uint.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--ramp-start" => o with { RampStart = ParseInt(a, Next(), 0) },
                 "--ramp-step" => o with { RampStep = ParseInt(a, Next(), 1) },

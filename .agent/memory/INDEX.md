@@ -12,6 +12,8 @@ Game design source of truth: `design/` (human-readable, shared with the user). M
 - [Stress test](architecture/stress-test.md) — horde sim (Vlg.Core) + Godot adapters, bench ramp/CSV, data file, VAT enemies, `--stress` launch
 - [Run](architecture/run.md) — playable level run: RunSim phases, MOBA skill leveling, stage loop, gems, run.json, boot scene
 - [Skills](architecture/skills.md) — hero data file, beat clock + Drop, SkillSystem kinds + branch forms, ultimates, pools, enemy statuses, damage sources, beat audio
+- [Hub](architecture/hub.md) — The Crossroads hub, meta credits/upgrades, save file, boot flow (hub default, --run)
+- [Assets](architecture/assets.md) — icon generator (ComfyUI), Blender prop script, fx shaders, beat samples
 - [Items](architecture/items.md) — items.json, inventory/sockets/stash, shop + chest rules, usables, passives, credits, dev args
 
 ## decisions
