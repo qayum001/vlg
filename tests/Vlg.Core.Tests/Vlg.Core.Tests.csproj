@@ -23,6 +23,7 @@
   <ItemGroup>
     <None Include="..\..\game\data\stress.json" Link="data\stress.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\game\data\run.json" Link="data\run.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\game\data\heroes\lowkey.json" Link="data\heroes\lowkey.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

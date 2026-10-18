@@ -1,0 +1,58 @@
+// Lowkey, the bassist (design/heroes/lowkey.md). Parsed strictly by Vlg.Core HeroDef: unknown or missing keys throw.
+// Skill cooldown and duration are in beats (beat clock below); distances in meters, speeds m/s (orbit: rad/s).
+// All numbers are placeholders.
+{
+  "id": "lowkey",
+  "name": "Lowkey",
+  "maxHp": 90,
+  "speed": 7.0,
+  "pickupRadius": 4.5,
+  // The Drop: 8-bar cycle, last 3 bars = 1 bar build-up + 2 bars Drop (+30% damage, +20% area, shockwave at the start).
+  "beat": {
+    "bpm": 130,
+    "cycleBars": 8,
+    "buildBars": 1,
+    "dropBars": 2,
+    "dropDamage": 0.3,
+    "dropArea": 0.2,
+    "shockDamage": 15,
+    "shockRadius": 9,
+    "shockSpeed": 20,
+    "shockKnockback": 12
+  },
+  // Pool of 6. Stats at level L = base + perLevel * (L - 1); count is floored. Stat meaning per kind: SkillStats.cs.
+  "skills": [
+    {
+      "id": "cowbell", "name": "Cowbell", "kind": "projectile", "tags": ["projectile"],
+      "base": { "damage": 9, "cooldown": 2, "count": 1, "speed": 16, "range": 14 },
+      "perLevel": { "damage": 2, "count": 0.5 }
+    },
+    {
+      "id": "low_end", "name": "Low End", "kind": "ring", "tags": ["area"],
+      "base": { "damage": 6, "cooldown": 4, "radius": 7, "speed": 14, "knockback": 9 },
+      "perLevel": { "damage": 1.2, "radius": 0.3 }
+    },
+    {
+      "id": "speaker_stack", "name": "Speaker Stack", "kind": "speaker", "tags": ["summon", "zone"],
+      "base": { "damage": 4, "cooldown": 8, "count": 2, "duration": 16, "radius": 3, "range": 12 },
+      "perLevel": { "damage": 0.8, "cooldown": -0.5, "count": 0.34 }
+    },
+    {
+      "id": "distortion", "name": "Distortion", "kind": "aura", "tags": ["aura"],
+      "base": { "damage": 2.5, "cooldown": 1, "radius": 2.8, "vuln": 0.1 },
+      "perLevel": { "damage": 0.6, "radius": 0.15 }
+    },
+    {
+      "id": "slap", "name": "Slap", "kind": "beam", "tags": ["beam", "aimed"],
+      "base": { "damage": 14, "cooldown": 2, "range": 16, "width": 1.2 },
+      "perLevel": { "damage": 3, "range": 0.8 }
+    },
+    {
+      "id": "vinyl", "name": "Vinyl", "kind": "orbit", "tags": ["orbit"],
+      "base": { "damage": 5, "cooldown": 0.5, "count": 2, "speed": 3, "range": 3, "radius": 0.7 },
+      "perLevel": { "damage": 1, "count": 0.5, "speed": 0.15 }
+    }
+  ],
+  // Default loadout until a loadout screen exists (launch arg --loadout overrides). Slot 0 starts at level 1.
+  "loadout": ["cowbell", "low_end", "speaker_stack", "slap"]
+}

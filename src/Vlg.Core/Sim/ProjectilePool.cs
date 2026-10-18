@@ -13,6 +13,8 @@ public sealed class ProjectilePool
     public readonly Vector2[] Velocity;
     public readonly float[] Life;
     public readonly float[] Damage;
+    /// <summary>Damage source for kill credit (<see cref="EnemySwarm.LastHit"/>).</summary>
+    public readonly byte[] Source;
 
     public ProjectilePool(int capacity)
     {
@@ -21,9 +23,10 @@ public sealed class ProjectilePool
         Velocity = new Vector2[capacity];
         Life = new float[capacity];
         Damage = new float[capacity];
+        Source = new byte[capacity];
     }
 
-    public bool Spawn(Vector2 position, Vector2 velocity, float life, float damage)
+    public bool Spawn(Vector2 position, Vector2 velocity, float life, float damage, byte source = 0)
     {
         if (Count == Capacity) return false;
         int i = Count++;
@@ -31,12 +34,13 @@ public sealed class ProjectilePool
         Velocity[i] = velocity;
         Life[i] = life;
         Damage[i] = damage;
+        Source[i] = source;
         return true;
     }
 
     /// <param name="grid">Built from enemy positions at frame start; enemies moved since, radius is padded.</param>
     /// <param name="hitRadius">Projectile radius + enemy radius.</param>
-    /// <param name="enemyMaxSpeed">Fastest enemy movement since the grid build, for query padding.</param>
+    /// <param name="enemyMaxSpeed">Fastest enemy movement since the grid build (steering + push), for query padding.</param>
     public void Update(float dt, EnemySwarm enemies, SpatialGrid grid, PointBuffer hits, float hitRadius, float enemyMaxSpeed)
     {
         Span<int> candidates = stackalloc int[16];
@@ -62,8 +66,7 @@ public sealed class ProjectilePool
                 int j = candidates[k];
                 if (enemies.Health[j] <= 0f) continue;
                 if (Vector2.DistanceSquared(enemies.Position[j], p) > hitR2) continue;
-                enemies.Health[j] -= Damage[i];
-                enemies.HitFlash[j] = 1f;
+                enemies.Damage(j, Damage[i], Source[i]);
                 hits.Add(p);
                 RemoveAt(i);
                 break;
@@ -79,5 +82,6 @@ public sealed class ProjectilePool
         Velocity[i] = Velocity[last];
         Life[i] = Life[last];
         Damage[i] = Damage[last];
+        Source[i] = Source[last];
     }
 }

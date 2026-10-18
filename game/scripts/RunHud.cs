@@ -7,10 +7,14 @@ using Vlg.Core.Run;
 
 namespace Vlg.Game;
 
-/// <summary>Run HUD: HP, XP + level, loop/stage/timer, skill levels, counters, controls hint.</summary>
+/// <summary>Run HUD: HP, XP + level, loop/stage/timer, skill levels, beat + Drop meter, counters, controls hint.</summary>
 public sealed class RunHud
 {
-    const string Hint = "WASD / left stick move · mouse / right stick camera · Esc / Start pause · F1 HUD · F2 skip stage · F3 +1 level";
+    const string Hint = "WASD / left stick move · mouse / right stick camera (aims Slap) · Esc / Start pause · M mute beat · F1 HUD · F2 skip stage · F3 +1 level";
+
+    static readonly Color BeatOff = new(1f, 1f, 1f, 0.2f);
+    static readonly Color BeatOn = new(0.3f, 0.95f, 1f);
+    static readonly Color DropOn = new(1f, 0.3f, 0.75f);
 
     readonly Control _root;
     readonly ProgressBar _hp;
@@ -20,6 +24,10 @@ public sealed class RunHud
     readonly Label _stage;
     readonly Label _skills;
     readonly Label _stats;
+    readonly ColorRect[] _beats = new ColorRect[BeatClock.BeatsPerBar];
+    readonly ProgressBar _cycle;
+    readonly StyleBoxFlat _cycleFill;
+    readonly Label _dropText;
     readonly StringBuilder _sb = new();
 
     public bool Visible
@@ -66,13 +74,53 @@ public sealed class RunHud
         _skills.OffsetLeft = 16;
         _skills.OffsetTop = -74;
         _skills.OffsetBottom = -44;
+
+        // Beat row under the stage line: 4 beat squares, cycle bar toward the next Drop, status text.
+        var beatRow = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        beatRow.AddThemeConstantOverride("separation", 6);
+        beatRow.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.CenterTop);
+        beatRow.OffsetTop = 74;
+        beatRow.OffsetLeft = -170;
+        beatRow.OffsetRight = 170;
+        _root.AddChild(beatRow);
+        for (int i = 0; i < _beats.Length; i++)
+        {
+            _beats[i] = new ColorRect { CustomMinimumSize = new Vector2(18, 18), Color = BeatOff, MouseFilter = Control.MouseFilterEnum.Ignore };
+            beatRow.AddChild(_beats[i]);
+        }
+        _cycleFill = new StyleBoxFlat { BgColor = BeatOn };
+        _cycle = new ProgressBar { ShowPercentage = false, CustomMinimumSize = new Vector2(150, 18), MaxValue = 1, MouseFilter = Control.MouseFilterEnum.Ignore };
+        _cycle.AddThemeStyleboxOverride("fill", _cycleFill);
+        _cycle.AddThemeStyleboxOverride("background", new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0.55f) });
+        beatRow.AddChild(_cycle);
+        _dropText = new Label
+        {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            LabelSettings = new LabelSettings { FontSize = 18, OutlineSize = 5, OutlineColor = Colors.Black },
+        };
+        beatRow.AddChild(_dropText);
+    }
+
+    /// <summary>Every frame: the beat squares must not lag behind the groove.</summary>
+    public void UpdateBeat(BeatClock beat)
+    {
+        bool drop = beat.InDrop;
+        float pump = MathF.Exp(-beat.BeatPhase * 5f);
+        for (int i = 0; i < _beats.Length; i++)
+        {
+            var on = drop ? DropOn : BeatOn;
+            _beats[i].Color = i == beat.BeatInBar && beat.Beat >= 0 ? on.Lerp(Colors.White, 0.5f * pump) : BeatOff;
+        }
+        _cycle.Value = (beat.BeatInCycle + beat.BeatPhase) / beat.CycleBeats;
+        _cycleFill.BgColor = drop ? DropOn : beat.InBuild ? BeatOn.Lerp(DropOn, beat.BuildProgress) : BeatOn;
+        _dropText.Text = drop ? "DROP" : beat.InBuild ? "build-up" : "";
+        _dropText.Modulate = drop ? DropOn : Colors.White;
     }
 
     public void Update(RunSim sim, float fps)
     {
         var inv = CultureInfo.InvariantCulture;
         var p = sim.Progress;
-        var c = sim.Config;
 
         _hp.MaxValue = sim.HeroMaxHp;
         _hp.Value = Math.Max(0f, sim.HeroHp);
@@ -88,10 +136,10 @@ public sealed class RunHud
         _stage.Text = string.Create(inv, $"Loop {st.Loop} · {StageName(st.Current.Kind)}{timer}");
 
         _sb.Clear();
-        for (int i = 0; i < c.Skills.Length; i++)
+        for (int i = 0; i < sim.Loadout.Length; i++)
         {
             int level = p.SkillLevel(i);
-            _sb.Append(c.Skills[i].Name).Append(' ').Append(level > 0 ? level.ToString(inv) : "–").Append("     ");
+            _sb.Append(sim.Loadout[i].Name).Append(' ').Append(level > 0 ? level.ToString(inv) : "–").Append("     ");
         }
         _sb.Append("skill cap ").Append(p.SkillCap.ToString(inv));
         if (p.BonusCount > 0) _sb.Append("   bonus +").Append(((p.DamageMultiplier - 1f) * 100f).ToString("0.#", inv)).Append("% damage");

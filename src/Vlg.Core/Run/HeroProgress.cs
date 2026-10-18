@@ -53,6 +53,14 @@ public sealed class HeroProgress
         PendingLevelUps++;
     }
 
+    /// <summary>Dev shortcut: every skill at <paramref name="level"/>, cap ignored.</summary>
+    public void DevSetAllSkills(int level)
+    {
+        if (level < 1 || level > _s.MaxSkillLevel)
+            throw new ArgumentOutOfRangeException(nameof(level), $"1..{_s.MaxSkillLevel}, got {level}");
+        Array.Fill(_skillLevels, level);
+    }
+
     /// <summary>
     /// Picks for the current pending level-up, in slot order. Cap uses the current hero level, so after
     /// a multi-level jump every pending pick sees the final level. Empty when nothing is pending.

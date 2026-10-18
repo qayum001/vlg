@@ -16,6 +16,8 @@ public sealed record WalkerSettings
     public required float HeadingTurnRate { get; init; }
     public required float AnimRate { get; init; }
     public required float HitFlashDecay { get; init; }
+    /// <summary>Knockback/pull velocity decay rate, 1/s. A push of v m/s travels about v / pushDecay m.</summary>
+    public required float PushDecay { get; init; }
 
     public SwarmTuning ToSwarm(float heroRadius) => new()
     {
@@ -28,5 +30,6 @@ public sealed record WalkerSettings
         HeadingTurnRate = HeadingTurnRate,
         AnimRate = AnimRate,
         HitFlashDecay = HitFlashDecay,
+        PushDecay = PushDecay,
     };
 }

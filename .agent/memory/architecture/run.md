@@ -1,17 +1,17 @@
-# Level run (first gameplay slice)
-Updated: 2026-10-17
-Related: [stress test](stress-test.md), [status](../project/status.md), [domain](../../../design/domain.md)
+# Level run
+Updated: 2026-10-18
+Related: [stress test](stress-test.md), [skills](skills.md), [status](../project/status.md), [domain](../../../design/domain.md)
 
-Purpose: playable run from `design/domain.md`: hero, 4 auto skills with MOBA leveling, walkers, XP gems, stage loop, death.
+Purpose: playable run from `design/domain.md`: hero, loadout skills with MOBA leveling, walkers, XP gems, stage loop, death. Skills, beat clock and statuses: [skills](skills.md).
 
 ## Where
-- Logic (Godot-free, tested): `src/Vlg.Core/Run/` — `RunSim` (orchestrator, phases), `HeroProgress` + `LevelRule` (XP, level-up picks, cap), `StageLoop`, `WalkerSpawner`, `SkillSystem`, `GemPool`.
-- Config: `src/Vlg.Core/Config/RunConfig.cs` + section records; data `game/data/run.json` (strict parse, `ConfigJson` options shared with stress.json).
-- Engine side: `game/scripts/RunGame.cs` (scene root `scenes/run.tscn`), `RunHud`, `ChoicePanel` (modal picks), `GemRenderer`, `SkillVisuals` (aura disc, orbit blades). Reuses `EnemyRenderer`, `ProjectileRenderer`, `VfxSystem` (bursts only), `OrbitCamera`, `Arena.Follow` (endless ground).
+- Logic (Godot-free, tested): `src/Vlg.Core/Run/` — `RunSim` (orchestrator, phases; `RunSim(config, hero, seed, workers, loadout)`), `HeroProgress` + `LevelRule` (XP, level-up picks, cap), `StageLoop`, `WalkerSpawner`, `GemPool`, skills ([skills](skills.md)).
+- Config: `src/Vlg.Core/Config/RunConfig.cs` + section records; data `game/data/run.json` (strict parse, `ConfigJson` options shared with stress.json and hero files). Hero: `game/data/heroes/lowkey.json`.
+- Engine side: `game/scripts/RunGame.cs` (scene root `scenes/run.tscn`), `RunHud`, `ChoicePanel` (modal picks), `GemRenderer`, `SkillVisuals`, `BeatAudio`, `BeatOverlay`. Reuses `EnemyRenderer`, `ProjectileRenderer`, `VfxSystem` (bursts only), `OrbitCamera`, `Arena.Follow` (endless ground).
 - Main scene `scenes/boot.tscn` (`Boot.cs`): run by default, stress test for `--stress`/`--bench` (export templates refuse a scene path arg).
 
 ## Data flow per step (`RunSim.Step`, only in phase Playing)
-(adapter: `SetView(yaw, aspect)`) → move hero → `StageLoop.Update` (entering Shop = full heal; Chest/Shop stop the step) → spawn + recycle outrun walkers just off-screen → grid build → swarm update → skills (Bolt/Nova spawn projectiles; Aura/Orbit damage on tick) → projectiles → contact damage → remove dead → gems at deaths → gems collected → XP → pending level-ups.
+(adapter: `SetView(yaw, aspect)` → view + aim) → move hero → `StageLoop.Update` (entering Shop = full heal; Chest/Shop stop the step) → beat advance → spawn + recycle outrun walkers just off-screen → grid build → swarm update (statuses) → Drop shock ring → skills → rings → projectiles → contact damage → remove dead → gems at deaths → gems collected → XP → pending level-ups. Query pad = (walker speed × 1.5 + MaxPushSpeed) × dt.
 
 ## Rules (domain.md)
 - Run start: hero level 1, loadout slot 0 at level 1. Each level-up = 1 pick: unlock (→1) or +1, skill level ≤ ceil(hero level / levelDivisor), max `maxSkillLevel`. Nothing pickable → +`maxedBonusDamage` damage bonus.
@@ -21,10 +21,9 @@ Purpose: playable run from `design/domain.md`: hero, 4 auto skills with MOBA lev
 - Loop scaling linear: 1 + perLoop × (loop−1); spawn multiplier scales rate and alive cap.
 
 ## Non-obvious
-- Loadout = `skills` array order in run.json (no loadout screen yet). Options shown in slot order, keys 1..9.
-- Bolt with no target in range stays ready (timer 0) and fires the frame one enters range.
-- Cooldown overshoot carries (`timer += cooldown`), so the average rate holds at any frame rate.
-- Hits/Deaths/HeroHurt cleared at the start of every Step call, even when paused. RunGame doesn't call Step while paused, so it gates bursts and hurt flash on "stepped this frame".
+- Loadout = hero `loadout` (or `--loadout`), no loadout screen yet. Options shown in slot order, keys 1..9.
+- A skill with no target (projectile) or no room (speaker cap) stays ready (timer 0) and retries.
+- Hits/Deaths/HeroHurt/Beams cleared at the start of every Step call, even when paused. RunGame doesn't call Step while paused, so it gates bursts and hurt flash on "stepped this frame".
 - Camera: `run.json` `camera` (tilt 40° below horizon, 28 m, FOV 45°, user 2026-10-17). `OrbitCamera` takes values as params; stress test keeps its own fixed 55°/22 m for bench comparability.
 - Spawning follows the view (concept.md): `ViewFootprint` = ground quad the camera sees (yaw + aspect); spawn = random direction, edge + `viewMargin` + [0, `band`) → ~18 m behind the hero, ~41-60 m ahead at 16:9. Config validation: both despawn radii must exceed the farthest visible point at 21:9 (`RunConfig.MaxAspect`); tilt must keep the top edge ≥ 5° below the horizon.
 - Props: run uses 5x5 tiles (props within 120 m), sun shadow distance from `camera.shadowDistance`.
@@ -36,6 +35,6 @@ Purpose: playable run from `design/domain.md`: hero, 4 auto skills with MOBA lev
 - Dev keys: F2 skip stage, F3 +1 level (`RunSim.DevSkipStage/DevGainLevel`).
 
 ## Extend
-- New skill kind → `SkillKind` + case in `SkillSystem.Update` + validation in `RunConfig.ValidateSkill` + `RunGame.SkillText`.
+- New skill kind: see [skills](skills.md) → Extend.
 - New tuning value → record property + run.json + validation.
 - Items, chest/shop content, elites, other enemy types: not started (Chest/Shop are placeholder panels).

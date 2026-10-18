@@ -1,6 +1,6 @@
 # Hero: Lowkey (bassist)
 
-Status: proposal, waiting for user review (keep / adjust per part)
+Status: approved by the user 2026-10-18 ("keep as proposed"); numbers are placeholders
 Updated: 2026-10-18
 Base: `../domain.md` (Heroes, Build). Items and skill tags: `../items.md`.
 Model: made by the user (R11). In game: capsule until then.
@@ -63,7 +63,7 @@ Every bar a sub-bass ring expands from her, hitting and pushing enemies back.
 ### 3. Speaker Stack
 Tags: Summon, Zone
 Drops a speaker near enemy clusters. It pumps a damage pulse around itself on every beat for 4 bars.
-- Numbers: 4 damage per pulse, radius 3 m, a new speaker every 4 bars, max 2. Per level: +0.8 damage, +1 max speaker every 3 levels.
+- Numbers: 4 damage per pulse, radius 3 m, a new speaker every 2 bars, each lasts 4 bars, max 2. Per level: +0.8 damage, +1 max speaker every 3 levels, new speaker half a beat sooner.
 - L5 **Wall of Sound** (deepen): speakers land 3 at a time in a ring around her, bigger pulses.
   - L10 **Festival Rig**: 6 speakers; every 4th pulse is a huge one.
   - L10 **Feedback Loop** (+Beam): speakers link with damaging beams between them.

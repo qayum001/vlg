@@ -16,6 +16,22 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+### Lowkey base kit + The Drop (beat clock)
+Added: 2026-10-18 | Confirmed: -
+What: the placeholder skills are gone. The hero is now Lowkey (`game/data/heroes/lowkey.json`, design: `design/heroes/lowkey.md`) with 90 HP and speed 7. She has a pool of 6 skills, and 4 of them are in the loadout. Her skills fire on a 130 BPM beat. Every 8 bars a 1-bar build-up leads into a 2-bar Drop (+30% damage, +20% area) that starts with a shockwave. A placeholder groove plays on the beat (kick, clap, hats, riser, drop boom, plus a sound for each skill cast). Skill branches, ultimates and items come next.
+How to test:
+1. Build, then play from source (`LAUNCH.md`). Default loadout: Cowbell (unlocked), Low End, Speaker Stack, Slap.
+2. Listen and watch the HUD under the stage line: 4 beat squares light up in time with the kick. The bar next to them fills toward the next Drop. It shows "build-up" (rising pink tint and riser sound), then "DROP" (pink flash, boom, a white shockwave ring that pushes walkers away; the hero glows pink on each beat).
+3. Cowbell: notes fly at the nearest walker in time with the beat, each with a cowbell hit that walks a short riff. Level-ups unlock the others:
+   - Low End: a pink ring every bar that pushes walkers back.
+   - Speaker Stack: purple boxes land on walker groups and pulse cyan on every beat.
+   - Slap: a pink beam in the direction the camera looks (turn the camera to aim).
+4. To see all 6 at once, run with `-- --loadout cowbell,low_end,speaker_stack,distortion,slap,vinyl --skill-level 5`:
+   - Distortion: purple field around you; walkers inside take more damage from everything.
+   - Vinyl: black records with pink labels circle you.
+5. M mutes / unmutes the beat. Level-up cards describe each skill with its numbers; cooldowns are in beats.
+Expected: no errors in the console. Skills fire on the beat, never between beats. The groove and the HUD squares stay in sync, stop while a card or the pause menu is open, and continue in time. During the Drop, the skill visuals get bigger and walkers die faster. A wrong id in `--loadout` stops the game with an error that lists the valid ids.
+
 ### Run camera: lower and farther, off-screen spawning
 Added: 2026-10-17 | Confirmed: -
 What: the run camera tilts 40° below the horizon (was 55°) and sits 28 m from the hero (was 22 m). Values are in `game/data/run.json` → `camera`. Walkers now spawn just outside the visible screen area in every direction, following camera rotation and screen shape. The stress test camera is unchanged.

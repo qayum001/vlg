@@ -9,13 +9,24 @@ namespace Vlg.Core.Run;
 
 /// <summary>
 /// One level run: hero, stage loop, walkers, skills, XP gems, level-ups. Godot-free.
-/// Step only clears last step's events (Hits, Deaths, HeroHurt) unless <see cref="Phase"/> is Playing;
+/// Step only clears last step's events (Hits, Deaths, HeroHurt, Beams) unless <see cref="Phase"/> is Playing;
 /// the adapter answers LevelUp/Chest/Shop/Dead.
 /// Ground plane: Vector2(x, y) = world (x, z).
 /// </summary>
 public sealed class RunSim
 {
+    /// <summary>Damage source ids (EnemySwarm.LastHit): hero skill slot i = HeroSkillSource + i.</summary>
+    public const byte HeroSkillSource = 1;
+    public const byte DropShockSource = 20;
+
     public readonly RunConfig Config;
+    public readonly HeroDef Hero;
+    /// <summary>Loadout skills in slot order.</summary>
+    public readonly SkillDef[] Loadout;
+    public readonly BeatClock Beat;
+    public readonly RingPool Rings;
+    public readonly SummonPool Summons;
+    public readonly BeamEvents Beams;
     public readonly EnemySwarm Enemies;
     public readonly ProjectilePool Projectiles;
     public readonly GemPool Gems;
@@ -35,6 +46,7 @@ public sealed class RunSim
     public float Time { get; private set; }
 
     readonly SwarmTuning _swarm;
+    readonly SkillWorld _world;
     readonly WalkerSpawner _spawner = new();
     readonly WorkerPool? _workers;
     readonly int[] _contacts;
@@ -45,9 +57,12 @@ public sealed class RunSim
     public const float DefaultAspect = 16f / 9f;
 
     /// <param name="workers">Shared pool for the enemy update; null = single thread. Same result either way.</param>
-    public RunSim(RunConfig config, uint seed, WorkerPool? workers = null)
+    /// <param name="loadout">Skill ids; null = the hero's default loadout.</param>
+    public RunSim(RunConfig config, HeroDef hero, uint seed, WorkerPool? workers = null, IReadOnlyList<string>? loadout = null)
     {
         Config = config;
+        Hero = hero;
+        Loadout = hero.LoadoutSkills(loadout);
         _workers = workers;
         _rng = new XorShift32(seed);
         _swarm = config.Walker.ToSwarm(config.Hero.Radius);
@@ -59,16 +74,24 @@ public sealed class RunSim
         Hits = new PointBuffer(s.EnemyCapacity);
         // Every death drops a gem: never drop death events.
         Deaths = new PointBuffer(s.EnemyCapacity);
-        Progress = new HeroProgress(config.Leveling, config.Skills.Length);
+        Rings = new RingPool(s.RingCapacity, s.EnemyCapacity);
+        Summons = new SummonPool(RunConfig.MaxSkills * RunConfig.MaxSummonsPerSkill);
+        Beams = new BeamEvents(64);
+        Beat = new BeatClock(hero.Beat);
+        Progress = new HeroProgress(config.Leveling, Loadout.Length);
         Stages = new StageLoop(config.Stages);
-        Skills = new SkillSystem(config.Skills, s.EnemyCapacity);
+        _world = new SkillWorld(Enemies, Grid, Projectiles, Rings, Summons, Beams, Hits, config.Hero.Radius, config.Walker.Radius);
+        Skills = new SkillSystem(Loadout, _world, Beat, HeroSkillSource, seed ^ 0x5EEDu);
         _contacts = new int[s.EnemyCapacity];
-        HeroHp = config.Hero.MaxHp;
+        HeroHp = hero.MaxHp;
         SetView(0f, DefaultAspect);
         OnStageEntered();
     }
 
-    public float HeroMaxHp => Config.Hero.MaxHp;
+    public float HeroMaxHp => Hero.MaxHp;
+
+    /// <summary>Unit camera forward on the ground: aimed skills fire along it.</summary>
+    public Vector2 Aim => _world.Aim;
 
     /// <summary>Ground area the camera sees, relative to the hero. Spawns and recycles land outside it.</summary>
     public ViewFootprint View => _view;
@@ -78,6 +101,7 @@ public sealed class RunSim
     {
         var c = Config.Camera;
         _view = ViewFootprint.Compute(c.TiltDeg, c.Distance, c.FovDeg, aspect, yaw);
+        _world.Aim = CameraMath.Forward(yaw);
     }
 
     public RunPhase Phase =>
@@ -95,6 +119,7 @@ public sealed class RunSim
     {
         Hits.Clear();
         Deaths.Clear();
+        Beams.Clear();
         HeroHurt = false;
         if (Phase != RunPhase.Playing) return;
 
@@ -102,19 +127,28 @@ public sealed class RunSim
         Time += dt;
         float len2 = move.LengthSquared();
         if (len2 > 1f) move /= MathF.Sqrt(len2);
-        HeroPosition += move * Config.Hero.Speed * dt;
+        HeroPosition += move * Hero.Speed * dt;
 
         if (Stages.Update(dt)) OnStageEntered();
         if (!Stages.Current.IsTimed) return;
+        Beat.Advance(dt);
 
         var hero = HeroPosition;
         _spawner.Update(dt, Stages.Current, Stages.Loop, hero, _view, Enemies, ref _rng, Config);
         Grid.Build(Enemies.Position, Enemies.Count, hero);
         Enemies.Update(dt, hero, Grid, _swarm, _workers);
 
-        float enemyMaxSpeed = Config.Walker.Speed * EnemySwarm.MaxSpeedFactor;
+        float enemyMaxSpeed = Config.Walker.Speed * EnemySwarm.MaxSpeedFactor + EnemySwarm.MaxPushSpeed;
         float pad = enemyMaxSpeed * dt;
-        Skills.Update(dt, hero, Config.Hero.Radius, Progress, Enemies, Grid, Projectiles, Hits, Config.Walker.Radius, pad, ref _rng);
+        _world.Hero = hero;
+        _world.QueryPad = pad;
+        if (Beat.DropStarted)
+        {
+            var b = Hero.Beat;
+            Rings.Spawn(hero, b.ShockRadius, b.ShockSpeed, b.ShockDamage * Progress.DamageMultiplier, b.ShockKnockback, DropShockSource);
+        }
+        Skills.Update(dt, Progress, Progress.DamageMultiplier);
+        Rings.Update(dt, Enemies, Grid, Hits, Config.Walker.Radius, pad);
         Projectiles.Update(dt, Enemies, Grid, Hits, Config.Sim.ProjectileRadius + Config.Walker.Radius, enemyMaxSpeed);
         ApplyContactDamage(dt, pad);
 
@@ -122,7 +156,7 @@ public sealed class RunSim
         for (int i = 0; i < Deaths.Count; i++) Gems.Spawn(Deaths.Items[i], Config.Walker.Xp);
 
         var p = Config.Pickups;
-        Progress.AddXp(Gems.Update(dt, hero, Config.Hero.PickupRadius, p.MagnetSpeed, p.CollectRadius, p.DespawnRadius));
+        Progress.AddXp(Gems.Update(dt, hero, Hero.PickupRadius, p.MagnetSpeed, p.CollectRadius, p.DespawnRadius));
     }
 
     public void ChooseLevelUp(int index)

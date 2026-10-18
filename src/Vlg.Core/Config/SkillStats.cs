@@ -4,10 +4,14 @@ using System.Text.Json.Serialization;
 namespace Vlg.Core.Config;
 
 /// <summary>
-/// Skill numbers at one level. Omitted keys are 0. Use per kind:
-/// Bolt/Nova: damage, cooldown, count (projectiles), speed (m/s), range (travel distance).
-/// Aura: damage, cooldown (tick), radius.
-/// Orbit: damage, cooldown (tick), count (blades), speed (rad/s), range (orbit distance), radius (blade hit radius).
+/// Skill numbers at one level. Omitted keys are 0. Time unit (cooldown, duration): beats for a hero
+/// with a beat clock, seconds otherwise. Use per kind:
+/// Projectile: damage, cooldown, count (projectiles), speed (m/s), range (travel distance).
+/// Ring: damage, cooldown, radius (max), speed (expansion m/s), knockback (push m/s, below speed).
+/// Speaker: damage (per pulse), cooldown (between placements), count (max alive), duration, radius (pulse), range (placement).
+/// Aura: damage, cooldown (tick), radius, vuln (+damage taken while hit, fraction).
+/// Beam: damage, cooldown, range (length), width.
+/// Orbit: damage, cooldown (tick), count (objects), speed (rad/s), range (orbit distance), radius (object hit radius).
 /// </summary>
 public readonly record struct SkillStats
 {
@@ -17,6 +21,10 @@ public readonly record struct SkillStats
     public float Speed { get; init; }
     public float Range { get; init; }
     public float Radius { get; init; }
+    public float Duration { get; init; }
+    public float Width { get; init; }
+    public float Knockback { get; init; }
+    public float Vuln { get; init; }
 
     /// <summary>Count floored; fractional growth (0.5 per level) adds one every other level.</summary>
     [JsonIgnore]
@@ -34,6 +42,10 @@ public readonly record struct SkillStats
             Speed = b.Speed + perLevel.Speed * k,
             Range = b.Range + perLevel.Range * k,
             Radius = b.Radius + perLevel.Radius * k,
+            Duration = b.Duration + perLevel.Duration * k,
+            Width = b.Width + perLevel.Width * k,
+            Knockback = b.Knockback + perLevel.Knockback * k,
+            Vuln = b.Vuln + perLevel.Vuln * k,
         };
     }
 }

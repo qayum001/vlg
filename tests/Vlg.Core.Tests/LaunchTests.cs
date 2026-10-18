@@ -53,6 +53,16 @@ public class LaunchTests
     }
 
     [Fact]
+    public void Loadout_parses_a_comma_list()
+    {
+        Assert.Null(LaunchOptions.Parse(Array.Empty<string>()).Loadout);
+        Assert.Equal(new[] { "vinyl", "slap", "cowbell" }, LaunchOptions.Parse(new[] { "--loadout", "vinyl, slap,cowbell" }).Loadout);
+        Assert.Throws<ArgumentException>(() => LaunchOptions.Parse(new[] { "--loadout", " , " }));
+        Assert.Equal(4, LaunchOptions.Parse(new[] { "--skill-level", "4" }).SkillLevel);
+        Assert.Throws<ArgumentException>(() => LaunchOptions.Parse(new[] { "--skill-level", "0" }));
+    }
+
+    [Fact]
     public void Threads_override_parses()
     {
         Assert.Null(LaunchOptions.Parse(Array.Empty<string>()).Threads);

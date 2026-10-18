@@ -21,9 +21,10 @@ Controls:
 | Input | Action |
 |---|---|
 | WASD / left stick | Move (W = away from the camera) |
-| Mouse / right stick | Orbit the camera |
-| Click, 1–3, d-pad + A | Pick a level-up card |
+| Mouse / right stick | Orbit the camera (also aims Slap) |
+| Click, 1–9, d-pad + A | Pick a level-up card |
 | Esc / Start | Pause menu (Resume, Restart run, Quit) |
+| M | Mute / unmute the beat |
 | F1 | Hide / show HUD |
 | F2 | Skip to the next stage (dev) |
 | F3 | +1 hero level (dev) |
@@ -61,6 +62,14 @@ Work for both. Combine freely.
 | `--rendering-method forward_plus` | before `--path` | Forward+ renderer. Default: `mobile`. |
 | `--preset medium` | after `--` | Start quality preset: `very_low`, `low` (default), `medium`, `high`. |
 | `--seed 7` | after `--` | Other random props and spawns. Default 1; same seed + same input = same run. |
+| `--loadout vinyl,distortion,slap,cowbell` | after `--` | Game run only. Hero skills in slot order (first starts unlocked). Ids: `cowbell`, `low_end`, `speaker_stack`, `distortion`, `slap`, `vinyl`. Default: `cowbell,low_end,speaker_stack,slap`. |
+| `--skill-level 5` | after `--` | Game run only (dev). Every loadout skill starts at this level, so you see them all at once. |
+
+Example: all six of Lowkey's skills at level 3:
+
+```powershell
+& "C:\Projects\Games\Godot\engine\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe" --path C:\Projects\Games\vlg\game -- --loadout cowbell,low_end,speaker_stack,distortion,slap,vinyl --skill-level 3
+```
 
 Example: game run on the Vega 8 at the medium preset:
 

@@ -10,7 +10,8 @@ Game design source of truth: `design/` (human-readable, shared with the user). M
 
 ## architecture
 - [Stress test](architecture/stress-test.md) — horde sim (Vlg.Core) + Godot adapters, bench ramp/CSV, data file, VAT enemies, `--stress` launch
-- [Run](architecture/run.md) — playable level run: RunSim phases, MOBA skill leveling, stage loop, skills, gems, run.json, boot scene
+- [Run](architecture/run.md) — playable level run: RunSim phases, MOBA skill leveling, stage loop, gems, run.json, boot scene
+- [Skills](architecture/skills.md) — hero data file, beat clock + Drop, SkillSystem kinds, rings/speakers/beams, enemy statuses, damage sources, beat audio
 
 ## decisions
 - [Engine](decisions/engine.md) — Godot 4.7 + C#, min spec 8 GB / 2 GB, Unity fallback trigger, perf test on Vega 8

@@ -1,6 +1,6 @@
 # Items: first pool
 
-Status: proposal, waiting for user review (keep / adjust per item)
+Status: approved by the user 2026-10-18 ("keep as proposed"); numbers are placeholders
 Updated: 2026-10-18
 Base: `domain.md` (Build → item types, Shop and chest). First hero: `heroes/lowkey.md`.
 

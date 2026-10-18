@@ -4,11 +4,15 @@ namespace Vlg.Core.Config;
 public enum SkillKind
 {
     /// <summary>Projectiles at the nearest enemies in range.</summary>
-    Bolt,
-    /// <summary>Ring of projectiles in all directions.</summary>
-    Nova,
-    /// <summary>Damage tick to every enemy around the hero.</summary>
+    Projectile,
+    /// <summary>Ring expanding from the cast point; hits each enemy once as it passes, pushes outward.</summary>
+    Ring,
+    /// <summary>Speaker placed on an enemy cluster; pulses damage around itself on every beat.</summary>
+    Speaker,
+    /// <summary>Damage tick to every enemy around the hero; hit enemies take extra damage for a while.</summary>
     Aura,
-    /// <summary>Blades circling the hero, damage tick around each blade.</summary>
+    /// <summary>Instant line hit from the hero in the camera direction.</summary>
+    Beam,
+    /// <summary>Objects circling the hero, damage tick around each one.</summary>
     Orbit,
 }

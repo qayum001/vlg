@@ -6,6 +6,7 @@
     "enemyCapacity": 4096,
     "projectileCapacity": 4096,
     "gemCapacity": 4096,
+    "ringCapacity": 256,
     "gridDim": 64,
     "gridCellSize": 2.0,
     "projectileRadius": 0.25,
@@ -14,13 +15,8 @@
   },
   // Angle below the horizon, distance to the hero, vertical FOV. Spawning follows the view.
   "camera": { "tiltDeg": 40, "distance": 28, "fovDeg": 45, "followRate": 10, "shadowDistance": 80 },
-  "hero": {
-    "maxHp": 100,
-    "speed": 6.5,
-    "radius": 0.5,
-    "pickupRadius": 4,
-    "contactMargin": 0.3
-  },
+  // Body shared by every hero. Per-hero stats, beat and skills: data/heroes/<id>.json.
+  "hero": { "radius": 0.5, "contactMargin": 0.3 },
   "walker": {
     "hp": 8,
     "speed": 3.0,
@@ -32,7 +28,9 @@
     "maxNeighbors": 12,
     "headingTurnRate": 8.0,
     "animRate": 1.6,
-    "hitFlashDecay": 6.0
+    "hitFlashDecay": 6.0,
+    // Knockback/pull decay, 1/s: a push of v m/s carries the walker about v / pushDecay m.
+    "pushDecay": 6.0
   },
   // Walkers spawn at view edge + viewMargin + [0, band) in a random direction (~16 m behind the hero, ~40-60 m ahead
   // at 16:9). despawnRadius must exceed the farthest visible point at 21:9 (validated).
@@ -54,29 +52,5 @@
     { "kind": "chest" },
     { "kind": "mobs", "durationSec": 120, "spawnPerSec": 1.2, "maxAlive": 120 },
     { "kind": "shop" }
-  ],
-  // Loadout in order; the first skill starts at level 1. Stats at level L = base + perLevel * (L - 1).
-  // count is floored, so 0.5 per level adds one every other level. Stat meaning per kind: SkillStats.cs.
-  "skills": [
-    {
-      "id": "bolt", "name": "Bolt", "kind": "bolt",
-      "base": { "damage": 10, "cooldown": 0.6, "count": 1, "speed": 18, "range": 14 },
-      "perLevel": { "damage": 2, "cooldown": -0.02, "count": 0.5, "range": 0.5 }
-    },
-    {
-      "id": "nova", "name": "Nova", "kind": "nova",
-      "base": { "damage": 5, "cooldown": 2.5, "count": 8, "speed": 12, "range": 9 },
-      "perLevel": { "damage": 1.2, "cooldown": -0.1, "count": 1 }
-    },
-    {
-      "id": "aura", "name": "Aura", "kind": "aura",
-      "base": { "damage": 3, "cooldown": 0.5, "radius": 2.5 },
-      "perLevel": { "damage": 0.8, "radius": 0.2 }
-    },
-    {
-      "id": "orbit", "name": "Orbit", "kind": "orbit",
-      "base": { "damage": 5, "cooldown": 0.25, "count": 2, "speed": 3, "range": 2.8, "radius": 0.6 },
-      "perLevel": { "damage": 1, "count": 0.34, "speed": 0.15, "range": 0.05, "radius": 0.03 }
-    }
   ]
 }

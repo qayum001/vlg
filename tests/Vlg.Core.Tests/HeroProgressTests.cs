@@ -165,4 +165,13 @@ public class HeroProgressTests
         Assert.Equal(1, p.PendingLevelUps);
         Assert.Equal(3f, p.Xp);
     }
+
+    [Fact]
+    public void Dev_set_all_skills_ignores_the_cap_and_checks_the_range()
+    {
+        var p = new HeroProgress(Settings(), 3);
+        p.DevSetAllSkills(5);
+        Assert.Equal(new[] { 5, 5, 5 }, new[] { p.SkillLevel(0), p.SkillLevel(1), p.SkillLevel(2) });
+        Assert.Throws<ArgumentOutOfRangeException>(() => p.DevSetAllSkills(11));
+    }
 }

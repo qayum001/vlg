@@ -13,4 +13,6 @@ public sealed record SwarmTuning
     public required float HeadingTurnRate { get; init; }
     public required float AnimRate { get; init; }
     public required float HitFlashDecay { get; init; }
+    /// <summary>Push velocity decay, 1/s. Stress test never pushes: 0 there.</summary>
+    public float PushDecay { get; init; }
 }

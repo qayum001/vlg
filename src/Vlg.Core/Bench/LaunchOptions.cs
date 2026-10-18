@@ -26,12 +26,17 @@ public sealed record LaunchOptions
     public int? Threads { get; init; }
     /// <summary>Open the stress test instead of the game run. --bench implies it.</summary>
     public bool Stress { get; init; }
+    /// <summary>Hero skill ids for the run loadout; null = the hero's default.</summary>
+    public string[]? Loadout { get; init; }
+    /// <summary>Dev: every loadout skill starts at this level (ignores the level cap).</summary>
+    public int? SkillLevel { get; init; }
 
     public bool WantsStressTest => Stress || Bench != null;
 
     public const string Usage =
         "--stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
-        "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>";
+        "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>  " +
+        "--loadout <id,id,...>  --skill-level <n>";
 
     public static LaunchOptions Parse(string[] args)
     {
@@ -55,6 +60,8 @@ public sealed record LaunchOptions
                 "--ramp-step" => o with { RampStep = ParseInt(a, Next(), 1) },
                 "--ramp-max" => o with { RampMax = ParseInt(a, Next(), 0) },
                 "--threads" => o with { Threads = ParseInt(a, Next(), 0) },
+                "--loadout" => o with { Loadout = ParseList(a, Next()) },
+                "--skill-level" => o with { SkillLevel = ParseInt(a, Next(), 1) },
                 _ => throw new ArgumentException($"unknown arg '{a}'. Usage: {Usage}"),
             };
         }
@@ -77,6 +84,12 @@ public sealed record LaunchOptions
         Enum.TryParse<BenchMode>(s, ignoreCase: true, out var m) && !int.TryParse(s, out _)
             ? m
             : throw new ArgumentException($"unknown bench mode '{s}'. Usage: {Usage}");
+
+    static string[] ParseList(string arg, string s)
+    {
+        var items = s.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        return items.Length > 0 ? items : throw new ArgumentException($"{arg} needs comma-separated ids, got '{s}'");
+    }
 
     static float ParseFloat(string arg, string s) =>
         float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) && v >= 0

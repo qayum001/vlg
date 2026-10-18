@@ -12,9 +12,9 @@ using NVec2 = System.Numerics.Vector2;
 namespace Vlg.Game;
 
 /// <summary>
-/// Level run (first gameplay slice). Rules live in Vlg.Core <see cref="RunSim"/>; this class reads input,
-/// draws the world and answers the sim's pauses (level-up, chest, shop, death) through <see cref="ChoicePanel"/>.
-/// Quality presets still come from stress.json (only preset source so far).
+/// Level run. Rules live in Vlg.Core <see cref="RunSim"/>; this class reads input, draws the world, plays the
+/// beat and answers the sim's pauses (level-up, chest, shop, death) through <see cref="ChoicePanel"/>.
+/// Hero: data/heroes/lowkey.json (only hero so far). Quality presets still come from stress.json.
 /// </summary>
 public partial class RunGame : Node3D
 {
@@ -27,14 +27,17 @@ public partial class RunGame : Node3D
     const float CullSnap = 50f;
     /// <summary>5x5 prop tiles: props reach past the farthest visible point of the lower, farther run camera.</summary>
     const int PropTiles = 5;
+    const string HeroPath = "res://data/heroes/lowkey.json";
 
     /// <summary>Never equals a real (phase, pending) pair: forces SyncPanel to rebuild after a pick.</summary>
     static readonly (RunPhase, int) PanelStale = (RunPhase.Playing, -1);
     static readonly Color HeroEmission = new(0.4f, 0.7f, 1f);
+    static readonly Color DropEmission = new(1f, 0.3f, 0.8f);
     static readonly Color HurtEmission = new(1f, 0.15f, 0.1f);
 
     LaunchOptions _options = null!;
     RunConfig _config = null!;
+    HeroDef _heroDef = null!;
     QualityPreset _preset = null!;
     WorkerPool _workers = null!;
     RunSim _sim = null!;
@@ -49,6 +52,8 @@ public partial class RunGame : Node3D
     StandardMaterial3D _heroMaterial = null!;
     RunHud _hud = null!;
     ChoicePanel _panel = null!;
+    BeatAudio _audio = null!;
+    BeatOverlay _overlay = null!;
 
     /// <summary>What the panel currently answers; Playing = hidden. Pending count refreshes chained level-ups.</summary>
     (RunPhase Phase, int Pending) _shown = (RunPhase.Playing, 0);
@@ -77,15 +82,17 @@ public partial class RunGame : Node3D
         if (_options.WantsStressTest)
             throw new ArgumentException("--stress/--bench open the stress test via the boot scene (main scene), not run.tscn");
         _config = RunConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/run.json"));
+        _heroDef = HeroDef.Parse(Godot.FileAccess.GetFileAsString(HeroPath), _config);
         _preset = StressConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/stress.json")).GetPreset(_options.Preset);
         _workers = new WorkerPool(_options.Threads ?? _config.Sim.WorkerThreads, _config.Sim.ParallelMinCount);
-        _sim = new RunSim(_config, _options.Seed, _workers);
+        _sim = new RunSim(_config, _heroDef, _options.Seed, _workers, _options.Loadout);
+        if (_options.SkillLevel is { } level) _sim.Progress.DevSetAllSkills(level);
 
         _arena = new Arena(this, GD.Load<Shader>("res://shaders/ground.gdshader"), _options.Seed, PropTiles);
         _enemies = new EnemyRenderer(this, GD.Load<Shader>("res://shaders/enemy_vat.gdshader"));
         _projectiles = new ProjectileRenderer(this);
         _gems = new GemRenderer(this);
-        _skillVisuals = new SkillVisuals(this, _config.Skills.Length);
+        _skillVisuals = new SkillVisuals(this, _sim.Loadout.Length);
         var cam = _config.Camera;
         _camera = new OrbitCamera(this, cam.TiltDeg, cam.Distance, cam.FovDeg, cam.FollowRate);
         _vfx = new VfxSystem(this, _camera.Camera, GD.Load<Shader>("res://shaders/overdraw_layer.gdshader"));
@@ -103,8 +110,10 @@ public partial class RunGame : Node3D
             MaterialOverride = _heroMaterial,
         };
         AddChild(_hero);
+        _overlay = new BeatOverlay(this);
         _hud = new RunHud(this);
         _panel = new ChoicePanel(this);
+        _audio = new BeatAudio(this);
 
         QualityApplier.Apply(_preset, GetViewport(), _arena, _enemies, _vfx);
         _arena.Sun.DirectionalShadowMaxDistance = cam.ShadowDistance;
@@ -139,8 +148,10 @@ public partial class RunGame : Node3D
         // HeroHurt is only refreshed by Step: stale while paused.
         if (stepped && _sim.HeroHurt) _hurtTimer = HurtFlashSec;
         _hurtTimer = MathF.Max(0f, _hurtTimer - dt);
-        _heroMaterial.Emission = _hurtTimer > 0f ? HurtEmission : HeroEmission;
-        _heroMaterial.EmissionEnergyMultiplier = _hurtTimer > 0f ? 2f : 0.5f;
+        var beat = _sim.Beat;
+        float pump = beat.Beat >= 0 ? MathF.Exp(-beat.BeatPhase * 7f) : 0f;
+        _heroMaterial.Emission = _hurtTimer > 0f ? HurtEmission : beat.InDrop ? DropEmission : HeroEmission;
+        _heroMaterial.EmissionEnergyMultiplier = _hurtTimer > 0f ? 2f : 0.4f + (beat.InDrop ? 1.6f : 0.8f) * pump;
 
         var cull = new Vector3(MathF.Round(hero.X / CullSnap) * CullSnap, 0f, MathF.Round(hero.Z / CullSnap) * CullSnap);
         if (cull != _cullCenter)
@@ -154,7 +165,10 @@ public partial class RunGame : Node3D
         _enemies.Update(_sim.Enemies, _workers);
         _projectiles.Update(_sim.Projectiles);
         _gems.Update(_sim.Gems, _time);
-        _skillVisuals.Update(_sim.Skills, _sim.HeroPosition, stepped ? dt : 0f);
+        _skillVisuals.Update(_sim, stepped ? dt : 0f);
+        _audio.Update(_sim, stepped);
+        _overlay.Update(beat, stepped, dt);
+        _hud.UpdateBeat(beat);
         _camera.Update(dt, hero);
         _arena.Follow(hero);
         _vfx.Update(delta, hero, _sim.Hits, _sim.Deaths, stepped ? _preset.BurstsPerFrame : 0);
@@ -190,6 +204,7 @@ public partial class RunGame : Node3D
                 break;
             case Key.Escape: TogglePauseMenu(); break;
             case Key.F1: _hud.Visible = !_hud.Visible; break;
+            case Key.M: _audio.Muted = !_audio.Muted; break;
             case Key.F2: _sim.DevSkipStage(); break;
             case Key.F3: _sim.DevGainLevel(); break;
             case Key.F11:
@@ -302,7 +317,7 @@ public partial class RunGame : Node3D
     {
         if (o.Kind == LevelUpKind.Bonus)
             return string.Create(CultureInfo.InvariantCulture, $"+{_config.Leveling.MaxedBonusDamage * 100f:0.#}% damage to all skills");
-        var def = _config.Skills[o.Slot];
+        var def = _sim.Loadout[o.Slot];
         string head = o.Kind == LevelUpKind.Unlock ? $"Unlock {def.Name}" : $"{def.Name}  {o.NewLevel - 1} → {o.NewLevel}";
         return $"{head}\n      {SkillText(def, o.NewLevel)}";
     }
@@ -311,12 +326,15 @@ public partial class RunGame : Node3D
     {
         var s = def.StatsAt(level);
         var inv = CultureInfo.InvariantCulture;
+        string every = string.Create(inv, $"every {s.Cooldown:0.##} beats");
         return def.Kind switch
         {
-            SkillKind.Bolt => string.Create(inv, $"{s.Amount} bolt(s) at nearest · {s.Damage:0.#} dmg · every {s.Cooldown:0.##} s · range {s.Range:0.#} m"),
-            SkillKind.Nova => string.Create(inv, $"ring of {s.Amount} · {s.Damage:0.#} dmg · every {s.Cooldown:0.##} s · range {s.Range:0.#} m"),
-            SkillKind.Aura => string.Create(inv, $"{s.Damage:0.#} dmg every {s.Cooldown:0.##} s · radius {s.Radius:0.#} m"),
-            SkillKind.Orbit => string.Create(inv, $"{s.Amount} blades · {s.Damage:0.#} dmg every {s.Cooldown:0.##} s · orbit {s.Range:0.#} m"),
+            SkillKind.Projectile => string.Create(inv, $"{s.Amount} note(s) at nearest · {s.Damage:0.#} dmg · {every} · range {s.Range:0.#} m"),
+            SkillKind.Ring => string.Create(inv, $"bass ring · {s.Damage:0.#} dmg · {every} · radius {s.Radius:0.#} m · pushes back"),
+            SkillKind.Speaker => string.Create(inv, $"up to {s.Amount} speakers · {s.Damage:0.#} dmg per beat · radius {s.Radius:0.#} m · last {s.Duration:0.#} beats"),
+            SkillKind.Aura => string.Create(inv, $"{s.Damage:0.#} dmg per beat · radius {s.Radius:0.#} m · Distorted +{s.Vuln * 100f:0}% damage taken"),
+            SkillKind.Beam => string.Create(inv, $"beam where the camera looks · {s.Damage:0.#} dmg · {every} · {s.Range:0.#} m long"),
+            SkillKind.Orbit => string.Create(inv, $"{s.Amount} records · {s.Damage:0.#} dmg per hit · orbit {s.Range:0.#} m"),
             _ => def.Kind.ToString(),
         };
     }

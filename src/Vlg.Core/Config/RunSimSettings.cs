@@ -6,6 +6,8 @@ public sealed record RunSimSettings
     public required int EnemyCapacity { get; init; }
     public required int ProjectileCapacity { get; init; }
     public required int GemCapacity { get; init; }
+    /// <summary>Expanding rings alive at once (Low End, Drop shockwave).</summary>
+    public required int RingCapacity { get; init; }
     public required int GridDim { get; init; }
     public required float GridCellSize { get; init; }
     /// <summary>Hit radius of every skill projectile (enemy radius is added).</summary>
