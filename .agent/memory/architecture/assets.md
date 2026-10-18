@@ -6,7 +6,7 @@ Purpose: how the agent-made assets are produced and used. All regenerable from s
 
 ## Icons (2D, AI)
 - `tools/icons/make_icons.py` (stdlib, talks to local ComfyUI SDXL base): 35 icons → `game/assets/icons/skills/<id>.png` (6 skills, 3 ultimates, `the_drop`) and `game/assets/icons/items/<id>.png` (25 items), 256x256, fixed seed per id, skips existing files unless ids are named. Style: hand-painted, black background; skills add the neon phonk palette. Ends with POST /free (VRAM).
-- Bad results: tweak that id's prompt (or SEED_SALT), delete the PNG, rerun with the id. Prompts that drew multiple objects (skull bottle) were rewritten.
+- Bad results: tweak that id's prompt or its `REDRAW` salt, rerun with the id (named ids overwrite). Redrawn 2026-10-18: patterns/multiple objects (skull bottle, needles, smoke, coil), a grin for gold tooth, bat-like fang, and sneakers with brand-like stripes (now one shoe, color blocks; negative prompt bans logos/stripes). Watch for trademark looks.
 - Used via `Icons.Skill/Item` in ChoicePanel cards (level-up, branch, chest, socket picker, hub setlist), shop offers/build, HUD icon rows. License + Steam AI disclosure: `third-party.md`.
 
 ## Props (3D, procedural)

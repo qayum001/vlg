@@ -17,14 +17,14 @@ URL = "http://127.0.0.1:8188"
 CHECKPOINT = "sd_xl_base_1.0.safetensors"
 SEED_SALT = 7
 # Per-id extra salt for redraws whose first seed came out wrong (pattern, wrong background).
-REDRAW = {"plague_flask": 11, "hex_needle": 5, "copper_coil": 3, "smoke_bomb": 2, "knockoff_sneakers": 4, "gold_tooth": 6,
+REDRAW = {"plague_flask": 11, "hex_needle": 5, "copper_coil": 3, "smoke_bomb": 2, "knockoff_sneakers": 12, "gold_tooth": 6,
           "vampire_tooth": 8}
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..", "game", "assets", "icons")
 
 STYLE = ("game item icon, one single object centered, stylized hand-painted digital art, bold clean shapes, "
          "vibrant saturated colors, soft rim light, isolated on a solid pure black background, crisp, high detail")
 SKILL_STYLE = STYLE + ", neon purple hot pink and cyan glow, synthwave night"
-NEGATIVE = ("text, letters, words, watermark, signature, logo, brand, swoosh, trademark, person, people, face, mouth, "
+NEGATIVE = ("text, letters, words, watermark, signature, logo, brand, swoosh, trademark, stripes, three stripes, person, people, face, mouth, "
             "hands, body, blurry, cropped, "
             "frame, border, multiple objects, collage, photo, photorealistic, noisy background, white background, "
             "light background, colored background, gradient background")
@@ -59,7 +59,7 @@ ITEMS = {
     "holy_water": "a glass bottle of glowing holy water with a small cross",
     "pocket_singularity": "a tiny black hole orb with a swirling purple accretion disk",
     "whetstone": "a sharpening whetstone with sparks",
-    "knockoff_sneakers": "one pair of cheap chunky colorful sneakers with plain stripes and no logos",
+    "knockoff_sneakers": "one single chunky sneaker shoe seen from the side, solid color blocks, patched with grey duct tape",
     "herbal_tea": "a steaming cup of herbal tea with green leaves",
     "horseshoe_magnet": "a red horseshoe magnet pulling golden coins",
     "vampire_tooth": "one single long white pointed fang tooth with a drop of red blood at the tip",

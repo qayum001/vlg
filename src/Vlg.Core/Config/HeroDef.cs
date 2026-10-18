@@ -50,6 +50,23 @@ public sealed record HeroDef
         return result;
     }
 
+    /// <summary>A saved setlist still matches this hero (null = default, also valid). Saves outlive data changes.</summary>
+    public bool IsValidLoadout(IReadOnlyList<string>? ids)
+    {
+        if (ids == null) return true;
+        try
+        {
+            LoadoutSkills(ids);
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    public bool HasUltimate(string? id) => id == null || Array.Exists(Ultimates, u => u.Id == id);
+
     /// <summary>The ultimate by id; null = the default.</summary>
     public UltimateDef UltimateById(string? id = null)
     {

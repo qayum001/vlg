@@ -12,7 +12,8 @@ Purpose: The Crossroads hub (domain.md hub between worlds) and meta credits / up
 ## Rules
 - Boot: hub by default; `--run` or any run dev arg (`LaunchOptions.WantsRun`: loadout, skill-level, branch, ultimate, ultimate-level, stage, credits, items) opens the run; `--stress`/`--bench` the stress test.
 - Hub: plaza radius 22 m (props cleared via `Arena(propClearRadius)`), E / gamepad A at a spot: Portal (Undead Town endless run), Setlist desk (4 distinct skills in order, slot 1 starts unlocked, then 1 ultimate; saved), The Fixer (meta upgrades; capsule placeholder, R11). F5 +100 meta credits (dev).
-- Meta credits are kept on death (domain.md); dev runs started straight from launch args also bank into the real save.
+- Meta credits are kept on death (domain.md); dev runs started straight from launch args also bank into the real save (delete `save.json` after agent smoke runs so the user starts fresh).
+- `GameSession.Sanitize(hero)` drops a saved setlist/ultimate the hero no longer has (`HeroDef.IsValidLoadout`/`HasUltimate`), so data changes never break startup.
 - Decisions taken without user input (goal "implement everything"): single endless portal (no storyline levels/objectives exist yet), upgrades = slots + small capped stats + start credits, numbers placeholders.
 
 ## Extend

@@ -61,7 +61,7 @@ public partial class HubGame : Node3D
         var run = RunConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/run.json"));
         _hero = HeroDef.Parse(Godot.FileAccess.GetFileAsString(HeroPath), run);
         _heroSpeed = _hero.Speed;
-        _ = GameSession.Shop;
+        GameSession.Sanitize(_hero);
 
         var arena = new Arena(this, GD.Load<Shader>("res://shaders/ground.gdshader"), 7, 1, PlazaRadius + 4f);
         arena.Sun.DirectionalShadowMaxDistance = 60f;

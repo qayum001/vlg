@@ -93,6 +93,7 @@ public partial class RunGame : Node3D
         _items = ItemsConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/items.json"));
         _preset = StressConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/stress.json")).GetPreset(_options.Preset);
         _workers = new WorkerPool(_options.Threads ?? _config.Sim.WorkerThreads, _config.Sim.ParallelMinCount);
+        GameSession.Sanitize(_heroDef);
         var save = GameSession.Save;
         _sim = new RunSim(_config, _heroDef, _items, _options.Seed, _workers, _options.Loadout ?? save.Loadout,
             _options.Ultimate ?? save.Ultimate, GameSession.Shop.Config, GameSession.Shop.Bonuses());

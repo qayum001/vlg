@@ -33,6 +33,18 @@ public class HeroDefTests
     }
 
     [Fact]
+    public void Saved_setlists_are_checked_against_the_hero()
+    {
+        var h = TestConfig.Hero;
+        Assert.True(h.IsValidLoadout(null));
+        Assert.True(h.IsValidLoadout(new[] { "vinyl", "slap" }));
+        Assert.False(h.IsValidLoadout(new[] { "vinyl", "removed_skill" }));
+        Assert.False(h.IsValidLoadout(new[] { "vinyl", "vinyl" }));
+        Assert.True(h.HasUltimate(null) && h.HasUltimate("encore"));
+        Assert.False(h.HasUltimate("old_ultimate"));
+    }
+
+    [Fact]
     public void Unknown_key_throws()
     {
         string json = TestConfig.HeroJson.Replace("\"maxHp\": 90,", "\"maxHp\": 90, \"bogus\": 1,");

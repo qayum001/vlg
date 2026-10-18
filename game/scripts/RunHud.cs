@@ -183,7 +183,7 @@ public sealed class RunHud
 
         _hp.MaxValue = sim.HeroMaxHp;
         _hp.Value = Math.Max(0f, sim.HeroHp);
-        _hpText.Text = string.Create(inv, $"HP {MathF.Ceiling(Math.Max(0f, sim.HeroHp)):F0} / {sim.HeroMaxHp:F0}");
+        _hpText.Text = string.Create(inv, $"HP {MathF.Ceiling(Math.Max(0f, sim.HeroHp)):F0} / {MathF.Ceiling(sim.HeroMaxHp):F0}");
 
         _xp.MaxValue = p.XpToNext;
         _xp.Value = p.Xp;

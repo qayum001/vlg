@@ -16,6 +16,13 @@ public static class GameSession
     public static MetaShop Shop => _shop ??= Load();
     public static MetaSave Save => Shop.Save;
 
+    /// <summary>Drops a saved setlist or ultimate the hero no longer has (data changed since the save).</summary>
+    public static void Sanitize(HeroDef hero)
+    {
+        if (!hero.IsValidLoadout(Save.Loadout)) Save.Loadout = null;
+        if (!hero.HasUltimate(Save.Ultimate)) Save.Ultimate = null;
+    }
+
     public static void Persist()
     {
         using var f = FileAccess.Open(SavePath, FileAccess.ModeFlags.Write)
