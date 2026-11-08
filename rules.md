@@ -43,3 +43,7 @@ Added: 2026-10-13
 ## R10. Telegram notifications
 Notify the user via Telegram (`agent_status` MCP, see memory `tooling.md`) only when they ask for it in that task.
 Added: 2026-10-14
+
+## R11. Headless game testing
+Use Godot headless/CLI execution and automated in-engine tests for game testing. Do not start Computer Use sessions or ask to use Computer Use for game testing.
+Added: 2026-11-08
