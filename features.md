@@ -16,6 +16,14 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+### Five item icons: painterly 3D text-to-image
+Added: 2026-11-08 | Confirmed: -
+What: Plague Flask, Clockwork Heart, Copper Coil, Grim Ledger and Pocket Singularity now use Arcane-inspired painterly 3D icons generated from their written descriptions with OpenAI's built-in image tool. No reference images were supplied. Native generated resolution is retained; no resizing.
+How to test:
+1. Launch the dev game with `-- --run --stage 4 --items plague_flask,clockwork_heart,copper_coil,grim_ledger,pocket_singularity`.
+2. Inspect the five item icons in the shop build/stash/socket panels, then Continue and inspect the HUD. Inspect their cards when offered in a chest or shop.
+Expected: each item shows the correct new image, without clipping, stretching or missing textures. All five PNGs are 1254 x 1254. Prompts and source descriptions: `tools/icons/text2image-prompts-2026-11-08.json`.
+
 ### Hub, meta-progression, icons, props, effects
 Added: 2026-10-18 | Confirmed: -
 What: the game opens in The Crossroads hub. Portal = start the endless Undead Town run. Setlist desk = pick 4 skills + 1 ultimate (saved). The Fixer (capsule placeholder) = meta upgrades: slots, damage, HP, pickup, start credits. Runs drop rare violet meta orbs and pay meta credits per finished loop, kept on death (save: `%APPDATA%\Godotpp_userdatalg\save.json`). Also: 35 icons on cards, shop and HUD; 3D props (speaker, subwoofer, vinyl, cowbell, boombox, toy drone, mortar shell); new ring/beam/zone effects.
