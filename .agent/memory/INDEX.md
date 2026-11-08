@@ -1,5 +1,6 @@
 # Memory index
 Current truth about vlg, agent-only. One line per file. How to maintain: `update-memory` skill.
+Project entry point: `AGENTS.md`; shared workflows: `.agents/skills/`.
 Game design source of truth: `design/` (human-readable, shared with the user). Memory links to it, doesn't copy it.
 
 ## project

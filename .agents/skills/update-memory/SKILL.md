@@ -10,7 +10,7 @@ Memory = current truth about the project, agent-only. Not history (devlogs), not
 ## Layout
 ~~~
 .agent/memory/
-  INDEX.md        one line per file: "- [Title](path) — hook". Loaded every session via CLAUDE.md.
+  INDEX.md        one line per file: "- [Title](path) — hook". Read at startup through AGENTS.md.
   project/        overview, status, open questions
   architecture/   one file per system: purpose, location, key types, data flow, how to extend
   decisions/      one file per decision: context, choice, why, rejected alternatives

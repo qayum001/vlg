@@ -21,7 +21,10 @@ Added: 2026-10-13
 
 ## R5. Git branches
 At least two branches: `master` (confirmed work) and `dev` (all ongoing work). The agent commits every change to `dev` without asking. `master` changes only by merging `dev` after the user confirms. Keep `.gitignore` up to date.
+
+Use `dev` for implementation, builds, exports, launches and manual test handoffs unless the user explicitly requests another branch. Check the current branch and `git worktree list` before acting. If the supplied workspace is detached or on another branch, use the existing `dev` worktree. A separate branch required by the host must start from current `dev`; integrate its completed feature into `dev` and verify it there before reporting it ready. Do not leave completed work only on a side branch or silently build from `master`.
 Added: 2026-10-13
+Changed: 2026-11-08
 
 ## R6. Code review
 Per feature: write code → test, no review. Review runs only before merging `dev` to `master`, when the user says merge: a fresh-context reviewer subagent reviews everything being merged, including the tests, for bugs, improvements, misleading logic and hallucinations (`review-changes` skill). Findings are reported only; the user picks which to fix, then merge.
@@ -51,3 +54,7 @@ Added: 2026-10-18
 ## R12. ComfyUI
 The agent may use ComfyUI for assets, launch it itself, and install ComfyUI modules (custom nodes, models) without asking. Sources: ComfyUI registry / Manager, official Hugging Face or maintainer pages.
 Added: 2026-10-18
+
+## R13. Shared agent workflow
+The project rules and workflows apply to every coding agent. `AGENTS.md` is the shared entry point; skills and reviewer briefs live in `.agents/`. `CLAUDE.md` may import the shared guide for compatibility, but must not contain a separate set of project instructions.
+Added: 2026-11-08

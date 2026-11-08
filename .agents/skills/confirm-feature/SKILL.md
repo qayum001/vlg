@@ -10,7 +10,7 @@ Only on explicit user confirmation in chat.
 1. On `dev`, tree clean. Run full test suite; failure → stop, report.
 2. `git log master..dev`: everything listed gets merged. Contains unconfirmed work → ask: merge all, or first revert the unconfirmed feature commits per feature-pipeline "Rejected feature" (never devlog commits).
 3. **Review** — `review-changes` skill on `master..dev`. Report findings, end the turn, wait for the user's pick.
-4. User picked fixes → apply on dev via feature-pipeline steps 4–9 (devlog Type: fix, reference the review). User-visible change → update test steps in features.md. Picked none → skip.
+4. User picked fixes → apply on dev via feature-pipeline steps 4–10 (devlog Type: fix, reference the review). User-visible change → update test steps in features.md. Picked none → skip.
    After the fixes, continue to step 5 without another review or confirmation; tests must pass.
 5. `features.md`: move confirmed entries to "Confirmed (master)", set `Confirmed:` date. Memory: update `project/status.md` if needed. Commit on dev: `docs: confirm <features>`.
 6. Devlog (Type: merge, Commits: merged feature commits, review: n findings / n fixed / n skipped) → commit `devlog: ...` on dev.
