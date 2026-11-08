@@ -16,6 +16,15 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+### Release launchers
+Added: 2026-11-08 | Confirmed: -
+What: two batch files in `launch/`: build and launch a standalone Windows release, or launch the newest completed release without rebuilding. Both use normal hub startup with no dev/debug launch arguments.
+How to test:
+1. Double-click `launch/build-and-launch.bat`: it exports the current code, then opens the hub.
+2. Close the game and double-click `launch/launch-latest.bat`: the same completed build opens without importing or compiling.
+3. Keep a game open and run the build launcher again: it creates a separate dated build and leaves the running game intact.
+Expected: successful launches use `build/release/<timestamp>/vlg.exe`. Failed exports do not replace the latest completed build. If no completed build exists, the latest launcher tells you to run the build launcher.
+
 ### Five item icons: painterly 3D text-to-image
 Added: 2026-11-08 | Confirmed: -
 What: Plague Flask, Clockwork Heart, Copper Coil, Grim Ledger and Pocket Singularity now use Arcane-inspired painterly 3D icons generated from their written descriptions with OpenAI's built-in image tool. No reference images were supplied. Native generated resolution is retained; no resizing.

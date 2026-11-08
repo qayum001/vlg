@@ -1,5 +1,20 @@
 # Launch
 
+## Release launchers (recommended)
+
+Open the `launch` directory and double-click:
+
+- **`build-and-launch.bat`**: compile and export the current checkout as a Windows release, then launch it.
+- **`launch-latest.bat`**: launch the newest completed release without building. Run the build launcher once if no release exists yet.
+
+Both start the standalone game at the hub with normal settings and no development or debug launch arguments. Saved progress is shared with other launches of vlg. The launchers work from any current directory.
+
+Builds are stored in dated directories under `build/release/`. A running game can stay open while a new release builds. Failed or incomplete exports are ignored by the latest-build launcher; previous completed builds remain available.
+
+Building requires the installed Godot 4.7.2 .NET engine, its Windows export templates, and the .NET SDK. The default engine path is the project's existing installation; set `VLG_GODOT_EXE` to another Godot 4.7.2 .NET console executable if needed. Launching an existing build does not require the editor or SDK. On failure, the batch window stays open with the error.
+
+## From source (development)
+
 Play vlg from source. PowerShell, full paths: paste into any PowerShell window on this machine.
 
 - Engine args (`--gpu-index`, `--rendering-method`) go before `--path`.

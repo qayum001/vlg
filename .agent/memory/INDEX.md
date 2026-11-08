@@ -7,6 +7,7 @@ Game design source of truth: `design/` (human-readable, shared with the user). M
 - [Status](project/status.md) — current phase (first playable slice), in-progress items, next steps
 - [Open questions](project/open-questions.md) — undecided tech/project items (Godot setup, remote, LFS)
 - [Tooling](project/tooling.md) — Godot path/templates/GPU indexes, .NET SDKs, Blender path/prefs, two Blender MCPs, Telegram notify MCP, broken claude CLI
+- [Release launchers](project/release-launchers.md) - standalone release build and latest-build batch files
 
 ## architecture
 - [Stress test](architecture/stress-test.md) — horde sim (Vlg.Core) + Godot adapters, bench ramp/CSV, data file, VAT enemies, `--stress` launch
