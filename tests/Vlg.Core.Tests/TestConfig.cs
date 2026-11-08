@@ -20,6 +20,10 @@ static class TestConfig
 
     public static HeroDef Hero => HeroDef.Parse(HeroJson, Run);
 
+    public static string PyromancerJson => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", "heroes", "pyromancer.json"));
+
+    public static HeroDef Pyromancer => HeroDef.Parse(PyromancerJson, Run);
+
     public static string ItemsJson => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", "items.json"));
 
     public static ItemsConfig Items => ItemsConfig.Parse(ItemsJson);

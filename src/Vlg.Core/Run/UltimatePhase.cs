@@ -10,4 +10,6 @@ public enum UltimatePhase
     Windup,
     /// <summary>Bass Cannon beam on.</summary>
     Firing,
+    /// <summary>Launching meteors, then waiting for their final impact.</summary>
+    MeteorShower,
 }

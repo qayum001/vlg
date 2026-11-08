@@ -1,0 +1,585 @@
+{
+  "id": "pyromancer",
+  "name": "Pyromancer",
+  "maxHp": 90,
+  "speed": 6.5,
+  "pickupRadius": 4,
+  "rhythmic": false,
+  "healingPerKill": 0.25,
+  "passiveName": "Ember Heart",
+  "passiveText": "Every kill restores 0.25 HP.",
+  "developmentAvailable": true,
+  "beat": {
+    "bpm": 60,
+    "cycleBars": 1,
+    "buildBars": 0,
+    "dropBars": 0,
+    "dropDamage": 0,
+    "dropArea": 0,
+    "shockDamage": 0,
+    "shockRadius": 1,
+    "shockSpeed": 1,
+    "shockKnockback": 0
+  },
+  "skills": [
+    {
+      "id": "magic_bolts",
+      "name": "Magic Bolts",
+      "kind": "projectile",
+      "tags": [
+        "projectile"
+      ],
+      "base": {
+        "damage": 8,
+        "cooldown": 0.55,
+        "count": 1,
+        "speed": 20,
+        "range": 15
+      },
+      "perLevel": {
+        "damage": 1.8,
+        "cooldown": -0.015,
+        "count": 0.34,
+        "range": 0.4
+      },
+      "branches": [
+        {
+          "id": "rapid",
+          "name": "Rapid Missiles",
+          "text": "One extra bolt per cast.",
+          "add": {
+            "count": 1
+          },
+          "branches": [
+            {
+              "id": "volley",
+              "name": "Arcane Volley",
+              "text": "Two more bolts per cast.",
+              "add": {
+                "count": 2
+              }
+            },
+            {
+              "id": "rush",
+              "name": "Arcane Rush",
+              "text": "Cast 0.1 seconds faster.",
+              "add": {
+                "cooldown": -0.1
+              }
+            }
+          ]
+        },
+        {
+          "id": "empowered",
+          "name": "Empowered Bolts",
+          "text": "Each bolt deals 8 more damage.",
+          "add": {
+            "damage": 8
+          },
+          "branches": [
+            {
+              "id": "impact",
+              "name": "Arcane Impact",
+              "text": "Each bolt deals 12 more damage.",
+              "add": {
+                "damage": 12
+              }
+            },
+            {
+              "id": "reach",
+              "name": "Arcane Reach",
+              "text": "Bolts travel 8 meters farther.",
+              "add": {
+                "range": 8
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fireball",
+      "name": "Fireball",
+      "kind": "projectile",
+      "tags": [
+        "projectile",
+        "area"
+      ],
+      "base": {
+        "damage": 16,
+        "cooldown": 1.6,
+        "count": 1,
+        "speed": 15,
+        "range": 18,
+        "blast": 2
+      },
+      "perLevel": {
+        "damage": 3,
+        "cooldown": -0.04,
+        "blast": 0.12
+      },
+      "branches": [
+        {
+          "id": "wildfire",
+          "name": "Wildfire",
+          "text": "Explosions reach 1.5 meters farther.",
+          "add": {
+            "blast": 1.5
+          },
+          "branches": [
+            {
+              "id": "conflagration",
+              "name": "Conflagration",
+              "text": "Wider and stronger explosions.",
+              "add": {
+                "blast": 2,
+                "damage": 10
+              }
+            },
+            {
+              "id": "chainfire",
+              "name": "Chainfire",
+              "text": "Launch an extra fireball.",
+              "add": {
+                "count": 1
+              }
+            }
+          ]
+        },
+        {
+          "id": "furnace",
+          "name": "Furnace Shot",
+          "text": "Fireballs deal 18 more damage.",
+          "add": {
+            "damage": 18
+          },
+          "branches": [
+            {
+              "id": "sunfire",
+              "name": "Sunfire",
+              "text": "Another 30 damage per fireball.",
+              "add": {
+                "damage": 30
+              }
+            },
+            {
+              "id": "rapidfire",
+              "name": "Rapid Fire",
+              "text": "Cast 0.35 seconds faster.",
+              "add": {
+                "cooldown": -0.35
+              }
+            }
+          ]
+        }
+      ],
+      "flags": [
+        "explodeOnHit"
+      ]
+    },
+    {
+      "id": "flame_aura",
+      "name": "Flame Aura",
+      "kind": "aura",
+      "tags": [
+        "area",
+        "aura"
+      ],
+      "base": {
+        "damage": 3,
+        "cooldown": 0.5,
+        "radius": 2.5
+      },
+      "perLevel": {
+        "damage": 0.8,
+        "radius": 0.2
+      },
+      "branches": [
+        {
+          "id": "blaze",
+          "name": "Blazing Circle",
+          "text": "Flames reach 1.5 meters farther.",
+          "add": {
+            "radius": 1.5
+          },
+          "branches": [
+            {
+              "id": "sea",
+              "name": "Sea of Fire",
+              "text": "Extend the aura by another 2 meters.",
+              "add": {
+                "radius": 2
+              }
+            },
+            {
+              "id": "scorch",
+              "name": "Scorching Circle",
+              "text": "Each tick deals 10 more damage.",
+              "add": {
+                "damage": 10
+              }
+            }
+          ]
+        },
+        {
+          "id": "searing",
+          "name": "Searing Heat",
+          "text": "Each tick deals 5 more damage.",
+          "add": {
+            "damage": 5
+          },
+          "branches": [
+            {
+              "id": "furnace",
+              "name": "Living Furnace",
+              "text": "Each tick deals 12 more damage.",
+              "add": {
+                "damage": 12
+              }
+            },
+            {
+              "id": "pulse",
+              "name": "Quick Embers",
+              "text": "Aura ticks 0.15 seconds faster.",
+              "add": {
+                "cooldown": -0.15
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flame_orbit",
+      "name": "Flame Orbit",
+      "kind": "orbit",
+      "tags": [
+        "orbit",
+        "area"
+      ],
+      "base": {
+        "damage": 5,
+        "cooldown": 0.25,
+        "count": 2,
+        "speed": 3,
+        "range": 2.8,
+        "radius": 0.6,
+        "burn": 2,
+        "burnSec": 2
+      },
+      "perLevel": {
+        "damage": 1,
+        "count": 0.34,
+        "speed": 0.15,
+        "radius": 0.03,
+        "burn": 0.4
+      },
+      "branches": [
+        {
+          "id": "embers",
+          "name": "Ember Swarm",
+          "text": "Two additional orbiting flames.",
+          "add": {
+            "count": 2
+          },
+          "branches": [
+            {
+              "id": "swarm",
+              "name": "Fire Swarm",
+              "text": "Three more orbiting flames.",
+              "add": {
+                "count": 3
+              }
+            },
+            {
+              "id": "reach",
+              "name": "Outer Flames",
+              "text": "Orbit 1.5 meters farther away.",
+              "add": {
+                "range": 1.5
+              }
+            }
+          ]
+        },
+        {
+          "id": "brands",
+          "name": "Searing Brands",
+          "text": "Burns deal 5 more damage per second.",
+          "add": {
+            "burn": 5
+          },
+          "branches": [
+            {
+              "id": "eternal",
+              "name": "Eternal Brands",
+              "text": "Burns last 3 seconds longer.",
+              "add": {
+                "burnSec": 3
+              }
+            },
+            {
+              "id": "whitehot",
+              "name": "White-Hot Brands",
+              "text": "Burns deal 10 more damage per second.",
+              "add": {
+                "burn": 10
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flame_nova",
+      "name": "Flame Nova",
+      "kind": "ring",
+      "tags": [
+        "area"
+      ],
+      "base": {
+        "damage": 12,
+        "cooldown": 3,
+        "radius": 7,
+        "speed": 12,
+        "knockback": 2
+      },
+      "perLevel": {
+        "damage": 2.5,
+        "cooldown": -0.08,
+        "radius": 0.35
+      },
+      "branches": [
+        {
+          "id": "blast",
+          "name": "Blasting Wave",
+          "text": "Nova deals 15 more damage.",
+          "add": {
+            "damage": 15
+          },
+          "branches": [
+            {
+              "id": "sunburst",
+              "name": "Sunburst",
+              "text": "Nova deals another 30 damage.",
+              "add": {
+                "damage": 30
+              }
+            },
+            {
+              "id": "echo",
+              "name": "Rapid Nova",
+              "text": "Nova recharges 0.6 seconds faster.",
+              "add": {
+                "cooldown": -0.6
+              }
+            }
+          ]
+        },
+        {
+          "id": "horizon",
+          "name": "Burning Horizon",
+          "text": "Nova travels 4 meters farther.",
+          "add": {
+            "radius": 4
+          },
+          "branches": [
+            {
+              "id": "horizon2",
+              "name": "Endless Horizon",
+              "text": "Nova reaches another 5 meters.",
+              "add": {
+                "radius": 5
+              }
+            },
+            {
+              "id": "force",
+              "name": "Wall of Fire",
+              "text": "Stronger knockback.",
+              "add": {
+                "knockback": 3
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "meteor",
+      "name": "Meteor",
+      "kind": "bellDrop",
+      "tags": [
+        "area"
+      ],
+      "base": {
+        "damage": 25,
+        "cooldown": 3.5,
+        "count": 1,
+        "radius": 2.8,
+        "range": 22,
+        "stun": 0.3
+      },
+      "perLevel": {
+        "damage": 5,
+        "cooldown": -0.08,
+        "radius": 0.12,
+        "count": 0.12
+      },
+      "branches": [
+        {
+          "id": "shower",
+          "name": "Falling Stars",
+          "text": "One additional meteor per cast.",
+          "add": {
+            "count": 1
+          },
+          "branches": [
+            {
+              "id": "storm",
+              "name": "Meteor Storm",
+              "text": "Two more meteors per cast.",
+              "add": {
+                "count": 2
+              }
+            },
+            {
+              "id": "haste",
+              "name": "Falling Fury",
+              "text": "Cast 0.8 seconds faster.",
+              "add": {
+                "cooldown": -0.8
+              }
+            }
+          ]
+        },
+        {
+          "id": "impact",
+          "name": "Deep Impact",
+          "text": "Meteors deal 25 more damage.",
+          "add": {
+            "damage": 25
+          },
+          "branches": [
+            {
+              "id": "crater",
+              "name": "Great Crater",
+              "text": "Impact radius grows by 2 meters.",
+              "add": {
+                "radius": 2
+              }
+            },
+            {
+              "id": "worldbreaker",
+              "name": "Worldbreaker",
+              "text": "Meteors deal another 50 damage.",
+              "add": {
+                "damage": 50
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "loadout": [
+    "magic_bolts",
+    "fireball",
+    "flame_aura",
+    "flame_orbit"
+  ],
+  "ultimate": "inferno",
+  "ultimates": [
+    {
+      "id": "inferno",
+      "name": "Inferno",
+      "text": "Ignite a wide area around you and leave burning ground.",
+      "kind": "inferno",
+      "charge": "cooldown",
+      "levels": [
+        {
+          "charge": 40,
+          "damage": 30,
+          "radius": 8,
+          "tick": 8,
+          "duration": 5
+        },
+        {
+          "charge": 40,
+          "damage": 50,
+          "radius": 10,
+          "tick": 13,
+          "duration": 6
+        },
+        {
+          "charge": 40,
+          "damage": 70,
+          "radius": 12,
+          "tick": 18,
+          "duration": 7
+        }
+      ]
+    },
+    {
+      "id": "meteor_shower",
+      "name": "Meteor Shower",
+      "text": "Call repeated meteors onto nearby enemies.",
+      "kind": "meteorShower",
+      "charge": "cooldown",
+      "levels": [
+        {
+          "charge": 45,
+          "damage": 35,
+          "radius": 3.0,
+          "range": 22,
+          "count": 6,
+          "period": 0.35,
+          "duration": 0.6
+        },
+        {
+          "charge": 45,
+          "damage": 55,
+          "radius": 3.5,
+          "range": 26,
+          "count": 9,
+          "period": 0.35,
+          "duration": 0.6
+        },
+        {
+          "charge": 45,
+          "damage": 75,
+          "radius": 4.0,
+          "range": 30,
+          "count": 12,
+          "period": 0.35,
+          "duration": 0.6
+        }
+      ]
+    },
+    {
+      "id": "phoenix",
+      "name": "Phoenix",
+      "text": "Erupt in phoenix fire, damaging nearby enemies and restoring health.",
+      "kind": "phoenix",
+      "charge": "cooldown",
+      "levels": [
+        {
+          "charge": 60,
+          "damage": 45,
+          "radius": 8,
+          "heal": 25
+        },
+        {
+          "charge": 60,
+          "damage": 75,
+          "radius": 10,
+          "heal": 40
+        },
+        {
+          "charge": 60,
+          "damage": 105,
+          "radius": 12,
+          "heal": 55
+        }
+      ]
+    }
+  ]
+}

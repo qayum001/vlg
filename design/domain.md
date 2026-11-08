@@ -79,6 +79,7 @@ Base: `concept.md` (genre, camera, art, platforms are decided there).
 - Heroes come from the storyline worlds. Closing a storyline unlocks a hero from that world (e.g. a plague doctor from the undead town).
 - The starting hero lives in the hub.
 - Each hero has: own pool of 6 skills + 3 ultimates, base stats (HP, speed, pickup radius), one unique passive (e.g. plague doctor: poison spreads to nearby enemies on kill).
+- During development, [Pyromancer](heroes/pyromancer.md) is available from the hub's Change hero selector without a storyline unlock.
 
 ### Build
 - In-run power sources: XP level-ups, chest picks, shop items.

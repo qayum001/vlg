@@ -136,8 +136,8 @@ public sealed class RunSim
         Inventory = new Inventory(items, Loadout.Length, metaBonuses.ActiveSlots, metaBonuses.UsableSlots);
         Inventory.AddCredits(metaBonuses.StartCredits);
         Shop = new Shop(items, seed ^ 0x5409u);
-        Skills = new SkillSystem(Loadout, _world, Beat, HeroSkillSource, seed ^ 0x5EEDu) { Modifier = Inventory };
-        Ultimate = new UltimateSystem(hero.UltimateById(ultimate), _world, Beat, UltimateSource);
+        Skills = new SkillSystem(Loadout, _world, hero.Rhythmic ? Beat : null, HeroSkillSource, seed ^ 0x5EEDu) { Modifier = Inventory };
+        Ultimate = new UltimateSystem(hero.UltimateById(ultimate), _world, Beat, UltimateSource, hero.Rhythmic);
         OwnedActives = new OwnedActives(Inventory);
         Actives = new SkillSystem(OwnedActives.Defs, _world, null, ActiveSource, seed ^ 0xAC71u);
         Usables = new UsableSystem(Inventory, _world, UsableSource);
@@ -246,7 +246,7 @@ public sealed class RunSim
         _world.Hero = hero;
         _world.QueryPad = pad;
         float dmgMul = DamageMultiplier;
-        if (Beat.DropStarted)
+        if (Hero.Rhythmic && Beat.DropStarted)
         {
             var b = Hero.Beat;
             Rings.Spawn(new RingShot
@@ -277,6 +277,7 @@ public sealed class RunSim
         Skills.Update(dt, Progress, dmgMul);
         Actives.Update(dt, OwnedActives, dmgMul);
         Ultimate.Update(dt, Progress.UltimateLevel, dmgMul);
+        if (Ultimate.HealOnCast > 0f) HeroHp = MathF.Min(HeroMaxHp, HeroHp + Ultimate.HealOnCast);
         Usables.Update(dt, dmgMul);
         Strikes.Update(dt, Enemies, Grid, Hits, er, pad, Flashes);
         Zones.Update(dt, Beat.BeatTick, Enemies, Grid, Hits, er, pad, Beams);
@@ -289,6 +290,8 @@ public sealed class RunSim
         int killed = Enemies.RemoveDead(Deaths, DeathSources);
         Kills += killed;
         HeroHp = MathF.Min(HeroMaxHp, HeroHp + Ultimate.HealPerKill * killed);
+        if (HeroHp > 0f && Hero.HealingPerKill > 0f)
+            HeroHp = MathF.Min(HeroMaxHp, HeroHp + Hero.HealingPerKill * killed);
         Ultimate.OnKills(killed);
         Skills.OnDeaths(Deaths);
         OnDeathsItems();

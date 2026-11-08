@@ -8,7 +8,7 @@ namespace Vlg.Core.Run;
 /// <summary>
 /// The loadout ultimate: charges while idle (seconds, kills or Drops), fires on <see cref="Press"/> when full,
 /// then runs its effect. Level comes from <see cref="HeroProgress.UltimateLevel"/> each Update (0 = locked).
-/// Durations are in beats of the hero's clock. Press only inside a sim step after the grid build (RunSim queues
+/// Musical durations use the hero's clock; fire ultimates use seconds. Press inside a sim step after the grid build (RunSim queues
 /// presses). Writes enemy health: single thread only.
 /// </summary>
 public sealed class UltimateSystem
@@ -23,7 +23,10 @@ public sealed class UltimateSystem
     readonly BeatClock _beat;
     readonly byte _source;
     readonly int[] _query;
+    readonly float _unitSec;
     float _left;
+    int _meteors;
+    float _meteorTimer;
 
     public readonly UltimateDef Def;
     public int Level { get; private set; }
@@ -36,14 +39,17 @@ public sealed class UltimateSystem
     public bool BeamStartedThisStep { get; private set; }
     /// <summary>Kills to heal for this step (Encore level with heal); RunSim applies.</summary>
     public float HealPerKill => Phase == UltimatePhase.Encore ? Stats.Heal : 0f;
+    /// <summary>HP restored once by a successful Phoenix cast; cleared by BeginStep.</summary>
+    public float HealOnCast { get; private set; }
 
-    public UltimateSystem(UltimateDef def, SkillWorld world, BeatClock beat, byte source)
+    public UltimateSystem(UltimateDef def, SkillWorld world, BeatClock beat, byte source, bool rhythmic = true)
     {
         Def = def;
         _w = world;
         _beat = beat;
         _source = source;
         _query = new int[world.Enemies.Capacity];
+        _unitSec = rhythmic ? beat.BeatSec : 1f;
     }
 
     public SkillStats Stats => Def.At(Level);
@@ -56,9 +62,10 @@ public sealed class UltimateSystem
     public bool Press(float damageMult)
     {
         if (!Ready) return false;
+        var st = Stats;
+        if (Def.Kind == UltimateKind.MeteorShower && !Target(st.Range, out _)) return false;
         Charge = 0f;
         FiredThisStep = true;
-        var st = Stats;
         switch (Def.Kind)
         {
             case UltimateKind.SubQuake:
@@ -66,12 +73,30 @@ public sealed class UltimateSystem
                 break;
             case UltimateKind.Encore:
                 Phase = UltimatePhase.Encore;
-                _left = st.Duration * _beat.BeatSec;
+                _left = st.Duration * _unitSec;
                 _beat.ForceDrop = true;
                 break;
             case UltimateKind.BassCannon:
                 Phase = UltimatePhase.Windup;
-                _left = WindupBeats * _beat.BeatSec;
+                _left = WindupBeats * _unitSec;
+                break;
+            case UltimateKind.Inferno:
+                Blast(st, damageMult);
+                _w.Zones.Spawn(new ZoneShot
+                {
+                    Center = _w.Hero, Radius = st.Radius, LifeSec = st.Duration,
+                    Damage = st.Tick * damageMult, Interval = 1f, Source = _source, Slot = -1,
+                });
+                break;
+            case UltimateKind.MeteorShower:
+                Phase = UltimatePhase.MeteorShower;
+                _meteors = st.Amount;
+                _meteorTimer = 0f;
+                _left = MathF.Max(0f, st.Amount - 1) * st.Period + st.Duration;
+                break;
+            case UltimateKind.Phoenix:
+                Blast(st, damageMult);
+                HealOnCast = st.Heal;
                 break;
             default:
                 throw new InvalidOperationException($"unknown ultimate kind {Def.Kind}");
@@ -84,6 +109,7 @@ public sealed class UltimateSystem
     {
         FiredThisStep = false;
         BeamStartedThisStep = false;
+        HealOnCast = 0f;
     }
 
     /// <summary>Kill charge (only while idle).</summary>
@@ -129,17 +155,34 @@ public sealed class UltimateSystem
                 _w.Beams.Add(_w.Hero, _w.Aim, st.Range, 0.25f, -1);
                 if (_left > 0f) return;
                 Phase = UltimatePhase.Firing;
-                _left = st.Duration * _beat.BeatSec;
+                _left = st.Duration * _unitSec;
                 BeamStartedThisStep = true;
                 break;
             case UltimatePhase.Firing:
                 Fire(st, damageMult);
                 if (_left <= 0f) Phase = UltimatePhase.Idle;
                 break;
+            case UltimatePhase.MeteorShower:
+                _meteorTimer -= dt;
+                while (_meteors > 0 && _meteorTimer <= 0f)
+                {
+                    if (Target(st.Range, out var target))
+                        _w.Strikes.Spawn(target, st.Radius, st.Duration, st.Damage * damageMult, st.Stun, _source, -1);
+                    _meteors--;
+                    _meteorTimer += st.Period;
+                }
+                if (_left <= 0f) Phase = UltimatePhase.Idle;
+                break;
         }
     }
 
     void Quake(SkillStats st, float damageMult)
+    {
+        Blast(st, damageMult);
+        if (st.Tick > 0f) _w.Zones.Spawn(Zone(_w.Hero, ShakeRadius, st.Duration, st.Tick * damageMult));
+    }
+
+    void Blast(SkillStats st, float damageMult)
     {
         var e = _w.Enemies;
         int n = Around(_w.Hero, st.Radius);
@@ -151,7 +194,6 @@ public sealed class UltimateSystem
             _w.Hits.Add(e.Position[j]);
         }
         _w.Flashes.Add(_w.Hero, st.Radius);
-        if (st.Tick > 0f) _w.Zones.Spawn(Zone(_w.Hero, ShakeRadius, st.Duration, st.Tick * damageMult));
     }
 
     /// <summary>Kills every enemy overlapping the beam (void-type: basic mobs die; elites/bosses % max HP later).</summary>
@@ -184,13 +226,31 @@ public sealed class UltimateSystem
     {
         Center = center,
         Radius = radius,
-        LifeSec = beats * _beat.BeatSec,
+        LifeSec = beats * _unitSec,
         Damage = damage,
         OnBeat = true,
         BeatSec = _beat.BeatSec,
         Source = _source,
         Slot = -1,
     };
+
+    bool Target(float range, out Vector2 target)
+    {
+        int count = Around(_w.Hero, range);
+        float nearest = float.MaxValue;
+        target = default;
+        bool found = false;
+        for (int k = 0; k < count; k++)
+        {
+            var p = _w.Enemies.Position[_query[k]];
+            float d2 = Vector2.DistanceSquared(p, _w.Hero);
+            if (d2 >= nearest) continue;
+            nearest = d2;
+            target = p;
+            found = true;
+        }
+        return found;
+    }
 
     int Around(Vector2 center, float reach)
     {

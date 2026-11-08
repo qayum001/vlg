@@ -28,6 +28,7 @@ public sealed record LaunchOptions
     public bool Stress { get; init; }
     /// <summary>Open the level run directly instead of the hub. Any run dev arg implies it.</summary>
     public bool Run { get; init; }
+    public string? Hero { get; init; }
     /// <summary>Hero skill ids for the run loadout; null = the hero's default.</summary>
     public string[]? Loadout { get; init; }
     /// <summary>Dev: every loadout skill starts at this level (ignores the level cap).</summary>
@@ -48,11 +49,11 @@ public sealed record LaunchOptions
     public bool WantsStressTest => Stress || Bench != null;
 
     /// <summary>Skip the hub: --run or any run-only arg (loadout, levels, stage, items...).</summary>
-    public bool WantsRun => Run || Loadout != null || SkillLevel != null || Branches != null || Ultimate != null
+    public bool WantsRun => Run || Hero != null || Loadout != null || SkillLevel != null || Branches != null || Ultimate != null
         || UltimateLevel != null || Stage != null || Credits != null || Items != null;
 
     public const string Usage =
-        "--run  --stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
+        "--run  --hero lowkey|pyromancer  --stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
         "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>  " +
         "--loadout <id,id,...>  --skill-level <n>  --branch <i,i,...>  --ultimate <id>  --ultimate-level <n>  --stage <n>  --credits <n>  --items <id,id,...>";
 
@@ -74,6 +75,7 @@ public sealed record LaunchOptions
                 "--windowed" => o with { Windowed = true },
                 "--stress" => o with { Stress = true },
                 "--run" => o with { Run = true },
+                "--hero" => o with { Hero = ParseHero(Next()) },
                 "--seed" => o with { Seed = uint.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--ramp-start" => o with { RampStart = ParseInt(a, Next(), 0) },
                 "--ramp-step" => o with { RampStep = ParseInt(a, Next(), 1) },
@@ -115,6 +117,9 @@ public sealed record LaunchOptions
         var items = s.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         return items.Length > 0 ? items : throw new ArgumentException($"{arg} needs comma-separated ids, got '{s}'");
     }
+
+    static string ParseHero(string id) => HeroRoster.Contains(id) ? id
+        : throw new ArgumentException($"unknown hero '{id}'");
 
     static float ParseFloat(string arg, string s) =>
         float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) && v >= 0

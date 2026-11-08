@@ -14,7 +14,7 @@ namespace Vlg.Game;
 /// <summary>
 /// Level run. Rules live in Vlg.Core <see cref="RunSim"/>; this class reads input, draws the world, plays the
 /// beat and answers the sim's pauses (level-up, chest, shop, death) through <see cref="ChoicePanel"/>.
-/// Hero: data/heroes/lowkey.json (only hero so far). Quality presets still come from stress.json.
+/// Hero selection comes from the hub save or --hero. Quality presets still come from stress.json.
 /// </summary>
 public partial class RunGame : Node3D
 {
@@ -27,7 +27,6 @@ public partial class RunGame : Node3D
     const float CullSnap = 50f;
     /// <summary>5x5 prop tiles: props reach past the farthest visible point of the lower, farther run camera.</summary>
     const int PropTiles = 5;
-    const string HeroPath = "res://data/heroes/lowkey.json";
     const float DevCredits = 100f;
     const string HubScene = "res://scenes/hub.tscn";
 
@@ -89,14 +88,15 @@ public partial class RunGame : Node3D
         if (_options.WantsStressTest)
             throw new ArgumentException("--stress/--bench open the stress test via the boot scene (main scene), not run.tscn");
         _config = RunConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/run.json"));
-        _heroDef = HeroDef.Parse(Godot.FileAccess.GetFileAsString(HeroPath), _config);
+        _heroDef = GameSession.LoadHero(_config, _options.Hero);
         _items = ItemsConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/items.json"));
         _preset = StressConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/stress.json")).GetPreset(_options.Preset);
         _workers = new WorkerPool(_options.Threads ?? _config.Sim.WorkerThreads, _config.Sim.ParallelMinCount);
-        GameSession.Sanitize(_heroDef);
         var save = GameSession.Save;
-        _sim = new RunSim(_config, _heroDef, _items, _options.Seed, _workers, _options.Loadout ?? save.Loadout,
-            _options.Ultimate ?? save.Ultimate, GameSession.Shop.Config, GameSession.Shop.Bonuses());
+        bool savedHero = _heroDef.Id == save.HeroId;
+        if (savedHero) GameSession.Sanitize(_heroDef);
+        _sim = new RunSim(_config, _heroDef, _items, _options.Seed, _workers, _options.Loadout ?? (savedHero ? save.Loadout : null),
+            _options.Ultimate ?? (savedHero ? save.Ultimate : null), GameSession.Shop.Config, GameSession.Shop.Bonuses());
         if (_options.SkillLevel is { } level) _sim.Progress.DevSetAllSkills(level);
         if (_options.UltimateLevel is { } ultLevel) _sim.Progress.DevSetUltimate(ultLevel);
         if (_options.Credits is { } credits) _sim.DevAddCredits(credits);
@@ -110,17 +110,17 @@ public partial class RunGame : Node3D
 
         _arena = new Arena(this, GD.Load<Shader>("res://shaders/ground.gdshader"), _options.Seed, PropTiles);
         _enemies = new EnemyRenderer(this, GD.Load<Shader>("res://shaders/enemy_vat.gdshader"));
-        _projectiles = new ProjectileRenderer(this);
+        _projectiles = new ProjectileRenderer(this, _sim);
         _gems = new GemRenderer(this);
         _coins = GemRenderer.Coins(this);
         _metaOrbs = GemRenderer.MetaOrbs(this);
-        _skillVisuals = new SkillVisuals(this, _sim.Loadout.Length);
+        _skillVisuals = new SkillVisuals(this, _sim.Loadout.Length, _heroDef.Id == "pyromancer");
         var cam = _config.Camera;
         _camera = new OrbitCamera(this, cam.TiltDeg, cam.Distance, cam.FovDeg, cam.FollowRate);
         _vfx = new VfxSystem(this, _camera.Camera, GD.Load<Shader>("res://shaders/overdraw_layer.gdshader"));
         _heroMaterial = new StandardMaterial3D
         {
-            AlbedoColor = new Color(0.9f, 0.95f, 1f),
+            AlbedoColor = _heroDef.Id == "pyromancer" ? new Color(0.85f, 0.22f, 0.055f) : new Color(0.9f, 0.95f, 1f),
             EmissionEnabled = true,
             Emission = HeroEmission,
             EmissionEnergyMultiplier = 0.5f,
@@ -192,8 +192,8 @@ public partial class RunGame : Node3D
         if (stepped && _sim.HeroHurt) _hurtTimer = HurtFlashSec;
         _hurtTimer = MathF.Max(0f, _hurtTimer - dt);
         var beat = _sim.Beat;
-        float pump = beat.Beat >= 0 ? MathF.Exp(-beat.BeatPhase * 7f) : 0f;
-        _heroMaterial.Emission = _hurtTimer > 0f ? HurtEmission : beat.InDrop ? DropEmission : HeroEmission;
+        float pump = _heroDef.Rhythmic && beat.Beat >= 0 ? MathF.Exp(-beat.BeatPhase * 7f) : 0f;
+        _heroMaterial.Emission = _hurtTimer > 0f ? HurtEmission : !_heroDef.Rhythmic ? new Color(1f, 0.32f, 0.04f) : beat.InDrop ? DropEmission : HeroEmission;
         _heroMaterial.EmissionEnergyMultiplier = _hurtTimer > 0f ? 2f : 0.4f + (beat.InDrop ? 1.6f : 0.8f) * pump;
 
         var cull = new Vector3(MathF.Round(hero.X / CullSnap) * CullSnap, 0f, MathF.Round(hero.Z / CullSnap) * CullSnap);
@@ -213,9 +213,12 @@ public partial class RunGame : Node3D
         _coins.Update(_sim.Coins, _time);
         _metaOrbs.Update(_sim.MetaOrbs, _time);
         _skillVisuals.Update(_sim, stepped ? dt : 0f);
-        _audio.Update(_sim, stepped);
-        _overlay.Update(beat, _sim.Ultimate, stepped, dt);
-        _hud.UpdateBeat(beat);
+        if (_heroDef.Rhythmic)
+        {
+            _audio.Update(_sim, stepped);
+            _overlay.Update(beat, _sim.Ultimate, stepped, dt);
+        }
+        _hud.UpdateBeat(beat, _heroDef.Rhythmic);
         _camera.Update(dt, hero);
         _arena.Follow(hero);
         _vfx.Update(delta, hero, _sim.Hits, _sim.Deaths, stepped ? _preset.BurstsPerFrame : 0);
@@ -479,25 +482,29 @@ public partial class RunGame : Node3D
             UltimateKind.SubQuake => string.Create(inv, $"{s.Damage:0} dmg + {s.Stun:0.#} s stun on screen") + (s.Tick > 0 ? string.Create(inv, $" · ground shakes {s.Duration / 4:0} bars") : ""),
             UltimateKind.Encore => string.Create(inv, $"Drop on for {s.Duration / 4:0} bars · skills +{s.Speed * 100f:0}% faster") + (s.Heal > 0 ? string.Create(inv, $" · +{s.Heal:0} HP per kill") : ""),
             UltimateKind.BassCannon => string.Create(inv, $"{s.Width:0} m beam for {s.Duration / 4:0} bars, kills what it touches") + (s.Tick > 0 ? " · leaves a burning line" : ""),
+            UltimateKind.Inferno => string.Create(inv, $"{s.Damage:0} dmg · radius {s.Radius:0.#} m · burning ground {s.Duration:0.#} s"),
+            UltimateKind.MeteorShower => string.Create(inv, $"{s.Amount} meteors · {s.Damage:0} dmg each · radius {s.Radius:0.#} m"),
+            UltimateKind.Phoenix => string.Create(inv, $"{s.Damage:0} dmg · radius {s.Radius:0.#} m · restores {s.Heal:0} HP"),
             _ => u.Kind.ToString(),
         };
         return $"{what} · {charge} · Space / Y";
     }
 
-    static string SkillText(SkillForm f)
+    string SkillText(SkillForm f)
     {
         var s = f.Stats;
         var inv = CultureInfo.InvariantCulture;
-        string every = string.Create(inv, $"every {s.Cooldown:0.##} beats");
+        string unit = _heroDef.Rhythmic ? "beats" : "s";
+        string every = string.Create(inv, $"every {s.Cooldown:0.##} {unit}");
         return f.Kind switch
         {
-            SkillKind.Projectile => string.Create(inv, $"{s.Amount} note(s) at nearest · {s.Damage:0.#} dmg · {every} · range {s.Range:0.#} m"),
-            SkillKind.Ring => string.Create(inv, $"bass ring · {s.Damage:0.#} dmg · {every} · radius {s.Radius:0.#} m · pushes back"),
+            SkillKind.Projectile => string.Create(inv, $"{s.Amount} projectile(s) at nearest · {s.Damage:0.#} dmg · {every} · range {s.Range:0.#} m") + (s.Blast > 0 ? $" · blast {s.Blast:0.#} m" : ""),
+            SkillKind.Ring => string.Create(inv, $"expanding ring · {s.Damage:0.#} dmg · {every} · radius {s.Radius:0.#} m"),
             SkillKind.Speaker => string.Create(inv, $"up to {s.Amount} speakers · {s.Damage:0.#} dmg per beat · radius {s.Radius:0.#} m · last {s.Duration:0.#} beats"),
-            SkillKind.Aura => string.Create(inv, $"{s.Damage:0.#} dmg per beat · radius {s.Radius:0.#} m · Distorted +{s.Vuln * 100f:0}% damage taken"),
+            SkillKind.Aura => string.Create(inv, $"{s.Damage:0.#} dmg · {every} · radius {s.Radius:0.#} m") + (s.Vuln > 0 ? $" · +{s.Vuln * 100f:0}% damage taken" : ""),
             SkillKind.Beam => string.Create(inv, $"beam where the camera looks · {s.Damage:0.#} dmg · {every} · {s.Range:0.#} m long"),
-            SkillKind.Orbit => string.Create(inv, $"{s.Amount} records · {s.Damage:0.#} dmg per hit · orbit {s.Range:0.#} m"),
-            SkillKind.BellDrop => string.Create(inv, $"{s.Amount} bell(s) on enemy groups · {s.Damage:0.#} dmg · {every} · radius {s.Radius:0.#} m"),
+            SkillKind.Orbit => string.Create(inv, $"{s.Amount} orbiting {(_heroDef.Rhythmic ? "records" : "flames")} · {s.Damage:0.#} dmg per hit · orbit {s.Range:0.#} m"),
+            SkillKind.BellDrop => string.Create(inv, $"{s.Amount} {(_heroDef.Rhythmic ? "bell(s)" : "meteor(s)")} on enemy groups · {s.Damage:0.#} dmg · {every} · radius {s.Radius:0.#} m"),
             SkillKind.Quake => string.Create(inv, $"cracks · {s.Damage:0.#} dmg per beat · {every} · radius {s.Radius:0.#} m · last {s.Duration:0.#} beats"),
             SkillKind.Drone => string.Create(inv, $"{s.Amount} drone(s) · {s.Damage:0.#} dmg per bolt · {every} · range {s.Range:0.#} m"),
             SkillKind.Shield => string.Create(inv, $"blocks a hit {every} · blast {s.Damage:0.#} dmg · radius {s.Radius:0.#} m"),

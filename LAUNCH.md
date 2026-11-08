@@ -117,3 +117,8 @@ Example: game run on the Vega 8 at the medium preset:
 ```powershell
 & "C:\Projects\Games\Godot\engine\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe" --gpu-index 1 --path C:\Projects\Games\vlg\game -- --preset medium
 ```
+## Hero selection
+
+In the hub, press **H** or interact with the **Change hero** stand near the starting point. Lowkey and Pyromancer are available during development. The selected hero is saved. Changing hero restores that hero's default four skills and ultimate; the Setlist desk edits the selected hero's loadout.
+
+To run Pyromancer directly from source, pass `-- --hero pyromancer`. Example for testing his ultimate: `-- --hero pyromancer --ultimate phoenix --ultimate-level 3`; press F4 to charge it, then Space / gamepad Y to cast. Pyromancer's cooldowns are in seconds and he has no beat soundtrack. His humanoid model remains a capsule placeholder.

@@ -1,32 +1,37 @@
 using System;
 using Godot;
 using Vlg.Core.Sim;
+using Vlg.Core.Run;
 
 namespace Vlg.Game;
 
 /// <summary>All projectiles in one MultiMesh. Emissive opaque mesh: glow without transparency cost.</summary>
 public sealed class ProjectileRenderer
 {
-    const int Stride = 12;
+    const int Stride = 16;
     const int CapacityStep = 512;
     const float Height = 0.8f;
 
     readonly MultiMesh _multimesh;
+    readonly RunSim? _sim;
     float[] _buffer = Array.Empty<float>();
 
-    public ProjectileRenderer(Node3D parent)
+    public ProjectileRenderer(Node3D parent, RunSim? sim = null)
     {
+        _sim = sim;
         var material = new StandardMaterial3D
         {
-            AlbedoColor = new Color(0.4f, 0.95f, 1f),
+            AlbedoColor = Colors.White,
+            VertexColorUseAsAlbedo = true,
             EmissionEnabled = true,
-            Emission = new Color(0.3f, 0.9f, 1f),
+            Emission = Colors.White,
             EmissionEnergyMultiplier = 4f,
         };
         _multimesh = new MultiMesh
         {
             TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
             Mesh = PlaceholderMeshes.BuildProjectile(),
+            UseColors = true,
             CustomAabb = EnemyRenderer.WorldAabb,
         };
         parent.AddChild(new MultiMeshInstance3D
@@ -62,6 +67,10 @@ public sealed class ProjectileRenderer
             b[o] = c; b[o + 1] = 0f; b[o + 2] = s; b[o + 3] = p.X;
             b[o + 4] = 0f; b[o + 5] = k; b[o + 6] = 0f; b[o + 7] = Height;
             b[o + 8] = -s; b[o + 9] = 0f; b[o + 10] = c; b[o + 11] = p.Y;
+            int slot = pool.Source[i] - RunSim.HeroSkillSource;
+            bool fire = _sim?.Hero.Id == "pyromancer" && (uint)slot < (uint)_sim.Loadout.Length && _sim.Loadout[slot].Id != "magic_bolts";
+            var color = fire ? new Color(1f, 0.3f, 0.025f) : new Color(0.3f, 0.9f, 1f);
+            b[o + 12] = color.R; b[o + 13] = color.G; b[o + 14] = color.B; b[o + 15] = 1f;
         }
         RenderingServer.MultimeshSetBuffer(_multimesh.GetRid(), b);
         _multimesh.VisibleInstanceCount = pool.Count;

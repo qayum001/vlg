@@ -161,8 +161,10 @@ public sealed class RunHud
     }
 
     /// <summary>Every frame: the beat squares must not lag behind the groove.</summary>
-    public void UpdateBeat(BeatClock beat)
+    public void UpdateBeat(BeatClock beat, bool visible = true)
     {
+        _beats[0].GetParent<Control>().Visible = visible;
+        if (!visible) return;
         bool drop = beat.InDrop;
         float pump = MathF.Exp(-beat.BeatPhase * 5f);
         for (int i = 0; i < _beats.Length; i++)

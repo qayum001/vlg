@@ -41,7 +41,10 @@ public sealed class SkillVisuals
     static readonly Color HolyColor = new(1f, 0.95f, 0.6f);
     static readonly Color PoisonColor = new(0.4f, 1f, 0.3f);
     static readonly Color SmokeColor = new(0.55f, 0.55f, 0.6f);
+    static readonly Color FireColor = new(1f, 0.3f, 0.035f);
+    static readonly Color FireFlashColor = new(1f, 0.8f, 0.25f);
 
+    readonly bool _fireTheme;
     readonly MeshInstance3D[] _discs;
     readonly ShaderMaterial[] _discMaterials;
     readonly float[] _pulse;
@@ -88,8 +91,9 @@ public sealed class SkillVisuals
     int _nextBeam;
     float _spin;
 
-    public SkillVisuals(Node3D parent, int skillCount)
+    public SkillVisuals(Node3D parent, int skillCount, bool fireTheme = false)
     {
+        _fireTheme = fireTheme;
         _discs = new MeshInstance3D[skillCount];
         _discMaterials = new ShaderMaterial[skillCount];
         _pulse = new float[skillCount];
@@ -99,7 +103,7 @@ public sealed class SkillVisuals
         var zoneShader = GD.Load<Shader>("res://shaders/fx_zone.gdshader");
         for (int i = 0; i < skillCount; i++)
         {
-            _discMaterials[i] = Fx(zoneShader, ("pattern", 0f), ("cells", 3f), ("tint", new Color(AuraColor, DiscAlpha)));
+            _discMaterials[i] = Fx(zoneShader, ("pattern", fireTheme ? 1f : 0f), ("cells", 3f), ("tint", new Color(fireTheme ? FireColor : AuraColor, DiscAlpha)));
             _discs[i] = new MeshInstance3D
             {
                 Name = $"AuraDisc{i}",
@@ -111,7 +115,9 @@ public sealed class SkillVisuals
             parent.AddChild(_discs[i]);
         }
 
-        _vinyls = AddMultiMesh(parent, "Vinyls", ModelMeshes.Get("vinyl"), null, RunConfig.MaxBlades * RunConfig.MaxSkills);
+        _vinyls = AddMultiMesh(parent, fireTheme ? "OrbitFlames" : "Vinyls",
+            fireTheme ? new SphereMesh { Radius = 0.45f, Height = 1.1f, RadialSegments = 10, Rings = 6 } : ModelMeshes.Get("vinyl"),
+            fireTheme ? Glow(FireColor, false) : null, RunConfig.MaxBlades * RunConfig.MaxSkills);
         _rings = AddMultiMesh(parent, "Rings", disc, Fx(ringShader, ("thickness", 0.07f), ("halo", 0.25f)), 0);
         _speakers = AddMultiMesh(parent, "Speakers", ModelMeshes.Get("speaker"), null, SpeakerCap);
         _subwoofers = AddMultiMesh(parent, "Subwoofers", ModelMeshes.Get("subwoofer"), null, SpeakerCap);
@@ -119,7 +125,9 @@ public sealed class SkillVisuals
         _beams = AddMultiMesh(parent, "Beams", new PlaneMesh { Size = Vector2.One }, Fx(GD.Load<Shader>("res://shaders/fx_beam.gdshader")), BeamSlots);
         _zones = AddMultiMesh(parent, "Zones", disc, Fx(zoneShader, ("cells", 4f)), 0, customData: true);
         _strikeMarks = AddMultiMesh(parent, "StrikeMarks", disc, Fx(ringShader, ("thickness", 0.06f), ("fill", 0.5f)), 0);
-        _bells = AddMultiMesh(parent, "Bells", ModelMeshes.Get("cowbell"), null, 0);
+        _bells = AddMultiMesh(parent, fireTheme ? "Meteors" : "Bells",
+            fireTheme ? new SphereMesh { Radius = 0.45f, Height = 1.15f, RadialSegments = 12, Rings = 6 } : ModelMeshes.Get("cowbell"),
+            fireTheme ? Glow(FireColor, false) : null, 0);
         _shells = AddMultiMesh(parent, "MortarShells", ModelMeshes.Get("mortar_shell"), null, 0);
         _drones = AddMultiMesh(parent, "Boomboxes", ModelMeshes.Get("boombox"), null, RunConfig.MaxSkills * RunConfig.MaxDrones);
         _toyDrones = AddMultiMesh(parent, "ToyDrones", ModelMeshes.Get("toy_drone"), null, RunConfig.MaxSkills * RunConfig.MaxDrones);
@@ -199,7 +207,7 @@ public sealed class SkillVisuals
             _pulse[i] = MathF.Max(0f, _pulse[i] - PulseDecay * dt);
             _discs[i].Position = new Vector3(hero.X, 0.03f, hero.Y);
             _discs[i].Scale = new Vector3(r, 1f, r);
-            _discMaterials[i].SetShaderParameter("tint", new Color(AuraColor, DiscAlpha + PulseAlpha * _pulse[i]));
+            _discMaterials[i].SetShaderParameter("tint", new Color(_fireTheme ? FireColor : AuraColor, DiscAlpha + PulseAlpha * _pulse[i]));
         }
 
         UpdateVinyls(sim);
@@ -247,10 +255,12 @@ public sealed class SkillVisuals
             bool cracks = kind == SkillKind.Quake || source == RunSim.UltimateSource;
             bool bubbles = source is RunSim.UsableSource or RunSim.PoisonSource;
             var color = source == RunSim.UsableSource ? HolyColor : source == RunSim.PoisonSource ? PoisonColor : cracks ? CrackColor : PuddleColor;
+            bool fire = IsFireSource(source);
+            if (fire) color = FireColor;
             int o = i * ZoneStride;
             Write(_zoneBuffer, o, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(z.Center[i].X, 0.04f, z.Center[i].Y),
                 new Color(color, (0.3f + 0.4f * pump) * MathF.Min(1f, life * 3f)));
-            _zoneBuffer[o + 16] = cracks ? 1f : bubbles ? 2f : 0f;
+            _zoneBuffer[o + 16] = cracks || fire ? 1f : bubbles ? 2f : 0f;
             _zoneBuffer[o + 17] = 0f;
             _zoneBuffer[o + 18] = 0f;
             _zoneBuffer[o + 19] = 0f;
@@ -271,9 +281,9 @@ public sealed class SkillVisuals
             float r = strikes.Radius[i];
             float left = strikes.StartDelay[i] > 0f ? MathF.Max(0f, strikes.Delay[i] / strikes.StartDelay[i]) : 0f;
             Write(_strikeBuffer, i * Stride, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(p.X, 0.06f, p.Y),
-                new Color(BellColor, 0.2f + 0.6f * (1f - left)));
+                new Color(IsFireSource(strikes.SourceOf(i)) ? FireColor : BellColor, 0.2f + 0.6f * (1f - left)));
             float k = MathF.Max(1f, r * 0.6f);
-            // Item strikes (Old Mortar) drop shells nose down; hero strikes drop cowbells.
+            // Item strikes retain mortar shells; hero strikes use the hero's mesh.
             if (strikes.SourceOf(i) >= RunSim.ActiveSource)
                 Write(_shellBuffer, shells++ * Stride, new Vector3(k, 0, 0), new Vector3(0, -k, 0), new Vector3(0, 0, -k),
                     new Vector3(p.X, 0.8f * k + BellDropHeight * left, p.Y), Colors.White);
@@ -337,7 +347,7 @@ public sealed class SkillVisuals
             float t = _flashAge[k] / FlashSec;
             float r = _flashRadius[k] * (0.6f + 0.5f * t);
             Write(_flashBuffer, n * Stride, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r), new Vector3(_flashPos[k].X, 0.1f, _flashPos[k].Y),
-                new Color(FlashColor, 1f - t));
+                new Color(_fireTheme ? FireFlashColor : FlashColor, 1f - t));
             n++;
         }
         RenderingServer.MultimeshSetBuffer(_flashes.GetRid(), _flashBuffer);
@@ -382,7 +392,7 @@ public sealed class SkillVisuals
         {
             float r = MathF.Max(0.1f, rings.Radius[i]);
             float fade = 1f - r / rings.MaxRadius[i];
-            var color = rings.Source[i] == RunSim.DropShockSource ? ShockColor : RingColor;
+            var color = IsFireSource(rings.Source[i]) ? FireColor : rings.Source[i] == RunSim.DropShockSource ? ShockColor : RingColor;
             Write(b, n * Stride, new Vector3(r, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, r),
                 new Vector3(rings.Center[i].X, 0.08f, rings.Center[i].Y), new Color(color, 0.25f + 0.75f * fade));
         }
@@ -445,12 +455,15 @@ public sealed class SkillVisuals
             float len = _beamLength[k], w = _beamWidth[k] * (1f + _beamAge[k] * 2f);
             var mid = _beamOrigin[k] + d * (len * 0.5f);
             Write(_beamBuffer, n * Stride, new Vector3(-d.Y * w, 0, d.X * w), new Vector3(0, 1, 0), new Vector3(d.X * len, 0, d.Y * len),
-                new Vector3(mid.X, 0.6f, mid.Y), new Color(BeamColor, 0.6f * (1f - _beamAge[k] / BeamFadeSec)));
+                new Vector3(mid.X, 0.6f, mid.Y), new Color(_fireTheme ? FireColor : BeamColor, 0.6f * (1f - _beamAge[k] / BeamFadeSec)));
             n++;
         }
         RenderingServer.MultimeshSetBuffer(_beams.GetRid(), _beamBuffer);
         _beams.VisibleInstanceCount = n;
     }
+
+    bool IsFireSource(byte source) => _fireTheme &&
+        (source == RunSim.UltimateSource || source >= RunSim.HeroSkillSource && source < RunSim.HeroSkillSource + _discs.Length);
 
     /// <summary>Row-major 3x4 transform from basis columns + origin, then RGBA.</summary>
     static void Write(float[] b, int o, Vector3 x, Vector3 y, Vector3 z, Vector3 origin, Color color)

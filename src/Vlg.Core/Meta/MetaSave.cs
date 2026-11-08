@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using Vlg.Core.Config;
 
 namespace Vlg.Core.Meta;
 
@@ -11,6 +12,7 @@ namespace Vlg.Core.Meta;
 public sealed class MetaSave
 {
     public int Version { get; set; } = 1;
+    public string HeroId { get; set; } = HeroRoster.DefaultId;
     public float MetaCredits { get; set; }
     /// <summary>Upgrade id → owned ranks.</summary>
     public Dictionary<string, int> Ranks { get; set; } = new();
@@ -26,8 +28,21 @@ public sealed class MetaSave
         WriteIndented = true,
     };
 
-    public static MetaSave Parse(string json) =>
-        string.IsNullOrWhiteSpace(json) ? new MetaSave() : JsonSerializer.Deserialize<MetaSave>(json, Json) ?? new MetaSave();
+    public static MetaSave Parse(string json)
+    {
+        var save = string.IsNullOrWhiteSpace(json) ? new MetaSave() : JsonSerializer.Deserialize<MetaSave>(json, Json) ?? new MetaSave();
+        if (!HeroRoster.Contains(save.HeroId)) save.SelectHero(HeroRoster.DefaultId);
+        return save;
+    }
+
+    public void SelectHero(string id)
+    {
+        if (!HeroRoster.Contains(id)) throw new ArgumentException($"unknown hero '{id}'", nameof(id));
+        if (HeroId == id) return;
+        HeroId = id;
+        Loadout = null;
+        Ultimate = null;
+    }
 
     public string ToJson() => JsonSerializer.Serialize(this, Json);
 

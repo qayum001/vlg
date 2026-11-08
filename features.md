@@ -16,6 +16,17 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+### Pyromancer and hub hero selection
+Added: 2026-11-08 | Confirmed: -
+What: Pyromancer is available during development alongside Lowkey. Six skills, three ultimates, Ember Heart kill healing, full rank 5/10 branch trees, second-based cooldowns, and fire effects. Hero selection is saved and uses the existing setlist, item and progression systems.
+How to test:
+1. Launch the normal hub. Press H or interact with the Change hero stand near the starting point. Pick Pyromancer; the capsule turns orange and the HUD shows his name. Use Setlist to choose four of his six skills and one of three ultimates, then enter the portal.
+2. Magic Bolts are blue. Unlock Fireball, Flame Aura and Flame Orbit: fireballs explode, an orange aura pulses and flames orbit the capsule. Try Flame Nova and Meteor through Setlist: an expanding ring pushes enemies; marked impacts precede falling meteors.
+3. Use F3 to gain levels. Rank 5 and 10 skills offer named branch paths. Hero levels 10/20/30 offer ultimate rank picks. F4 fills ultimate charge; Space / Y casts Inferno, Meteor Shower or Phoenix. Check burning ground, repeated delayed meteors and Phoenix's capped healing.
+4. Return to the hub, change to Lowkey and enter the portal. Lowkey keeps his existing music, Drop and abilities. Restart the game: the selected hero persists. Changing hero resets the setlist to that hero's defaults; selecting the same hero preserves it.
+5. Direct development launch: `-- --hero pyromancer --skill-level 5 --branch 0,0,0,0 --ultimate phoenix --ultimate-level 3`. Pause: spell effects, charge and stage time stop. Pyromancer has no beat HUD or beat soundtrack.
+Expected: both heroes are available, setlists never cross between heroes, no missing-resource errors, and the hero remains a capsule placeholder (R11). Balance is provisional. Full kit and ability-authoring notes: `design/heroes/pyromancer.md`.
+
 ### Release launchers
 Added: 2026-11-08 | Confirmed: -
 What: two batch files in `launch/`: build and launch a standalone Windows release, or launch the newest completed release without rebuilding. Both use normal hub startup with no dev/debug launch arguments.

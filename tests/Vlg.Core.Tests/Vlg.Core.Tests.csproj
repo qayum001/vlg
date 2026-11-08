@@ -24,6 +24,7 @@
     <None Include="..\..\game\data\stress.json" Link="data\stress.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\game\data\run.json" Link="data\run.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\game\data\heroes\lowkey.json" Link="data\heroes\lowkey.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\game\data\heroes\pyromancer.json" Link="data\heroes\pyromancer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\game\data\items.json" Link="data\items.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\game\data\meta.json" Link="data\meta.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

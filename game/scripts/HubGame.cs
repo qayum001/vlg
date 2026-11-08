@@ -19,7 +19,6 @@ namespace Vlg.Game;
 public partial class HubGame : Node3D
 {
     const string RunScene = "res://scenes/run.tscn";
-    const string HeroPath = "res://data/heroes/lowkey.json";
     const float MouseYawPerPixel = 0.005f;
     const float StickYawRate = 2.5f;
     const float StickDeadzone = 0.2f;
@@ -59,7 +58,7 @@ public partial class HubGame : Node3D
     {
         _options = LaunchOptions.Parse(OS.GetCmdlineUserArgs());
         var run = RunConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/run.json"));
-        _hero = HeroDef.Parse(Godot.FileAccess.GetFileAsString(HeroPath), run);
+        _hero = GameSession.LoadHero(run);
         _heroSpeed = _hero.Speed;
         GameSession.Sanitize(_hero);
 
@@ -78,6 +77,7 @@ public partial class HubGame : Node3D
 
         AddPortal(new Vector3(0, 0, -12));
         AddDesk(new Vector3(-10, 0, 0));
+        AddHeroStand(new Vector3(-4, 0, 4));
         AddFixer(new Vector3(10, 0, 0));
         AddChild(new Label3D
         {
@@ -91,6 +91,7 @@ public partial class HubGame : Node3D
 
         BuildHud();
         _panel = new ChoicePanel(this);
+        ApplyHeroAppearance();
         Input.MouseMode = Input.MouseModeEnum.Captured;
         _camera.Snap(HeroWorld());
     }
@@ -132,7 +133,7 @@ public partial class HubGame : Node3D
         var save = GameSession.Save;
         var inv = CultureInfo.InvariantCulture;
         _status.Text = string.Create(inv, $"The Crossroads · {MathF.Floor(save.MetaCredits):0} meta credits · best loop {save.BestLoop} · runs {save.Runs}\n")
-            + $"Setlist: {string.Join(", ", LoadoutNames())} + {_hero.UltimateById(save.Ultimate).Name}";
+            + $"{_hero.Name} · Setlist: {string.Join(", ", LoadoutNames())} + {_hero.UltimateById(save.Ultimate).Name}";
     }
 
     public override void _UnhandledInput(InputEvent e)
@@ -155,6 +156,9 @@ public partial class HubGame : Node3D
                 break;
             case Key.E:
                 if (!_panel.IsOpen) Interact();
+                break;
+            case Key.H:
+                if (!_panel.IsOpen) PickHero();
                 break;
             case Key.Escape:
                 if (_panel.IsOpen) _panel.Hide();
@@ -181,6 +185,53 @@ public partial class HubGame : Node3D
     });
 
     // ---- Spots ----
+
+    void AddHeroStand(Vector3 at)
+    {
+        AddChild(new MeshInstance3D
+        {
+            Name = "HeroStand",
+            Mesh = new CylinderMesh { TopRadius = 1.1f, BottomRadius = 1.2f, Height = 0.18f },
+            Position = at + new Vector3(0, 0.09f, 0),
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.8f, 0.3f, 0.08f) },
+        });
+        AddLabel(at + new Vector3(0, 2.2f, 0), "Change hero · H");
+        _spots.Add(new Spot("Heroes", at, 2.8f, "change hero (development access)", PickHero));
+    }
+
+    void PickHero()
+    {
+        var run = RunConfig.Parse(Godot.FileAccess.GetFileAsString("res://data/run.json"));
+        var heroes = new HeroDef[HeroRoster.Ids.Count];
+        var labels = new string[heroes.Length + 1];
+        for (int i = 0; i < heroes.Length; i++)
+        {
+            heroes[i] = GameSession.LoadHero(run, HeroRoster.Ids[i]);
+            var hero = heroes[i];
+            labels[i] = $"{hero.Name}{(hero.Id == _hero.Id ? " · selected" : "")}\n      HP {hero.MaxHp:0} · Speed {hero.Speed:0.#} · {(hero.Rhythmic ? "The Drop" : hero.PassiveName)}";
+        }
+        labels[heroes.Length] = "Cancel";
+        _panel.Show("Choose hero", "Development access: both heroes are available.\nChanging hero resets the setlist to that hero's default four skills and ultimate.", labels, i =>
+        {
+            if (i < heroes.Length)
+            {
+                _hero = heroes[i];
+                GameSession.Save.SelectHero(_hero.Id);
+                GameSession.Sanitize(_hero);
+                _heroSpeed = _hero.Speed;
+                ApplyHeroAppearance();
+                GameSession.Persist();
+            }
+            _panel.Hide();
+        });
+    }
+
+    void ApplyHeroAppearance()
+    {
+        var material = (StandardMaterial3D)_heroNode.MaterialOverride;
+        material.AlbedoColor = _hero.Id == "pyromancer" ? new Color(0.85f, 0.22f, 0.055f) : new Color(0.9f, 0.95f, 1f);
+        material.Emission = _hero.Id == "pyromancer" ? new Color(1f, 0.32f, 0.04f) : new Color(0.4f, 0.7f, 1f);
+    }
 
     void AddPortal(Vector3 at)
     {
@@ -352,7 +403,7 @@ public partial class HubGame : Node3D
         var hint = new Label
         {
             Position = new Vector2(16, 72),
-            Text = "WASD / left stick move · mouse / right stick camera · E / A interact · Esc menu · F5 +100 meta credits (dev)",
+            Text = "WASD / left stick move · mouse / right stick camera · E / A interact · H change hero · Esc menu · F5 +100 meta credits (dev)",
             LabelSettings = new LabelSettings { FontSize = 14, OutlineSize = 4, OutlineColor = Colors.Black },
             Modulate = new Color(1, 1, 1, 0.7f),
         };

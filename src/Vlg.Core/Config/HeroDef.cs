@@ -17,6 +17,11 @@ public sealed record HeroDef
     /// <summary>Gems inside this distance start flying to the hero.</summary>
     public required float PickupRadius { get; init; }
     public required BeatSettings Beat { get; init; }
+    public bool Rhythmic { get; init; } = true;
+    public float HealingPerKill { get; init; }
+    public string PassiveName { get; init; } = "";
+    public string PassiveText { get; init; } = "";
+    public bool DevelopmentAvailable { get; init; } = true;
     /// <summary>Skill pool (domain.md: 6 per hero).</summary>
     public required SkillDef[] Skills { get; init; }
     /// <summary>Skill ids in loadout order; slot 0 starts at level 1.</summary>
@@ -78,6 +83,8 @@ public sealed record HeroDef
     void Validate(RunConfig run)
     {
         Require(MaxHp > 0 && Speed > 0 && PickupRadius >= 0, "maxHp/speed must be > 0, pickupRadius >= 0");
+        Require(float.IsFinite(MaxHp) && float.IsFinite(Speed) && float.IsFinite(PickupRadius), "hero stats must be finite");
+        Require(float.IsFinite(HealingPerKill) && HealingPerKill >= 0, "healingPerKill must be finite and >= 0");
         Require(run.Pickups.DespawnRadius > PickupRadius, "pickupRadius must stay below run pickups.despawnRadius");
 
         var b = Beat;
@@ -117,6 +124,8 @@ public sealed record HeroDef
         {
             var st = u.Levels[i];
             string lv = $"{at} level {i + 1}";
+            for (int stat = 0; stat < SkillStats.Size; stat++)
+                Require(float.IsFinite(st[(Stat)stat]), $"{lv}: stats must be finite");
             Require(st.Charge > 0 && st.Tick >= 0 && st.Heal >= 0, $"{lv}: charge > 0, tick/heal >= 0");
             if (st.Tick > 0) Require(st.Duration > 0, $"{lv}: tick needs duration > 0");
             switch (u.Kind)
@@ -129,6 +138,18 @@ public sealed record HeroDef
                     break;
                 case UltimateKind.BassCannon:
                     Require(st.Range > 0 && st.Width > 0 && st.Duration > 0, $"{lv}: needs range > 0, width > 0, duration > 0");
+                    break;
+                case UltimateKind.Inferno:
+                    Require(st.Damage > 0 && st.Radius > 0 && st.Tick > 0 && st.Duration > 0,
+                        $"{lv}: needs damage/radius/tick/duration > 0");
+                    break;
+                case UltimateKind.MeteorShower:
+                    Require(st.Damage > 0 && st.Radius > 0 && st.Range > 0 && st.Period > 0 && st.Duration > 0 && st.Amount is >= 1 and <= RunConfig.MaxProjectilesPerCast,
+                        $"{lv}: needs damage/radius/range/period/duration > 0, count 1..{RunConfig.MaxProjectilesPerCast}");
+                    break;
+                case UltimateKind.Phoenix:
+                    Require(st.Damage > 0 && st.Radius > 0 && st.Heal > 0,
+                        $"{lv}: needs damage/radius/heal > 0");
                     break;
                 default:
                     throw new FormatException($"{lv}: unknown kind {u.Kind}");

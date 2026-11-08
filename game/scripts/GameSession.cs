@@ -16,6 +16,13 @@ public static class GameSession
     public static MetaShop Shop => _shop ??= Load();
     public static MetaSave Save => Shop.Save;
 
+    public static HeroDef LoadHero(RunConfig run, string? id = null)
+    {
+        id ??= Save.HeroId;
+        if (!HeroRoster.Contains(id)) throw new System.ArgumentException($"unknown hero '{id}'");
+        return HeroDef.Parse(FileAccess.GetFileAsString($"res://data/heroes/{id}.json"), run);
+    }
+
     /// <summary>Drops a saved setlist or ultimate the hero no longer has (data changed since the save).</summary>
     public static void Sanitize(HeroDef hero)
     {

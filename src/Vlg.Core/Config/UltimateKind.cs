@@ -9,4 +9,10 @@ public enum UltimateKind
     Encore,
     /// <summary>1 bar windup, then a beam along the camera for duration beats that kills what it touches: range, width; tick = burning line per beat.</summary>
     BassCannon,
+    /// <summary>Fire burst and lingering ground damage: damage, radius, tick per second, duration seconds.</summary>
+    Inferno,
+    /// <summary>Delayed impacts on nearby targets: count, period seconds, range, radius, damage.</summary>
+    MeteorShower,
+    /// <summary>Fire burst around the hero and immediate healing: damage, radius, heal HP.</summary>
+    Phoenix,
 }
