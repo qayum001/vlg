@@ -62,3 +62,7 @@ Added: 2026-11-08
 ## R14. Apply all project rules to every request
 After every user request, including follow-ups and corrections, read and apply all project rules before acting. Check `AGENTS.md`, all of `rules.md` and `code-rules.md`, the relevant shared workflows, and the applicable design rules. Verify the branch/worktree and current `dev` instructions first so an older checkout cannot hide newer rules. Reconcile the request with these rules, pass the applicable constraints to subagents, and check compliance again before reporting completion. Do not silently skip a rule; explain any conflict with a higher-priority instruction or an actual blocker.
 Added: 2026-11-08
+
+## R15. Subagents require an explicit request
+Never use subagents unless the user explicitly asks for them. This applies to every task and workflow, including research, implementation and reviews. When the user gives this instruction during ongoing work, stop any running subagents and continue the work in the main agent.
+Added: 2026-11-08

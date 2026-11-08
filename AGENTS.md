@@ -25,6 +25,7 @@ Read [rules.md](rules.md) and [.agent/memory/INDEX.md](.agent/memory/INDEX.md) b
 6. New project facts: use [update-memory](.agents/skills/update-memory/SKILL.md). Notable events: use [add-devlog](.agents/skills/add-devlog/SKILL.md).
 
 ## Subagents
+Never use subagents unless the user explicitly asks for them (R15). This overrides workflow steps that would otherwise spawn one; handle the work in the main agent until explicitly requested.
 The main agent handles workflow setup and user coordination. Subagents follow the caller's brief, do not run the feature pipeline or commit, and put open questions in their report.
 
 ## Conventions
