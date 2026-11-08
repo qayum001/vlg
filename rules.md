@@ -58,3 +58,7 @@ Added: 2026-10-18
 ## R13. Shared agent workflow
 The project rules and workflows apply to every coding agent. `AGENTS.md` is the shared entry point; skills and reviewer briefs live in `.agents/`. `CLAUDE.md` may import the shared guide for compatibility, but must not contain a separate set of project instructions.
 Added: 2026-11-08
+
+## R14. Apply all project rules to every request
+After every user request, including follow-ups and corrections, read and apply all project rules before acting. Check `AGENTS.md`, all of `rules.md` and `code-rules.md`, the relevant shared workflows, and the applicable design rules. Verify the branch/worktree and current `dev` instructions first so an older checkout cannot hide newer rules. Reconcile the request with these rules, pass the applicable constraints to subagents, and check compliance again before reporting completion. Do not silently skip a rule; explain any conflict with a higher-priority instruction or an actual blocker.
+Added: 2026-11-08

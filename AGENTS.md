@@ -16,6 +16,7 @@ Read [rules.md](rules.md) and [.agent/memory/INDEX.md](.agent/memory/INDEX.md) b
 - `CLAUDE.md` - compatibility import of this guide for Claude; shared instructions live here.
 
 ## Workflow
+0. For every user request, follow-up and correction, perform the rules check in R14 before acting: read the current project rules, applicable workflows and design constraints, then apply them throughout the task. Recheck compliance before reporting completion.
 1. Verify the branch and worktree (R5). Use `dev` for implementation, builds, launches and testing. If the current workspace is detached or on another branch, locate the existing `dev` worktree with `git worktree list` and work there. Do not treat a feature left only on a side branch as ready for the user to test from `dev`.
 2. New request: use [clarify](.agents/skills/clarify/SKILL.md) (R4).
 3. Code or tooling change: use [feature-pipeline](.agents/skills/feature-pipeline/SKILL.md).

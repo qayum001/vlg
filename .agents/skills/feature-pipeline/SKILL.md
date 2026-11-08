@@ -7,6 +7,7 @@ description: Mandatory pipeline for any code change in vlg (feature, bug fix, re
 
 Steps in order. Step not applicable → say why in the report.
 
+0. **Rules check (every request, R14)** - Before acting on each user request, follow-up or correction, verify the branch and worktree against current `dev`; read `AGENTS.md`, all of `rules.md` and `code-rules.md`, the applicable shared workflows and design rules. Reconcile the request with every applicable rule. Carry these constraints into the plan and subagent briefs. Before the final report, check the changes, validation, branch handoff, assets and documentation against the same rules. Explain any higher-priority conflict or actual blocker instead of silently skipping a rule. This check also applies to requests that do not change code.
 1. **Clarify** — `clarify` skill. No code before requirements are clear.
 2. **Context** - Read `AGENTS.md`, memory `INDEX.md` and relevant files, `rules.md`, `code-rules.md`. Check the branch and `git worktree list`; work in the `dev` checkout, including when the supplied workspace is detached or on another branch (R5). Inspect existing changes and preserve unrelated work.
 3. **Plan** — non-trivial work: short plan (files, approach, tests). Plan changes scope → confirm with user.

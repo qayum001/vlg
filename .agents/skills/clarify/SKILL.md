@@ -8,6 +8,7 @@ description: First step for every new user request in vlg (task, feature, fix, c
 R4: the user may drop details unintentionally. Ask before acting.
 
 ## Procedure
+0. Apply the every-request rules check (R14) before deciding what to ask or do, including on follow-ups and corrections.
 1. Extract explicit requirements from the request. Check `rules.md` and memory `INDEX.md` for related context.
 2. Run the checklists below. Mark each item: given / inferable (code, memory, rules) / unknown.
 3. Ask about unknowns that change what gets built. Each question gets a recommended default.
