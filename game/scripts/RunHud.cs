@@ -45,7 +45,7 @@ public sealed class RunHud
         set => _root.Visible = value;
     }
 
-    public RunHud(Node parent)
+    public RunHud(Node parent, bool rhythmic = true)
     {
         var layer = new CanvasLayer { Name = "Hud" };
         parent.AddChild(layer);
@@ -75,7 +75,7 @@ public sealed class RunHud
 
         var hint = AddLabel(14, HorizontalAlignment.Left);
         hint.Position = new Vector2(16, 48);
-        hint.Text = Hint;
+        hint.Text = rhythmic ? Hint : Hint.Replace(" (aims Slap)", "").Replace(" · M mute", "");
         hint.Modulate = new Color(1, 1, 1, 0.7f);
 
         // Form names get long ("Speaker Stack Â· Boombox Drone Â· Bass Boosted"): wrap upward over two lines.
@@ -185,7 +185,7 @@ public sealed class RunHud
 
         _hp.MaxValue = sim.HeroMaxHp;
         _hp.Value = Math.Max(0f, sim.HeroHp);
-        _hpText.Text = string.Create(inv, $"HP {MathF.Ceiling(Math.Max(0f, sim.HeroHp)):F0} / {MathF.Ceiling(sim.HeroMaxHp):F0}");
+        _hpText.Text = string.Create(inv, $"{sim.Hero.Name} · HP {MathF.Ceiling(Math.Max(0f, sim.HeroHp)):F0} / {MathF.Ceiling(sim.HeroMaxHp):F0}");
 
         _xp.MaxValue = p.XpToNext;
         _xp.Value = p.Xp;

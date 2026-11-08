@@ -1,78 +1,93 @@
 using System;
 using Godot;
-using Vlg.Core.Sim;
 using Vlg.Core.Run;
+using Vlg.Core.Sim;
 
 namespace Vlg.Game;
 
-/// <summary>All projectiles in one MultiMesh. Emissive opaque mesh: glow without transparency cost.</summary>
 public sealed class ProjectileRenderer
 {
-    const int Stride = 16;
+    const int Stride = 12;
     const int CapacityStep = 512;
     const float Height = 0.8f;
-
-    readonly MultiMesh _multimesh;
     readonly RunSim? _sim;
-    float[] _buffer = Array.Empty<float>();
+    readonly Batch _magic;
+    readonly Batch? _fire;
 
     public ProjectileRenderer(Node3D parent, RunSim? sim = null)
     {
         _sim = sim;
-        var material = new StandardMaterial3D
-        {
-            AlbedoColor = Colors.White,
-            VertexColorUseAsAlbedo = true,
-            EmissionEnabled = true,
-            Emission = Colors.White,
-            EmissionEnergyMultiplier = 4f,
-        };
-        _multimesh = new MultiMesh
-        {
-            TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
-            Mesh = PlaceholderMeshes.BuildProjectile(),
-            UseColors = true,
-            CustomAabb = EnemyRenderer.WorldAabb,
-        };
-        parent.AddChild(new MultiMeshInstance3D
-        {
-            Name = "Projectiles",
-            Multimesh = _multimesh,
-            MaterialOverride = material,
-            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-        });
+        _magic = new Batch(parent, "Projectiles", PlaceholderMeshes.BuildProjectile(), new Color(0.3f, 0.9f, 1f));
+        if (sim?.Hero.Id == "pyromancer")
+            _fire = new Batch(parent, "Fireballs", new SphereMesh { Radius = 0.3f, Height = 0.6f, RadialSegments = 10, Rings = 6 }, new Color(1f, 0.3f, 0.025f));
     }
 
-    public void SetCullCenter(Vector3 center) => _multimesh.CustomAabb = EnemyRenderer.CullBoxAround(center);
+    public void SetCullCenter(Vector3 center)
+    {
+        _magic.Mesh.CustomAabb = EnemyRenderer.CullBoxAround(center);
+        if (_fire != null) _fire.Mesh.CustomAabb = EnemyRenderer.CullBoxAround(center);
+    }
+
+    bool IsFire(ProjectilePool pool, int index)
+    {
+        if (_fire == null || _sim == null) return false;
+        int slot = pool.Source[index] - RunSim.HeroSkillSource;
+        return (uint)slot < (uint)_sim.Loadout.Length && _sim.Loadout[slot].Id != "magic_bolts";
+    }
 
     public void Update(ProjectilePool pool)
     {
-        int capacity = (Math.Max(pool.Count, 1) + CapacityStep - 1) / CapacityStep * CapacityStep;
-        if (capacity != _multimesh.InstanceCount)
+        int fireCount = 0;
+        for (int i = 0; i < pool.Count; i++) if (IsFire(pool, i)) fireCount++;
+        _magic.Prepare(pool.Count - fireCount);
+        _fire?.Prepare(fireCount);
+        int magic = 0, fire = 0;
+        for (int i = 0; i < pool.Count; i++)
         {
-            _multimesh.InstanceCount = capacity;
-            _buffer = new float[capacity * Stride];
-        }
-
-        var b = _buffer;
-        for (int i = 0, o = 0; i < pool.Count; i++, o += Stride)
-        {
+            bool flaming = IsFire(pool, i);
+            var batch = flaming ? _fire! : _magic;
+            int o = (flaming ? fire++ : magic++) * Stride;
+            var b = batch.Buffer;
             var v = pool.Velocity[i];
             float len = v.Length();
             float sin = len > 1e-4f ? v.X / len : 0f, cos = len > 1e-4f ? v.Y / len : 1f;
             var p = pool.Position[i];
-            // Bigger hit radius (Big Disc) draws bigger.
             float k = pool.Radius[i] / pool.DefaultRadius;
-            float c = cos * k, s = sin * k;
-            b[o] = c; b[o + 1] = 0f; b[o + 2] = s; b[o + 3] = p.X;
-            b[o + 4] = 0f; b[o + 5] = k; b[o + 6] = 0f; b[o + 7] = Height;
-            b[o + 8] = -s; b[o + 9] = 0f; b[o + 10] = c; b[o + 11] = p.Y;
-            int slot = pool.Source[i] - RunSim.HeroSkillSource;
-            bool fire = _sim?.Hero.Id == "pyromancer" && (uint)slot < (uint)_sim.Loadout.Length && _sim.Loadout[slot].Id != "magic_bolts";
-            var color = fire ? new Color(1f, 0.3f, 0.025f) : new Color(0.3f, 0.9f, 1f);
-            b[o + 12] = color.R; b[o + 13] = color.G; b[o + 14] = color.B; b[o + 15] = 1f;
+            b[o] = cos * k; b[o + 1] = 0; b[o + 2] = sin * k; b[o + 3] = p.X;
+            b[o + 4] = 0; b[o + 5] = k; b[o + 6] = 0; b[o + 7] = Height;
+            b[o + 8] = -sin * k; b[o + 9] = 0; b[o + 10] = cos * k; b[o + 11] = p.Y;
         }
-        RenderingServer.MultimeshSetBuffer(_multimesh.GetRid(), b);
-        _multimesh.VisibleInstanceCount = pool.Count;
+        _magic.Upload(magic);
+        _fire?.Upload(fire);
+    }
+
+    sealed class Batch
+    {
+        public MultiMesh Mesh { get; }
+        public float[] Buffer { get; private set; } = Array.Empty<float>();
+
+        public Batch(Node3D parent, string name, Mesh mesh, Color color)
+        {
+            Mesh = new MultiMesh { TransformFormat = MultiMesh.TransformFormatEnum.Transform3D, Mesh = mesh, CustomAabb = EnemyRenderer.WorldAabb };
+            parent.AddChild(new MultiMeshInstance3D
+            {
+                Name = name, Multimesh = Mesh, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+                MaterialOverride = new StandardMaterial3D { AlbedoColor = color, EmissionEnabled = true, Emission = color, EmissionEnergyMultiplier = 4f },
+            });
+        }
+
+        public void Prepare(int count)
+        {
+            int capacity = (Math.Max(count, 1) + CapacityStep - 1) / CapacityStep * CapacityStep;
+            if (capacity <= Mesh.InstanceCount) return;
+            Mesh.InstanceCount = capacity;
+            Buffer = new float[capacity * Stride];
+        }
+
+        public void Upload(int count)
+        {
+            RenderingServer.MultimeshSetBuffer(Mesh.GetRid(), Buffer);
+            Mesh.VisibleInstanceCount = count;
+        }
     }
 }

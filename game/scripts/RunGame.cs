@@ -133,7 +133,7 @@ public partial class RunGame : Node3D
         };
         AddChild(_hero);
         _overlay = new BeatOverlay(this);
-        _hud = new RunHud(this);
+        _hud = new RunHud(this, _heroDef.Rhythmic);
         _panel = new ChoicePanel(this);
         _shop = new ShopPanel(this, _panel);
         _audio = new BeatAudio(this);
