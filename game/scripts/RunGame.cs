@@ -47,6 +47,7 @@ public partial class RunGame : Node3D
     StandardMaterial3D _heroMaterial = null!;
     RunHud _hud = null!;
     ChoicePanel _panel = null!;
+    SettingsPanel _settings = null!;
 
     /// <summary>What the panel currently answers; Playing = hidden. Pending count refreshes chained level-ups.</summary>
     (RunPhase Phase, int Pending) _shown = (RunPhase.Playing, 0);
@@ -71,6 +72,7 @@ public partial class RunGame : Node3D
 
     void Setup()
     {
+        GameSettings.Initialize();
         _options = LaunchOptions.Parse(OS.GetCmdlineUserArgs());
         if (_options.WantsStressTest)
             throw new ArgumentException("--stress/--bench open the stress test via the boot scene (main scene), not run.tscn");
@@ -102,6 +104,7 @@ public partial class RunGame : Node3D
         AddChild(_hero);
         _hud = new RunHud(this);
         _panel = new ChoicePanel(this);
+        _settings = new SettingsPanel(this, ShowPauseMenu);
 
         QualityApplier.Apply(_preset, GetViewport(), _arena, _enemies, _vfx);
         // Stress-only effects off: spell lights, aura particles, overdraw layers.
@@ -175,6 +178,11 @@ public partial class RunGame : Node3D
             TogglePauseMenu();
             return;
         }
+        if (e is InputEventJoypadButton { Pressed: true, ButtonIndex: JoyButton.B } && _settings.Visible)
+        {
+            ShowPauseMenu();
+            return;
+        }
         if (e is not InputEventKey { Pressed: true, Echo: false } key) return;
         switch (key.PhysicalKeycode)
         {
@@ -183,8 +191,8 @@ public partial class RunGame : Node3D
                 break;
             case Key.Escape: TogglePauseMenu(); break;
             case Key.F1: _hud.Visible = !_hud.Visible; break;
-            case Key.F2: _sim.DevSkipStage(); break;
-            case Key.F3: _sim.DevGainLevel(); break;
+            case Key.F2 when !_pauseMenu: _sim.DevSkipStage(); break;
+            case Key.F3 when !_pauseMenu: _sim.DevGainLevel(); break;
             case Key.F11:
                 DisplayServer.WindowSetMode(DisplayServer.WindowGetMode() == DisplayServer.WindowMode.Windowed
                     ? DisplayServer.WindowMode.Fullscreen
@@ -211,6 +219,11 @@ public partial class RunGame : Node3D
 
     void TogglePauseMenu()
     {
+        if (_settings.Visible)
+        {
+            ShowPauseMenu();
+            return;
+        }
         if (_pauseMenu)
         {
             _pauseMenu = false;
@@ -220,12 +233,22 @@ public partial class RunGame : Node3D
         }
         if (_sim.Phase != RunPhase.Playing) return;
         _pauseMenu = true;
-        _panel.Show("Paused", "", new[] { "Resume", "Restart run", "Quit" }, i =>
+        ShowPauseMenu();
+    }
+
+    void ShowPauseMenu()
+    {
+        _settings.Hide();
+        _panel.Show("Paused", "", new[] { "Resume", "Settings", "Restart run", "Quit" }, i =>
         {
             switch (i)
             {
                 case 0: TogglePauseMenu(); break;
-                case 1: Restart(); break;
+                case 1:
+                    _panel.Hide();
+                    _settings.Show();
+                    break;
+                case 2: Restart(); break;
                 default: GetTree().Quit(); break;
             }
         });

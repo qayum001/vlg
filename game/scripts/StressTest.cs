@@ -70,6 +70,7 @@ public partial class StressTest : Node3D
 
     void Setup()
     {
+        GameSettings.Initialize();
         // Frame times must be unthrottled for the bench (project default is vsync on for play).
         DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Disabled);
         _options = LaunchOptions.Parse(OS.GetCmdlineUserArgs());

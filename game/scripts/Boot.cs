@@ -17,6 +17,7 @@ public partial class Boot : Node
     {
         try
         {
+            GameSettings.Initialize();
             bool stress = LaunchOptions.Parse(OS.GetCmdlineUserArgs()).WantsStressTest;
             GetTree().CallDeferred(SceneTree.MethodName.ChangeSceneToFile, stress ? StressScene : RunScene);
         }

@@ -1,8 +1,9 @@
 # Status
-Updated: 2026-10-17
+Updated: 2026-11-08
 Related: [overview](overview.md), [open questions](open-questions.md), [concept](../../../design/concept.md), [domain](../../../design/domain.md), [run](../architecture/run.md)
 
 - Phase: gameplay prototype. First playable slice confirmed and merged to master (2026-10-17): hero, 4 auto skills (Bolt, Nova, Aura, Orbit) with MOBA leveling, walkers, XP gems, 5-stage loop (Chest/Shop = placeholder pause panels), HP + death + restart ([run](../architecture/run.md)).
+- Awaiting confirmation: pause-menu Settings with saved master audio volume, plus automated headless game verification ([settings](../architecture/settings.md)). User requires headless/CLI game testing and no Computer Use (R11).
 - Done: genre, 2D/3D, camera, aiming, players, art approach (see `design/concept.md`).
 - Game domain confirmed 2026-10-17 (`design/domain.md`): hub + storylines, stage loop, enemies, heroes, skills/branching, items, pickups, meta. Built via `grill-me` skill. Deferred items listed in the doc.
 - Blender MCPs: both load natively in Code sessions and work against the same Blender (official 9876, community 9877). Exception: official screenshot tools return black, so visuals go through community `look` (see [tooling](tooling.md)).

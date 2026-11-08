@@ -43,6 +43,7 @@ Layout:
 
 Commands (repo root; `G` = Godot console exe, path in memory `project/tooling.md`):
 - Tests: `dotnet test --project tests/Vlg.Core.Tests/Vlg.Core.Tests.csproj`
+- Headless game tests (no window/Computer Use): `./tools/test-game.ps1` (override engine with `-Godot <console exe>`). Runs the unit suite, builds, imports, then exercises real Godot UI/input/audio/persistence with isolated user data under `build/game-tests/`.
 - Build game C#: `dotnet build game/Vlg.csproj`
 - Import after adding resources/shaders: `"$G" --headless --path game --import`
 - Run from source (debug): `"$G" --path game -- <game args>`; game args: `LaunchOptions.Usage`. Main scene `boot.tscn` opens the game run; `--stress` or `--bench` opens the stress test (exports refuse a scene path arg).

@@ -1,6 +1,6 @@
 # Level run (first gameplay slice)
-Updated: 2026-10-17
-Related: [stress test](stress-test.md), [status](../project/status.md), [domain](../../../design/domain.md)
+Updated: 2026-11-08
+Related: [stress test](stress-test.md), [settings](settings.md), [status](../project/status.md), [domain](../../../design/domain.md)
 
 Purpose: playable run from `design/domain.md`: hero, 4 auto skills with MOBA leveling, walkers, XP gems, stage loop, death.
 
@@ -31,6 +31,7 @@ move hero → `StageLoop.Update` (entering Shop = full heal; Chest/Shop stop the
 - Quality presets still read from `stress.json` (`--preset`, default low). Spell lights/aura/overdraw layers forced off.
 - Seed = `--seed` (default 1): runs are deterministic for the same input.
 - Dev keys: F2 skip stage, F3 +1 level (`RunSim.DevSkipStage/DevGainLevel`).
+- Pause menu includes Settings; master audio volume and headless verification are described in [settings](settings.md). F2/F3 do not change the run while the pause/settings menu is open.
 
 ## Extend
 - New skill kind → `SkillKind` + case in `SkillSystem.Update` + validation in `RunConfig.ValidateSkill` + `RunGame.SkillText`.

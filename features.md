@@ -15,7 +15,24 @@ Expected: ...
 ```
 
 ## Awaiting confirmation (dev)
-_None._
+
+### Settings and master audio volume
+Added: 2026-11-08
+What: Settings screen in the run's pause menu, with a master volume slider from 0 to 100%. Changes apply to the Master audio bus immediately and save automatically to `user://settings.json`. Missing or invalid settings fall back to 100%; invalid files produce a warning. There are no audio assets or playback in the game yet.
+How to test:
+1. Start a run. Press Esc / Start, then choose Settings (or press 2). The run stays paused and the mouse is visible.
+2. Drag the volume slider. The percentage updates; 0 shows "Muted". Focus the slider and use Left/Right or the gamepad d-pad to adjust it. Tab / Down moves to Back.
+3. Use Back, Esc, gamepad B, or Start to return to the pause menu. The run stays paused; Resume returns to play and captures the mouse.
+4. Reopen Settings, restart the run, and relaunch the game. The selected volume is retained. New installations start at 100%.
+Expected: the menu works with mouse, keyboard and gamepad; 0 mutes the Master bus and increasing the slider unmutes it. Save failures show a message in Settings without preventing volume changes. Existing level-up, chest, shop and death panels still work.
+
+### Headless game verification
+Added: 2026-11-08
+What: `tools/test-game.ps1` runs the unit suite, builds the game and runs in-engine smoke tests without a window or Computer Use. Test data and logs are isolated under `build/game-tests/`. Test scenes are excluded from exports.
+How to test:
+1. Run `./tools/test-game.ps1` from the repo root (use `-Godot <console exe>` for a different Godot .NET installation).
+2. Check the three `GAME_SMOKE_PASS` lines and the final log directory. The settings phase exercises pause, settings, synthetic mouse/keyboard/controller input, live Master bus volume/mute, restart, saving and save failure; fresh processes verify loading the saved value and recovery from malformed JSON.
+Expected: all unit tests pass, the build has no warnings, and all three headless phases pass. No window opens and normal player preferences are untouched.
 
 ## Confirmed (master)
 
