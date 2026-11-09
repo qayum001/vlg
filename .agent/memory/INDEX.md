@@ -5,17 +5,19 @@ Game design source of truth: `design/` (human-readable, shared with the user). M
 
 ## project
 - [Overview](project/overview.md) — what vlg is, concept + domain summary, art approach, engine, platforms, min spec, user's design habits
-- [Status](project/status.md) — current phase (first playable slice), in-progress items, next steps
-- [Open questions](project/open-questions.md) — undecided tech/project items (Godot setup, remote, LFS)
+- [Status](project/status.md) — gameplay prototype, confirmed content and pending dev tooling
+- [Open questions](project/open-questions.md) — unverified hardware targets, engine testing, LFS and settings data
 - [Tooling](project/tooling.md) — Godot path/templates/GPU indexes, .NET SDKs, Blender path/prefs, two Blender MCPs, Telegram notify MCP, broken claude CLI
+- [QuestionForms](project/questionforms.md) - installed grill-me entry point, local MCP/API, Python bridge and interview resume
 - [Release launchers](project/release-launchers.md) - standalone release build and latest-build batch files
+- [Codex rule hook](project/codex-hooks.md) - lifecycle-only instruction loader, diagnostics and local installation
 
 ## architecture
 - [Stress test](architecture/stress-test.md) — horde sim (Vlg.Core) + Godot adapters, bench ramp/CSV, data file, VAT enemies, `--stress` launch
 - [Run](architecture/run.md) — playable level run: RunSim phases, MOBA skill leveling, stage loop, gems, run.json, boot scene
-- [Skills](architecture/skills.md) — hero data file, beat clock + Drop, SkillSystem kinds + branch forms, ultimates, pools, enemy statuses, damage sources, beat audio
-- [Hub](architecture/hub.md) — The Crossroads hub, meta credits/upgrades, save file, boot flow (hub default, --run)
-- [Assets](architecture/assets.md) — icon generator (ComfyUI), Blender prop script, fx shaders, beat samples
+- [Skills](architecture/skills.md) — Lowkey/Pyromancer data, beat/second timing, Drop, SkillSystem kinds + branch forms, ultimates, pools, enemy statuses, damage sources, beat audio
+- [Hub](architecture/hub.md) — The Crossroads, saved hero/setlist selection, meta credits/upgrades, save file and boot flow
+- [Assets](architecture/assets.md) — ComfyUI originals/native replacement icons, Blender props, fx shaders, beat samples
 - [Items](architecture/items.md) — items.json, inventory/sockets/stash, shop + chest rules, usables, passives, credits, dev args
 
 ## decisions

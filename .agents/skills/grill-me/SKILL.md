@@ -1,37 +1,25 @@
 ---
 name: grill-me
-description: Relentless design interview in vlg. Use when the user asks to be grilled, to stress-test a plan, or to brainstorm a design area (theme, entities, systems, progression) until every decision is made. Rounds of numbered questions with recommended answers; decisions land in design/.
+description: Run an explicitly requested vlg design interview through QuestionForms and record agreed decisions in design/. Use when the user invokes grill-me, asks to be grilled, or requests a QuestionForms design interview.
 ---
 
-# Grill me
+# Grill me for vlg
 
-Adapted from `grilling` in github.com/mattpocock/skills (MIT).
+Use the installed QuestionForms-adapted `grill-me` skill for the interview. This project workflow adds game context and design recording.
 
-Goal: shared understanding of a design, nothing silently assumed. The design is a decision tree; resolve it branch by branch.
+## Load the interview instructions
+1. Read [QuestionForms tooling](../../../.agent/memory/project/questionforms.md) to resolve the installed skill directory, then read its `SKILL.md`. Read its `references/questionforms.md` when using the bundled Python bridge.
+2. Follow that installed skill for neutral questions, service operations, submitted answers, session/round IDs, bounded waits, recovery, resume and final confirmation. Prefer connected QuestionForms MCP tools; otherwise use the installed bridge against the existing local service.
+3. Load [concept](../../../design/concept.md), the area's design document when present, and the [memory index](../../../.agent/memory/INDEX.md). Do not ask settled decisions again. No interview starts until the user provides a topic.
 
-## Procedure
-1. Load context: `design/concept.md`, the area's doc in `design/` if it exists, memory `INDEX.md`. Decided items are not asked again.
-2. Doc: one file per area, `design/<area>.md`, linked from `concept.md`. Sections: Decided, Tree (open decisions + what each depends on), Parked.
-3. Round = the frontier: open decisions whose prerequisites are all decided. Max ~5 per round, most foundational first. The rest waits.
-4. Question format:
-   ~~~
-   **Q1. <title>** <question, 1-2 lines>
-   a) ...  b) ...  c) ...
-   ➡️ b) <one-line why>
-   ~~~
-   Word it so "yes" accepts every recommendation. User answers per number ("Q2 c", "Q3 <own idea>") or "yes".
-5. Facts vs decisions: facts (code, engine limits, perf budget, how reference games do it) → look up yourself (WebSearch, subagent if large). Ask the user only for decisions.
-6. After each reply:
-   - Record decisions in the doc (user's words for names and themes).
-   - Answer conflicts with an earlier decision, `concept.md`, min spec or art approach → say so once with the trade-off, then accept the user's call.
-   - Answers that open new branches → add to Tree.
-   - Ideas outside the session scope → Parked.
-   - Commit the doc on dev (`docs:`), then send the next round.
-7. Done: frontier empty, Tree empty or only items the user chose to defer. Send a short summary of the tree and ask the user to confirm shared understanding. No implementation in this skill.
-8. After confirmation: project facts → `update-memory` (link the doc, don't copy it), session → `add-devlog`.
+## Record the game design
+- Use one file per area, `design/<area>.md`, linked from `design/concept.md`. Keep Decided, Tree (open decisions and prerequisites), and Parked sections.
+- Each round covers the current decision frontier, normally at most five questions, most foundational first. Ask one decision per question in short, direct English.
+- Investigate facts from the environment yourself. Delegate only when the user explicitly requests subagents (R15).
+- After a submitted round, record agreed decisions using the user's words for names and themes; add newly opened branches to Tree and out-of-scope ideas to Parked. Commit the design document on `dev` before the next round.
+- Check decisions against the game concept, min-spec performance, art ownership, single-player scope and existing decisions. Explain conflicts and resolve them with the user. Humanoids remain the user's responsibility (R11).
+- Keep the original QuestionForms session link throughout the interview. Written input may answer multiple questions or introduce new ideas; read it fully and clarify conflicts before recording a decision.
+- When the frontier is resolved or explicitly deferred, ask for confirmation of the summary through the same session. After confirmation, close the session, update project memory with links to the design document, and add a dev log.
+- This workflow does not authorize implementation or replace ordinary R4 clarification for other tasks.
 
-## Rules
-- One decision per question. No compound questions.
-- Every question has a recommendation with a reason.
-- Short, direct English (user is non-native). Free-text answers are common: read them fully, they may answer several questions or add new ones.
-- Check new ideas against constraints: agent-made low-poly art, hundreds of enemies on min spec, single-player, small-team content scope.
+The installed adaptation and its MIT license come from `qayum001/QuestionForms/skills/grill-me`, adapted from Matt Pocock's `grill-me` / `grilling` skills.

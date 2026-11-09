@@ -1,6 +1,6 @@
 # Tooling (this machine)
-Updated: 2026-10-18
-Related: [overview](overview.md), [status](status.md)
+Updated: 2026-11-10
+Related: [overview](overview.md), [status](status.md), [QuestionForms](questionforms.md), [Codex hook](codex-hooks.md)
 
 ## Blender
 - Blender 5.2.2 LTS (Steam): `C:\Program Files (x86)\Steam\steamapps\common\Blender\blender.exe`. Not on PATH. Headless: `blender.exe --background --python <script>`.
@@ -35,6 +35,9 @@ Different protocols, so different ports. Never put both on one port.
 - media_files: only files inside the bot project dir (mounted read-only at `/workspace`). vlg files can't be attached unless copied there or the mount changes.
 - Git Bash: prefix `docker exec` with `MSYS_NO_PATHCONV=1`, else `/app` becomes `C:/Program Files/Git/app`.
 - HTTP fallback: same container `notificationsbot-status-bot-1` on 127.0.0.1:9000. `GET /health`, `POST /status` `{"message":...}` with bearer `STATUS_API_KEY` from that `.env`. Other paths 404 (no MCP over HTTP).
+
+## QuestionForms interviews
+- The installed `grill-me` skill uses the existing local service at `http://localhost:8000`. Entry point, MCP endpoint, Python fallback and resume rules: [QuestionForms](questionforms.md).
 
 ## Other
 - `uv` 0.13.0 via winget; aliases in `%LOCALAPPDATA%\Microsoft\WinGet\Links` (on PATH).

@@ -1,13 +1,14 @@
 # Features
 
 Manual test guide.
-- **Awaiting confirmation** — on `dev`, needs the user's manual test. Confirm → merged to `master`.
-- **Confirmed** — merged to `master`.
+- **Awaiting confirmation** — implemented on `dev`, awaiting user approval.
+- **Approved for merge** — the user authorized the merge; the implementation has not reached `master` yet.
+- **Confirmed** — the implementation has successfully reached `master`. Historical entries can also be mirrored on `dev`.
 
 Entry format:
 ```
 ### <Feature name>
-Added: YYYY-MM-DD | Confirmed: YYYY-MM-DD
+Added: YYYY-MM-DD | Approved for merge: YYYY-MM-DD or - | Confirmed: YYYY-MM-DD or -
 What: one or two lines.
 How to test:
 1. ...
@@ -17,6 +18,37 @@ Expected: ...
 ## Awaiting confirmation (dev)
 
 None.
+
+## Approved for merge (dev)
+
+### Clarification, review authorization and merge states
+Added: 2026-11-10 | Approved for merge: 2026-11-10 | Confirmed: -
+What: clarification explicitly seeks omitted requirements through as many rounds as needed. The required pre-merge or explicitly requested reviewer is authorized by R6; other subagents still need an explicit request. Merge approval is tracked separately from successful integration.
+How to test:
+1. Read R4/R6/R8/R15 and the matching shared workflows: the exception should apply only to reviews, and the review-result pause should remain even with no findings.
+2. On the next authorized merge, check that covered entries move to Approved for merge before review and stay there until the implementation reaches master.
+3. After successful integration, check that Confirmed dates are recorded on dev and merged into master with the merge log.
+Expected: approval alone never means Confirmed; failed merges leave approved features pending.
+
+### QuestionForms design interviews
+Added: 2026-11-10 | Approved for merge: 2026-11-10 | Confirmed: -
+What: the project `grill-me` workflow uses the installed QuestionForms skill to collect browser answers and records agreed game decisions in `design/`. Agent setup and connection details are linked from `AGENTS.md` and the memory index.
+How to test:
+1. With the existing local QuestionForms service running, invoke `$grill-me` with a vlg design topic.
+2. Open the returned session link and submit a round, including a written answer. Check that the agent reads the submission and records the agreed decisions on `dev`.
+3. Follow-up rounds should appear under that same session link and ask only decisions whose prerequisites are settled.
+4. Confirm the final summary; the agent should close that session and update project memory and the dev log.
+Expected: questions and answers use QuestionForms through connected MCP tools or the installed Python bridge. Pending forms remain unanswered until submitted; no extra service instance starts. Full interview testing awaits a user-provided topic.
+
+### Automatic Codex project rules
+Added: 2026-11-10 | Approved for merge: 2026-11-10 | Confirmed: -
+What: one read-only Codex SessionStart hook supplies current dev instructions on startup, resume, clear, compaction and fork, including older linked worktrees. It only loads context, adds nothing on ordinary prompts, and never blocks rule-repair requests.
+How to test:
+1. Inspect the single vlg SessionStart entry in Codex Settings > Hooks; trust it if Codex requests it. Open a new vlg chat.
+2. Inspect hook activity: the complete current AGENTS.md, rules.md, code-rules.md and memory index should appear once in that event's context. Ordinary follow-up prompts should not run the vlg loader.
+3. Run `tools/codex/test-project-rules.ps1`: its disposable repository checks missing, empty and oversized rules, successful repair, older worktrees and installation without modifying real rules.
+4. Start a chat in an unrelated repository: the loader supplies no vlg instructions.
+Expected: automatic complete context or a non-blocking diagnostic. No workflow execution, approval logic or repeated per-prompt injection. Exact behavior, inspection command, setup and removal: `tools/codex/README.md`.
 
 ## Confirmed (master)
 
