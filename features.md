@@ -16,7 +16,14 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
-None.
+### Automatic Codex project rules
+Added: 2026-11-10 | Confirmed: -
+What: a read-only Codex hook supplies current dev instructions at session start/resume/compaction and each user prompt, including sessions in older linked worktrees. Installed locally through `tools/codex/install-project-rules.ps1`; one-time hook trust is required.
+How to test:
+1. Review and trust both vlg loader entries in Codex Settings > Hooks, then open a new vlg chat with an ordinary project request.
+2. Inspect hook activity: the SessionStart and UserPromptSubmit handlers should supply the complete current AGENTS.md, rules.md, code-rules.md and memory index without a reminder in the prompt.
+3. Start a chat in an unrelated repository: the loader supplies no vlg instructions.
+Expected: project instructions arrive automatically. The loader reports missing/oversized rules instead of truncating them. Setup, limitations and removal: `tools/codex/README.md`.
 
 ## Confirmed (master)
 
