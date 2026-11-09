@@ -16,6 +16,16 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+### QuestionForms design interviews
+Added: 2026-11-10 | Confirmed: -
+What: the project `grill-me` workflow uses the installed QuestionForms skill to collect browser answers and records agreed game decisions in `design/`. Agent setup and connection details are linked from `AGENTS.md` and the memory index.
+How to test:
+1. With the existing local QuestionForms service running, invoke `$grill-me` with a vlg design topic.
+2. Open the returned session link and submit a round, including a written answer. Check that the agent reads the submission and records the agreed decisions on `dev`.
+3. Follow-up rounds should appear under that same session link and ask only decisions whose prerequisites are settled.
+4. Confirm the final summary; the agent should close that session and update project memory and the dev log.
+Expected: questions and answers use QuestionForms through connected MCP tools or the installed Python bridge. Pending forms remain unanswered until submitted; no extra service instance starts. Full interview testing awaits a user-provided topic.
+
 ### Automatic Codex project rules
 Added: 2026-11-10 | Confirmed: -
 What: a read-only Codex hook supplies current dev instructions at session start/resume/compaction and each user prompt, including sessions in older linked worktrees. Installed locally through `tools/codex/install-project-rules.ps1`; one-time hook trust is required.

@@ -12,6 +12,7 @@ Every dependency, its license and whether it ships in the game. Add a row before
 | ComfyUI (portable) | 0.39.0 | GPL-3.0 | no (local tool) | runs SDXL for icons | 2026-10-18 (R12) |
 | Blender | 5.2.2 | GPL-3.0-or-later | no (local tool; exported models are ours) | builds `game/assets/models/*.glb` via `tools/models/make_props.py` | 2026-10-13 (art approach) |
 | OpenAI built-in image generation | service (2026-11-08) | OpenAI service terms (model not redistributed) | outputs only (five item icons) | text-to-image replacements; prompts in `tools/icons/text2image-prompts-2026-11-08.json` | 2026-11-08 (user requested generation and replacement) |
+| QuestionForms-adapted grill-me skill | main snapshot installed 2026-11-10 | MIT (Matt Pocock; installed LICENSE) | no (local agent skill and Python bridge) | browser design interviews through the existing QuestionForms service; project workflow in `.agents/skills/grill-me/` | 2026-11-10 (user requested installation and project integration) |
 
 Godot's license requires its copyright notice in the shipped game (credits / about screen): https://godotengine.org/license
 
