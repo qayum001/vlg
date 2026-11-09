@@ -1,13 +1,15 @@
 # Assets: icons, props, effects, audio
-Updated: 2026-10-18
+Updated: 2026-11-10
 Related: [skills](skills.md), [items](items.md), [tooling](../project/tooling.md)
 
-Purpose: how the agent-made assets are produced and used. All regenerable from scripts in `tools/`.
+Purpose: how agent-made assets are produced and used. Most original assets have scripts in `tools/`; the five native image-generation replacements below are separate outputs.
 
 ## Icons (2D, AI)
 - `tools/icons/make_icons.py` (stdlib, talks to local ComfyUI SDXL base): 35 icons → `game/assets/icons/skills/<id>.png` (6 skills, 3 ultimates, `the_drop`) and `game/assets/icons/items/<id>.png` (25 items), 256x256, fixed seed per id, skips existing files unless ids are named. Style: hand-painted, black background; skills add the neon phonk palette. Ends with POST /free (VRAM).
 - Bad results: tweak that id's prompt or its `REDRAW` salt, rerun with the id (named ids overwrite). Redrawn 2026-10-18: patterns/multiple objects (skull bottle, needles, smoke, coil), a grin for gold tooth, bat-like fang, and sneakers with brand-like stripes (now one shoe, color blocks; negative prompt bans logos/stripes). Watch for trademark looks.
 - Used via `Icons.Skill/Item` in ChoicePanel cards (level-up, branch, chest, socket picker, hub setlist), shop offers/build, HUD icon rows. License + Steam AI disclosure: `third-party.md`.
+
+- Plague Flask, Clockwork Heart, Copper Coil, Grim Ledger and Pocket Singularity now use native 1254x1254 OpenAI-generated PNGs, without resizing. Prompts/source descriptions: `tools/icons/text2image-prompts-2026-11-08.json`; these replace five original ComfyUI icons. Running `make_icons.py` with those IDs overwrites the replacements with its 256x256 output.
 
 ## Props (3D, procedural)
 - `tools/models/make_props.py`, run headless: `blender.exe --background --factory-startup --python tools/models/make_props.py` (doesn't touch the user's open Blender; Blender MCP was down this session). Exports `game/assets/models/{speaker,subwoofer,vinyl,cowbell,boombox,toy_drone,mortar_shell}.glb` with Principled materials (emission → glTF).

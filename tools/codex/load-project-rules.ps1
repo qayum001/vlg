@@ -2,7 +2,6 @@ $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [Console]::OutputEncoding
-$scopedToProject = $false
 $hookEvent = $null
 
 function Read-Git([string] $directory, [string[]] $gitArguments) {
@@ -18,7 +17,7 @@ function Normalize-Path([string] $path) {
 try {
     $hookInput = [Console]::In.ReadToEnd() | ConvertFrom-Json
     $hookEvent = [string]$hookInput.hook_event_name
-    if ($hookEvent -notin @('SessionStart', 'UserPromptSubmit')) { exit 0 }
+    if ($hookEvent -ne 'SessionStart') { exit 0 }
     if (-not $hookInput.cwd) { throw 'Hook input is missing cwd.' }
 
     $repoRoot = Normalize-Path (Join-Path $PSScriptRoot '..\..')
@@ -29,7 +28,6 @@ try {
         exit 0
     }
     if (-not [string]::Equals($repoCommon, $sessionCommon, [StringComparison]::OrdinalIgnoreCase)) { exit 0 }
-    $scopedToProject = $true
 
     $devDirectory = $null
     $worktrees = Read-Git $repoRoot @('worktree', 'list', '--porcelain')
@@ -54,19 +52,13 @@ try {
     }
     $context = $parts -join "`n`n"
     if ([System.Text.Encoding]::UTF8.GetByteCount($context) -gt 65536) {
-        throw 'Project instructions exceed the 64 KiB hook limit; adjust the loader deliberately instead of truncating rules.'
+        throw 'Project instructions exceed the 64 KiB context limit; inspect the files directly to diagnose or reduce their size.'
     }
     @{ hookSpecificOutput = @{ hookEventName = $hookEvent; additionalContext = $context } } | ConvertTo-Json -Depth 4 -Compress
 } catch {
     $reason = "vlg rules could not be loaded: $($_.Exception.Message)"
-    if ($scopedToProject) {
-        if ($hookEvent -eq 'UserPromptSubmit') {
-            @{ decision = 'block'; reason = $reason } | ConvertTo-Json -Compress
-        } else {
-            @{ continue = $false; stopReason = $reason; systemMessage = $reason } | ConvertTo-Json -Compress
-        }
-        exit 0
-    }
-    [Console]::Error.WriteLine($reason)
-    exit 1
+    if ($reason.Length -gt 2048) { $reason = $reason.Substring(0, 2048) }
+    $diagnostic = "# vlg rule-loading diagnostic`n$reason`nProject instruction context is incomplete. This diagnostic does not block requests to inspect or repair the rule files."
+    @{ systemMessage = $reason; hookSpecificOutput = @{ hookEventName = 'SessionStart'; additionalContext = $diagnostic } } | ConvertTo-Json -Depth 4 -Compress
+    exit 0
 }

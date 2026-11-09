@@ -1,11 +1,11 @@
 # Hero kit: skills, branches, beat clock, statuses
-Updated: 2026-10-18
-Related: [run](run.md), [status](../project/status.md), [Lowkey design](../../../design/heroes/lowkey.md), [items design](../../../design/items.md)
+Updated: 2026-11-10
+Related: [run](run.md), [status](../project/status.md), [Lowkey design](../../../design/heroes/lowkey.md), [Pyromancer design](../../../design/heroes/pyromancer.md), [items design](../../../design/items.md)
 
-Purpose: hero-tied skills with branch forms (domain.md Build) and Lowkey's beat-clock passive (The Drop).
+Purpose: shared hero skill/branch systems, Lowkey's beat-clock passive (The Drop), and Pyromancer's non-rhythmic kit.
 
 ## Where
-- Hero data: `game/data/heroes/lowkey.json` → `HeroDef` (stats, `beat`, 6-skill pool, default `loadout`). Validated against `RunConfig` (`HeroDef.Parse(json, run)`). Run body (radius, contactMargin) stays in run.json `hero`.
+- Hero data: `game/data/heroes/{lowkey,pyromancer}.json` → `HeroDef` (stats, `Rhythmic`, beat settings, kill healing, six-skill pool, default loadout). `HeroRoster` lists supported IDs; Lowkey is the default. Validated against `RunConfig` (`HeroDef.Parse(json, run)`). Run body (radius, contactMargin) stays in run.json `hero`.
 - Core (`src/Vlg.Core/Run/`): `BeatClock`, `SkillSystem` (forms cache, timers, beat gating, casts per `SkillKind`, flag behaviors), `SkillWorld` (shared pools + per-step hero/aim/facing/queryPad, owned by RunSim), `RingPool` (+`RingShot`), `SummonPool`, `ZonePool` (+`ZoneShot`), `StrikePool`, `BeamEvents`; Sim: `ProjectilePool` (+`ProjectileShot`: pierce, bounce, explode, burst, return, hit memory), `FlashEvents`.
 - Config: `SkillStats` = one float per `Stat` enum (JSON object of camelCase stat keys, unknown throws; init accessors copy-on-write). `SkillDef.Branches` → `BranchDef` tree (scale/add/kind/tags/flags/branches) → `SkillDef.Resolve(level, path, branchLevels)` = `SkillForm` (kind, tags, flag bits, stats, "Skill · A · A1" name). `SkillFlag` = behaviors numbers can't express.
 - Statuses on `EnemySwarm`: `Id` (stable), Slow/SlowTimer, StunTimer, Vuln/VulnTimer, `Push` (m/s, decays by walker.pushDecay, capped `MaxPushSpeed`), `LastHit` (damage source), `DamageDealt` (overkill excluded). All damage goes through `EnemySwarm.Damage(i, amount, source)`.
@@ -23,18 +23,20 @@ Purpose: hero-tied skills with branch forms (domain.md Build) and Lowkey's beat-
 - Source `RunSim.UltimateSource` 21. Dev: `--ultimate`, `--ultimate-level`, F4 fill.
 
 ## Rules
-- Beat: 130 BPM (data). Cycle 8 bars; last buildBars + dropBars bars = build-up then Drop (+dropDamage, +dropArea on hero skills; shockwave ring from the hero on the first Drop beat, source `RunSim.DropShockSource`).
+- Lowkey beat: 130 BPM (data). Cycle 8 bars; last buildBars + dropBars bars = build-up then Drop (+dropDamage, +dropArea on hero skills; shockwave ring from the hero on the first Drop beat, source `RunSim.DropShockSource`).
 - Beat advances only in timed stages while Playing (sim time). First Advance crosses beat 0. One tick per step even if several boundaries are crossed.
-- Hero skill cooldown/duration are in beats (`SkillSystem.UnitSec`). A ready skill fires only on a half-beat tick; overshoot carries (bounded by half a beat), so cooldown cuts still count on average.
+- `RunSim` passes a BeatClock to SkillSystem only for rhythmic heroes. Lowkey cooldowns/durations use beats (`UnitSec = BeatSec`) with half-beat firing gates and carried overshoot. Pyromancer uses seconds (`UnitSec = 1`) without that gate; his beat HUD/audio and Drop shock are disabled.
 - Speakers pulse on beat ticks (after placement, so one placed on a beat pulses at once); placement = most crowded of 6 random enemies in range; at the count cap the skill waits.
 - Rings hit an enemy when its near edge is passed this step; knockback < ring speed (validated) keeps it one hit per ring.
 - Beam aims along camera forward (`RunSim.Aim` from `SetView` yaw).
-- Damage sources: hero slot i = `RunSim.HeroSkillSource` + i (1..9), Drop shock 20. Items get their own range later. `RunSim.DeathSources` holds kill credit per death.
+- Damage sources: hero slot i = `RunSim.HeroSkillSource` + i (1..9), Drop shock 20. Item source ranges are defined in RunSim. `RunSim.DeathSources` holds kill credit per death.
 - Shield (Noise Gate): `SkillSystem.TryBlock` from RunSim contact damage; a block covers `RunSim.BlockSec` (0.5 s), blasts, restarts the cooldown. Sidechain checks charged shields at Update start.
-- Zones tick on beat ticks (hero) or their Interval; strikes land after half a beat; burns tick in `EnemySwarm.Integrate` (not in DamageDealt); ramp heat decays 1/s.
+- Zones use beat ticks only with a rhythmic owner; otherwise their Interval. Strike delays scale by UnitSec. Burns tick in `EnemySwarm.Integrate` (not in DamageDealt); ramp heat decays 1/s.
+
+- Pyromancer has six skills, rank 5/10 branches, Inferno / Meteor Shower / Phoenix ultimates, and Ember Heart (`HealingPerKill` applied in RunSim). Ability definitions and authoring guidance: [Pyromancer design](../../../design/heroes/pyromancer.md).
 
 ## Dev / testing
-- `--loadout a,b,c` (ids, slot order), `--skill-level n` (all loadout skills at n, cap ignored; queues the branch picks passed) and `--branch i,j,...` (answers queued picks in order: slot 0 point 0, slot 0 point 1, slot 1 ...) launch args. `M` mutes the beat.
+- `--hero lowkey|pyromancer` selects the hero; `--loadout a,b,c` (ids, slot order), `--skill-level n` (all loadout skills at n, cap ignored; queues the branch picks passed) and `--branch i,j,...` (answers queued picks in order: slot 0 point 0, slot 0 point 1, slot 1 ...) launch args. `M` mutes the beat.
 - Gotcha: a `with` on SkillStats used to share the stat array and mutate the original (test-order bugs); init accessors now clone.
 
 ## Extend

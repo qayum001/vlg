@@ -1,6 +1,6 @@
 # Tooling (this machine)
 Updated: 2026-11-10
-Related: [overview](overview.md), [status](status.md), [QuestionForms](questionforms.md)
+Related: [overview](overview.md), [status](status.md), [QuestionForms](questionforms.md), [Codex hook](codex-hooks.md)
 
 ## Blender
 - Blender 5.2.2 LTS (Steam): `C:\Program Files (x86)\Steam\steamapps\common\Blender\blender.exe`. Not on PATH. Headless: `blender.exe --background --python <script>`.
