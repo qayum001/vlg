@@ -5,7 +5,7 @@ description: First step for every new user request in vlg (task, feature, fix, c
 
 # Clarify
 
-R4: the user may drop details unintentionally. Ask before acting.
+R4: the user may drop details unintentionally. Ask before acting. The goal is to uncover missing requirements, including omissions in an apparently complete prompt. Continue through as many clarification rounds as needed; completeness takes priority over starting quickly. The existing answer/go-ahead exceptions still apply.
 
 ## Procedure
 0. Apply the every-request rules check (R14) before deciding what to ask or do, including on follow-ups and corrections.

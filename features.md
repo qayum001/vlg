@@ -1,13 +1,14 @@
 # Features
 
 Manual test guide.
-- **Awaiting confirmation** — on `dev`, needs the user's manual test. Confirm → merged to `master`.
-- **Confirmed** — merged to `master`.
+- **Awaiting confirmation** — implemented on `dev`, awaiting user approval.
+- **Approved for merge** — the user authorized the merge; the implementation has not reached `master` yet.
+- **Confirmed** — the implementation has successfully reached `master`. Historical entries can also be mirrored on `dev`.
 
 Entry format:
 ```
 ### <Feature name>
-Added: YYYY-MM-DD | Confirmed: YYYY-MM-DD
+Added: YYYY-MM-DD | Approved for merge: YYYY-MM-DD or - | Confirmed: YYYY-MM-DD or -
 What: one or two lines.
 How to test:
 1. ...
@@ -34,6 +35,10 @@ How to test:
 2. Inspect hook activity: the SessionStart and UserPromptSubmit handlers should supply the complete current AGENTS.md, rules.md, code-rules.md and memory index without a reminder in the prompt.
 3. Start a chat in an unrelated repository: the loader supplies no vlg instructions.
 Expected: project instructions arrive automatically. The loader reports missing/oversized rules instead of truncating them. Setup, limitations and removal: `tools/codex/README.md`.
+
+## Approved for merge (dev)
+
+None.
 
 ## Confirmed (master)
 

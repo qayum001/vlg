@@ -7,7 +7,7 @@ Read [rules.md](rules.md) and [.agent/memory/INDEX.md](.agent/memory/INDEX.md) b
 ## Layout
 - `rules.md` - user-declared rules. Always apply.
 - `code-rules.md` - code conventions.
-- `features.md` - features and manual test steps (awaiting on dev / confirmed on master).
+- `features.md` - features and manual test steps: awaiting confirmation, approved for merge, or confirmed after reaching master.
 - `LAUNCH.md` - release launchers, source commands and controls. Update when launch behavior or controls change.
 - `design/` - game design docs, shared with the user. Source of truth for design; `concept.md` first.
 - `.agent/memory/` - long-term project context. Entry: `INDEX.md`.
@@ -25,7 +25,7 @@ Read [rules.md](rules.md) and [.agent/memory/INDEX.md](.agent/memory/INDEX.md) b
 6. New project facts: use [update-memory](.agents/skills/update-memory/SKILL.md). Notable events: use [add-devlog](.agents/skills/add-devlog/SKILL.md).
 
 ## Subagents
-Never use subagents unless the user explicitly asks for them (R15). This overrides workflow steps that would otherwise spawn one; handle the work in the main agent until explicitly requested.
+Research and implementation subagents require an explicit user request (R15). The fresh-context reviewer for the required pre-merge workflow or an explicitly requested review is already authorized by R6; this review exception takes precedence over R15. Other workflows do not authorize subagents.
 The main agent handles workflow setup and user coordination. Subagents follow the caller's brief, do not run the feature pipeline or commit, and put open questions in their report.
 
 ## Conventions

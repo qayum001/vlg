@@ -7,7 +7,7 @@ description: Fresh-context review of vlg changes via the `reviewer` subagent —
 
 1. Range: `master..dev` by default (everything about to be merged). User asked for something else → that range.
 2. Gather requirements for the range: devlog Requirements sections of the commits in range, plus their features.md entries.
-3. Spawn subagent `reviewer`. Not available → `general-purpose` with `.agents/agents/reviewer.md` body as instructions. Give it:
+3. Spawn subagent `reviewer`. R6 authorizes this review subagent and takes precedence over the general R15 restriction; no separate subagent approval is needed. Not available → `general-purpose` with `.agents/agents/reviewer.md` body as instructions. Give it:
    - the range and how to get the diff,
    - the requirements from step 2,
    - test commands.

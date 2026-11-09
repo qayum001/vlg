@@ -16,8 +16,9 @@ Dev logs live in `.agent/devlogs/` (in the repo, committed), separate from memor
 Added: 2026-10-13
 
 ## R4. Clarify first
-The user may drop details unintentionally. Every new request starts with clarifying questions (`clarify` skill). Skip only for answers to the agent's questions and short go-aheads ("yes", "merge", "continue").
+The user may drop details unintentionally. Every new request starts with clarifying questions (`clarify` skill). Skip only for answers to the agent's questions and short go-aheads ("yes", "merge", "continue"). Clarification aims to uncover requirements the user may have omitted, even when the prompt looks complete. Use as many rounds as needed to establish the required details before implementation; do not trade that understanding for speed.
 Added: 2026-10-13
+Changed: 2026-11-10
 
 ## R5. Git branches
 At least two branches: `master` (confirmed work) and `dev` (all ongoing work). The agent commits every change to `dev` without asking. `master` changes only by merging `dev` after the user confirms. Keep `.gitignore` up to date.
@@ -27,17 +28,18 @@ Added: 2026-10-13
 Changed: 2026-11-08
 
 ## R6. Code review
-Per feature: write code → test, no review. Review runs only before merging `dev` to `master`, when the user says merge: a fresh-context reviewer subagent reviews everything being merged, including the tests, for bugs, improvements, misleading logic and hallucinations (`review-changes` skill). Findings are reported only; the user picks which to fix, then merge.
+Per feature: write code → test, no review. Review runs only before merging `dev` to `master`, when the user says merge: a fresh-context reviewer subagent reviews everything being merged, including the tests, for bugs, improvements, misleading logic and hallucinations (`review-changes` skill). Findings are reported only; the user picks which to fix, then merge. The reviewer subagent required by this workflow, or by an explicitly requested review, is authorized without a separate subagent request. This review allowance takes precedence over the general restriction in R15.
 Added: 2026-10-13
-Changed: 2026-10-13
+Changed: 2026-11-10
 
 ## R7. Rules file
 All user-declared rules, current and future, live in this file.
 Added: 2026-10-13
 
 ## R8. Features list
-`features.md` lists implemented features with manual test steps. A feature counts as confirmed once merged to `master`.
+`features.md` lists implemented features with manual test steps and three states: **Awaiting confirmation** (implemented on dev, awaiting the user), **Approved for merge** (the user authorized merging it, but the merge is not complete), and **Confirmed** (the implementation has successfully reached master). Approval alone must never set Confirmed. Historical confirmed entries may also be present on dev after synchronization; they must describe work already on master.
 Added: 2026-10-13
+Changed: 2026-11-10
 
 ## R9. Blender MCP roles
 Seeing the scene (screenshots, viewport checks): community MCP `look` (`mcp__blender__*`). Renders: official MCP (`mcp__Blender__render_*`).
@@ -63,6 +65,7 @@ Added: 2026-11-08
 After every user request, including follow-ups and corrections, read and apply all project rules before acting. Check `AGENTS.md`, all of `rules.md` and `code-rules.md`, the relevant shared workflows, and the applicable design rules. Verify the branch/worktree and current `dev` instructions first so an older checkout cannot hide newer rules. Reconcile the request with these rules, pass the applicable constraints to subagents, and check compliance again before reporting completion. Do not silently skip a rule; explain any conflict with a higher-priority instruction or an actual blocker.
 Added: 2026-11-08
 
-## R15. Subagents require an explicit request
-Never use subagents unless the user explicitly asks for them. This applies to every task and workflow, including research, implementation and reviews. When the user gives this instruction during ongoing work, stop any running subagents and continue the work in the main agent.
+## R15. Subagents require an explicit request, except for reviews
+Research and implementation subagents require an explicit user request. The fresh-context reviewer used by the R6 pre-merge workflow or an explicitly requested review is the exception: review authorization includes the reviewer subagent and takes precedence over this general restriction. Other workflows do not grant permission to spawn subagents. If the user explicitly stops subagents during ongoing work, stop them and follow that instruction.
 Added: 2026-11-08
+Changed: 2026-11-10

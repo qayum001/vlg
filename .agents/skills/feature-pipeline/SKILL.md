@@ -22,7 +22,7 @@ Steps in order. Step not applicable → say why in the report.
 11. **Report** — what changed, test results, manual test steps. Ask: test it, then "merge" → `confirm-feature` (runs the subagent review first), or reject → revert.
 
 No per-feature review (R6). Review happens once, before merge to master.
-Subagents are allowed only when the user explicitly requests them (R15), including during pre-merge review workflows.
+Research and implementation subagents require an explicit user request (R15). The fresh-context reviewer in the R6 pre-merge workflow or an explicitly requested review is authorized by the review exception, without a separate subagent request.
 
 ## Rejected feature
 `git revert <feature commits>` on dev (not devlog commits, no history rewrite). Remove its features.md entry and fix memory in the same or a follow-up commit. Devlog entry (Type: revert).
