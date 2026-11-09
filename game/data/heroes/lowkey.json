@@ -1,0 +1,250 @@
+// Lowkey, the bassist (design/heroes/lowkey.md). Parsed strictly by Vlg.Core HeroDef: unknown or missing keys throw.
+// Skill cooldown and duration are in beats (beat clock below); distances in meters, speeds m/s (orbit: rad/s).
+// All numbers are placeholders.
+{
+  "id": "lowkey",
+  "name": "Lowkey",
+  "maxHp": 90,
+  "speed": 7.0,
+  "pickupRadius": 4.5,
+  // The Drop: 8-bar cycle, last 3 bars = 1 bar build-up + 2 bars Drop (+30% damage, +20% area, shockwave at the start).
+  "beat": {
+    "bpm": 130,
+    "cycleBars": 8,
+    "buildBars": 1,
+    "dropBars": 2,
+    "dropDamage": 0.3,
+    "dropArea": 0.2,
+    "shockDamage": 15,
+    "shockRadius": 9,
+    "shockSpeed": 20,
+    "shockKnockback": 12
+  },
+  // Pool of 6. Stats at level L = base + perLevel * (L - 1); count is floored. Stat meaning per kind: SkillStats.cs.
+  // branches: options at skill level 5, each with its level-10 options. A branch applies stats * scale + add
+  // (scale 0 + add x sets a stat to x), may change kind and tags, and adds flags (SkillFlag.cs).
+  "skills": [
+    {
+      "id": "cowbell", "name": "Cowbell", "kind": "projectile", "tags": ["projectile"],
+      "base": { "damage": 9, "cooldown": 2, "count": 1, "speed": 16, "range": 14 },
+      "perLevel": { "damage": 2, "count": 0.5 },
+      "branches": [
+        {
+          "id": "riff", "name": "Riff", "text": "A 4-note riff every bar, notes pierce 2 enemies.",
+          "scale": { "cooldown": 2 }, "add": { "count": 1, "pierce": 2 },
+          "branches": [
+            { "id": "solo", "name": "Solo", "text": "8-note riff, notes pierce 4.", "add": { "count": 3, "pierce": 2 } },
+            { "id": "octave", "name": "Octave", "text": "Every note gets a twin: smaller, faster, higher pitch.", "flags": ["twin"] }
+          ]
+        },
+        {
+          "id": "ricochet", "name": "Ricochet", "text": "Notes bounce to 3 more enemies, -15% damage per bounce.",
+          "tags": ["projectile", "chain"], "add": { "bounces": 3, "falloff": 0.15 },
+          "branches": [
+            { "id": "pinball", "name": "Pinball", "text": "6 bounces, no damage loss.", "scale": { "falloff": 0 }, "add": { "bounces": 3 } },
+            { "id": "echo_chamber", "name": "Echo Chamber", "text": "Every bounce rings a small burst around the target.", "flags": ["burstOnBounce"] }
+          ]
+        },
+        {
+          "id": "cowbell_rain", "name": "Cowbell Rain", "text": "Giant cowbells fall on enemy groups and ring a shockwave on impact.",
+          "kind": "bellDrop", "tags": ["area"], "scale": { "count": 0 }, "add": { "count": 2, "radius": 2.5 },
+          "branches": [
+            {
+              "id": "cathedral", "name": "Cathedral", "text": "One huge bell per bar that stuns for 1 s. In the Drop: a bell on every beat.",
+              "scale": { "count": 0, "cooldown": 2, "radius": 2, "damage": 3 }, "add": { "count": 1, "stun": 1 }, "flags": ["dropEveryBeat"]
+            },
+            { "id": "hailstorm", "name": "Hailstorm", "text": "Many small bells, falling twice as often.", "scale": { "cooldown": 0.5, "radius": 0.7 }, "add": { "count": 2 } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "low_end", "name": "Low End", "kind": "ring", "tags": ["area"],
+      "base": { "damage": 6, "cooldown": 4, "radius": 7, "speed": 14, "knockback": 9 },
+      "perLevel": { "damage": 1.2, "radius": 0.3 },
+      "branches": [
+        {
+          "id": "sub_bass", "name": "Sub Bass", "text": "Slower, wider ring. Hit enemies are slowed 40% for 1 s.",
+          "scale": { "speed": 0.7, "knockback": 0.8 }, "add": { "radius": 3, "slow": 0.4, "slowSec": 1 },
+          "branches": [
+            { "id": "infrasound", "name": "Infrasound", "text": "Hit enemies are stunned for 0.5 s.", "add": { "stun": 0.5 } },
+            { "id": "pressure", "name": "Pressure", "text": "Damage grows with distance from her: strongest at the edge.", "scale": { "damage": 1.2 }, "flags": ["distanceDamage"] }
+          ]
+        },
+        {
+          "id": "double_time", "name": "Double Time", "text": "2 rings per bar, 60% damage each.",
+          "scale": { "cooldown": 0.5, "damage": 0.6 },
+          "branches": [
+            { "id": "triplets", "name": "Triplets", "text": "3 rings per bar.", "scale": { "cooldown": 0.667 } },
+            { "id": "collapse", "name": "Collapse", "text": "Each ring expands, then collapses back to her: hits twice and pulls enemies in.", "flags": ["collapse"] }
+          ]
+        },
+        {
+          "id": "earthquake", "name": "Earthquake", "text": "No ring. Each bar the ground cracks around her; the cracks hurt on every beat for 2 bars.",
+          "kind": "quake", "tags": ["zone"], "scale": { "radius": 0.85, "damage": 0.35, "knockback": 0 }, "add": { "duration": 8 },
+          "branches": [
+            { "id": "fault_line", "name": "Fault Line", "text": "Cracks follow her path as a trail.", "scale": { "cooldown": 0.25, "radius": 0.35 } },
+            { "id": "aftershock", "name": "Aftershock", "text": "Every 4th bar the cracks erupt for big damage. In the Drop: every bar.", "add": { "period": 4 }, "flags": ["aftershock"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "speaker_stack", "name": "Speaker Stack", "kind": "speaker", "tags": ["summon", "zone"],
+      "base": { "damage": 4, "cooldown": 8, "count": 2, "duration": 16, "radius": 3, "range": 12 },
+      "perLevel": { "damage": 0.8, "cooldown": -0.5, "count": 0.34 },
+      "branches": [
+        {
+          "id": "wall_of_sound", "name": "Wall of Sound", "text": "Speakers land 3 at a time in a ring around her, with bigger pulses.",
+          "add": { "count": 3, "radius": 1 }, "flags": ["ringPlacement"],
+          "branches": [
+            { "id": "festival_rig", "name": "Festival Rig", "text": "More speakers; every 4th pulse is a huge one.", "add": { "count": 3, "period": 4 }, "flags": ["bigPulse"] },
+            { "id": "feedback_loop", "name": "Feedback Loop", "text": "Speakers link up with damaging beams between them.", "tags": ["summon", "zone", "beam"], "flags": ["link"] }
+          ]
+        },
+        {
+          "id": "subwoofer", "name": "Subwoofer", "text": "One big sub. Its pulse pulls enemies in and hits harder the more enemies are inside.",
+          "scale": { "count": 0, "radius": 1.6, "damage": 1.5 }, "add": { "count": 1, "pull": 4 }, "flags": ["crowdScaling"],
+          "branches": [
+            { "id": "black_hole_sub", "name": "Black Hole Sub", "text": "Stronger pull; enemies at its center are crushed.", "scale": { "pull": 2 }, "flags": ["crush"] },
+            { "id": "blowout", "name": "Blowout", "text": "When it expires, the sub explodes for big area damage.", "flags": ["blowout"] }
+          ]
+        },
+        {
+          "id": "boombox_drone", "name": "Boombox Drone", "text": "A flying boombox follows her and shoots sound bolts on every beat.",
+          "kind": "drone", "tags": ["summon", "projectile"], "scale": { "count": 0, "cooldown": 0, "radius": 0 },
+          "add": { "count": 1, "cooldown": 1, "speed": 18, "blast": 1.5 },
+          "branches": [
+            { "id": "drone_squad", "name": "Drone Squad", "text": "3 drones.", "add": { "count": 2 } },
+            { "id": "bass_boosted", "name": "Bass Boosted", "text": "Bolts explode on hit.", "flags": ["explodeOnHit"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "distortion", "name": "Distortion", "kind": "aura", "tags": ["aura"],
+      "base": { "damage": 2.5, "cooldown": 1, "radius": 2.8, "vuln": 0.1 },
+      "perLevel": { "damage": 0.6, "radius": 0.15 },
+      "branches": [
+        {
+          "id": "overdrive", "name": "Overdrive", "text": "Double damage, smaller field; Distorted becomes +20%.",
+          "scale": { "damage": 2, "radius": 0.7 }, "add": { "vuln": 0.1 },
+          "branches": [
+            { "id": "blown_speaker", "name": "Blown Speaker", "text": "Enemies that die inside explode.", "flags": ["deathBurst"] },
+            { "id": "clipping", "name": "Clipping", "text": "In the Drop the field doubles its damage and size.", "flags": ["dropDouble"] }
+          ]
+        },
+        {
+          "id": "fuzz_trail", "name": "Fuzz Trail", "text": "She leaves fuzz puddles behind her; they last 3 s and Distort enemies too.",
+          "tags": ["aura", "zone"], "add": { "duration": 6 }, "flags": ["trail"],
+          "branches": [
+            { "id": "static_storm", "name": "Static Storm", "text": "Puddles zap a nearby enemy with small lightning on every beat.", "tags": ["aura", "zone", "chain"], "flags": ["zap"] },
+            { "id": "tar_pit", "name": "Tar Pit", "text": "Puddles slow enemies 50%.", "add": { "slow": 0.5, "slowSec": 0.6 } }
+          ]
+        },
+        {
+          "id": "noise_gate", "name": "Noise Gate", "text": "The field becomes a shield: it blocks 1 hit every 2 bars, and each block blasts enemies around her.",
+          "kind": "shield", "scale": { "cooldown": 0, "damage": 4, "radius": 1.2 }, "add": { "cooldown": 8, "knockback": 12 },
+          "branches": [
+            { "id": "hard_limiter", "name": "Hard Limiter", "text": "Blocks 1 hit every bar.", "scale": { "cooldown": 0.5 } },
+            { "id": "sidechain", "name": "Sidechain", "text": "While the shield is up, all her skills deal +15% damage.", "flags": ["sidechain"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "slap", "name": "Slap", "kind": "beam", "tags": ["beam", "aimed"],
+      "base": { "damage": 14, "cooldown": 2, "range": 16, "width": 1.2, "count": 1 },
+      "perLevel": { "damage": 3, "range": 0.8 },
+      "branches": [
+        {
+          "id": "slap_and_pop", "name": "Slap & Pop", "text": "Beams fire forward and backward.", "add": { "count": 1 },
+          "branches": [
+            { "id": "cross", "name": "Cross", "text": "4 directions.", "add": { "count": 2 } },
+            { "id": "pop_shot", "name": "Pop Shot", "text": "The end of each beam explodes.", "flags": ["endBurst"] }
+          ]
+        },
+        {
+          "id": "sustain", "name": "Sustain", "text": "One continuous beam. Damage on an enemy grows the longer it stays in the beam.",
+          "scale": { "cooldown": 0.25, "damage": 0.3 }, "flags": ["ramp"],
+          "branches": [
+            { "id": "wide_load", "name": "Wide Load", "text": "Beam width doubles.", "scale": { "width": 2 } },
+            { "id": "overtone", "name": "Overtone", "text": "The beam splits into 3 at its end.", "flags": ["split"] }
+          ]
+        },
+        {
+          "id": "sweep", "name": "Sweep", "text": "Automatic: each bar the beam sweeps a 180 degree arc in front of her (where she walks).",
+          "kind": "sweep", "tags": ["beam"], "scale": { "cooldown": 2 }, "add": { "arc": 180, "duration": 4 },
+          "branches": [
+            { "id": "full_circle", "name": "Full Circle", "text": "360 degree sweep.", "scale": { "arc": 2 } },
+            { "id": "double_sweep", "name": "Double Sweep", "text": "Two beams sweep in opposite directions.", "add": { "count": 1 } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vinyl", "name": "Vinyl", "kind": "orbit", "tags": ["orbit"],
+      "base": { "damage": 5, "cooldown": 0.5, "count": 2, "speed": 3, "range": 3, "radius": 0.7 },
+      "perLevel": { "damage": 1, "count": 0.5, "speed": 0.15 },
+      "branches": [
+        {
+          "id": "turntable", "name": "Turntable", "text": "+2 records, wider orbit.", "add": { "count": 2, "range": 1 },
+          "branches": [
+            { "id": "double_deck", "name": "Double Deck", "text": "A second ring of records spins the other way.", "flags": ["doubleDeck"] },
+            { "id": "hot_wax", "name": "Hot Wax", "text": "Records set enemies on fire.", "add": { "burn": 4, "burnSec": 2 } }
+          ]
+        },
+        {
+          "id": "frisbee", "name": "Frisbee", "text": "Records fly out to far enemies and come back, hitting both ways.",
+          "kind": "boomerang", "tags": ["projectile"], "scale": { "count": 0.5, "cooldown": 4, "speed": 0, "range": 0 }, "add": { "speed": 14, "range": 12 },
+          "branches": [
+            { "id": "rebound", "name": "Rebound", "text": "Records bounce between enemies before they return.", "tags": ["projectile", "chain"], "add": { "bounces": 3 } },
+            { "id": "big_disc", "name": "Big Disc", "text": "One huge disc that pierces everything.", "scale": { "count": 0, "radius": 2.5, "damage": 2.5 }, "add": { "count": 1 } }
+          ]
+        },
+        {
+          "id": "scratch", "name": "Scratch", "text": "Every bar the records reverse spin with a scratch burst that pulls nearby enemies onto the ring.",
+          "tags": ["orbit", "area"], "add": { "period": 4 }, "flags": ["scratch"],
+          "branches": [
+            { "id": "beat_juggle", "name": "Beat Juggle", "text": "Scratch every 2 beats.", "scale": { "period": 0.5 } },
+            { "id": "spinback", "name": "Spinback", "text": "In the Drop, records swing out to the screen edge and back.", "flags": ["spinback"] }
+          ]
+        }
+      ]
+    }
+  ],
+  // Pool of 3 ultimates, pressed by the player. Unlock/upgrade at hero levels 10/20/30 (run.json leveling.ultimateLevels).
+  // levels[i] = ultimate level i + 1; charge = seconds (cooldown), kills or Drops. Stat use: UltimateKind.cs. Durations in beats.
+  "ultimates": [
+    {
+      "id": "sub_quake", "name": "Sub Quake", "kind": "subQuake", "charge": "cooldown",
+      "text": "One huge 808 hit over the whole screen: big damage and a stun.",
+      "levels": [
+        { "charge": 60, "damage": 60, "radius": 40, "stun": 2 },
+        { "charge": 60, "damage": 120, "radius": 40, "stun": 3 },
+        { "charge": 60, "damage": 120, "radius": 40, "stun": 3, "tick": 10, "duration": 16 }
+      ]
+    },
+    {
+      "id": "encore", "name": "Encore", "kind": "encore", "charge": "kills",
+      "text": "The crowd wants more: the Drop stays on and her skills fire 50% faster.",
+      "levels": [
+        { "charge": 1500, "duration": 32, "speed": 0.5 },
+        { "charge": 1500, "duration": 48, "speed": 0.5 },
+        { "charge": 1500, "duration": 48, "speed": 0.5, "heal": 1 }
+      ]
+    },
+    {
+      "id": "bass_cannon", "name": "Bass Cannon", "kind": "bassCannon", "charge": "drops",
+      "text": "1 bar charge-up, then a giant beam where the camera looks. Kills everything it touches.",
+      "levels": [
+        { "charge": 3, "range": 40, "width": 4, "duration": 8 },
+        { "charge": 2, "range": 40, "width": 6, "duration": 8 },
+        { "charge": 2, "range": 40, "width": 6, "duration": 12, "tick": 8 }
+      ]
+    }
+  ],
+  // Default loadout until a loadout screen exists (launch args --loadout / --ultimate override). Slot 0 starts at level 1.
+  "loadout": ["cowbell", "low_end", "speaker_stack", "slap"],
+  "ultimate": "sub_quake"
+}

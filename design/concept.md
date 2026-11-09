@@ -1,7 +1,7 @@
 # Game concept
 
 Status: brainstorming
-Updated: 2026-10-17
+Updated: 2026-10-18
 
 ## Decided
 - **Genre:** survivors-like (Vampire Survivors style): automatic attacks, large hordes, level-up upgrade picks, run-based. The theme is not decided.
@@ -10,7 +10,7 @@ Updated: 2026-10-17
 - **Aiming:** most weapons are automatic. Aimed weapons fire in the camera's facing direction, so rotating the camera is aiming. No aiming cursor.
 - **Players:** single-player.
 - **Visual direction:** colorful, with heavy particles and VFX. Stylized low-poly models; shaders and effects carry the look.
-- **Art:** all assets are made by the agent (Blender via MCP and scripts) and reviewed/adjusted by the user. No external asset packs or AI 3D generators.
+- **Art:** the user models the hero, NPCs and all humanoid entities (humanoid enemies included). The agent makes everything else (non-humanoid monsters, items, props, VFX, icons) with Blender, Godot and ComfyUI (2D images); the user reviews and adjusts. No external asset packs or AI 3D generators.
 - **Platforms:** Windows + Steam Deck (Windows build through Proton). Linux/macOS native not planned.
 - **Engine:** Godot 4.7 + C# (why: `engine.md`).
 - **Min spec:** 8 GB RAM, 2 GB VRAM (GTX 750 Ti / GTX 1050 / Radeon Vega 8 class, about Steam Deck level). Target 60 fps on the low preset, 1080p output, render scale may drop on min spec. A "very low" preset tries to run on 4 GB / 1 GB but is not promised.

@@ -10,7 +10,7 @@ public class HeroProgressTests
 {
     static LevelingSettings Settings(int divisor = 3, int maxSkill = 10) => new()
     {
-        XpBase = 5, XpPerLevel = 5, LevelDivisor = divisor, MaxSkillLevel = maxSkill, MaxedBonusDamage = 0.02f,
+        XpBase = 5, XpPerLevel = 5, LevelDivisor = divisor, MaxSkillLevel = maxSkill, MaxedBonusDamage = 0.02f, BranchLevels = new[] { 5, 10 }, UltimateLevels = new[] { 10, 20, 30 },
     };
 
     static (LevelUpKind, int, int)[] Shape(HeroProgress p) =>
@@ -164,5 +164,14 @@ public class HeroProgressTests
         Assert.Equal(2, p.Level);
         Assert.Equal(1, p.PendingLevelUps);
         Assert.Equal(3f, p.Xp);
+    }
+
+    [Fact]
+    public void Dev_set_all_skills_ignores_the_cap_and_checks_the_range()
+    {
+        var p = new HeroProgress(Settings(), 3);
+        p.DevSetAllSkills(5);
+        Assert.Equal(new[] { 5, 5, 5 }, new[] { p.SkillLevel(0), p.SkillLevel(1), p.SkillLevel(2) });
+        Assert.Throws<ArgumentOutOfRangeException>(() => p.DevSetAllSkills(11));
     }
 }

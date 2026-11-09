@@ -10,15 +10,30 @@ public class WalkerSpawnerTests
 {
     static readonly Vector2 Hero = new(10, -4);
 
-    static EnemySwarm Run(StageDef stage, int loop, float seconds, float dt = 0.05f)
+    static ViewFootprint View(float yaw = 0f)
+    {
+        var cam = TestConfig.Run.Camera;
+        return ViewFootprint.Compute(cam.TiltDeg, cam.Distance, cam.FovDeg, 16f / 9f, yaw);
+    }
+
+    static EnemySwarm Run(StageDef stage, int loop, float seconds, float dt = 0.05f, float yaw = 0f)
     {
         var c = TestConfig.Run;
+        var view = View(yaw);
         var enemies = new EnemySwarm(1024);
         var spawner = new WalkerSpawner();
         var rng = new XorShift32(7);
         int steps = (int)System.MathF.Round(seconds / dt);
-        for (int i = 0; i < steps; i++) spawner.Update(dt, stage, loop, Hero, enemies, ref rng, c);
+        for (int i = 0; i < steps; i++) spawner.Update(dt, stage, loop, Hero, view, enemies, ref rng, c);
         return enemies;
+    }
+
+    /// <summary>Offset lies in [view edge + margin, view edge + margin + band] along its own direction.</summary>
+    static void AssertJustOffScreen(Vector2 position, in ViewFootprint view, SpawnSettings s)
+    {
+        var offset = position - Hero;
+        float edge = view.DistanceToEdge(Vector2.Normalize(offset));
+        Assert.InRange(offset.Length(), edge + s.ViewMargin - 1e-3f, edge + s.ViewMargin + s.Band + 1e-3f);
     }
 
     [Fact]
@@ -48,14 +63,24 @@ public class WalkerSpawnerTests
         Assert.Equal((int)(10 * c.LoopScaling.Spawn(3)), capped.Count);
     }
 
-    [Fact]
-    public void Spawns_on_the_ring_around_the_hero()
+    [Theory]
+    [InlineData(0f)]
+    [InlineData(2.2f)]
+    public void Spawns_just_outside_the_camera_view_at_any_yaw(float yaw)
     {
         var c = TestConfig.Run;
-        var e = Run(new StageDef { Kind = StageKind.Horde, DurationSec = 100, SpawnPerSec = 50, MaxAlive = 500 }, 1, 5f);
+        var view = View(yaw);
+        var e = Run(new StageDef { Kind = StageKind.Horde, DurationSec = 100, SpawnPerSec = 50, MaxAlive = 500 }, 1, 5f, yaw: yaw);
         Assert.True(e.Count > 100);
-        for (int i = 0; i < e.Count; i++)
-            Assert.InRange(Vector2.Distance(e.Position[i], Hero), c.Spawn.RingMin - 1e-3f, c.Spawn.RingMax + 1e-3f);
+        for (int i = 0; i < e.Count; i++) AssertJustOffScreen(e.Position[i], view, c.Spawn);
+    }
+
+    [Fact]
+    public void Spawns_come_closer_behind_the_hero_than_ahead()
+    {
+        var view = View();
+        var ahead = CameraMath.Forward(0f);
+        Assert.True(view.DistanceToEdge(-ahead) < view.DistanceToEdge(ahead) / 2f);
     }
 
     [Fact]
@@ -74,9 +99,9 @@ public class WalkerSpawnerTests
         enemies.Spawn(Hero + new Vector2(100, 0), 5, ref rng);
         enemies.Spawn(Hero + new Vector2(5, 0), 5, ref rng);
 
-        new WalkerSpawner().Update(0.05f, new StageDef { Kind = StageKind.Chest }, 1, Hero, enemies, ref rng, c);
+        new WalkerSpawner().Update(0.05f, new StageDef { Kind = StageKind.Chest }, 1, Hero, View(), enemies, ref rng, c);
 
-        Assert.InRange(Vector2.Distance(enemies.Position[0], Hero), c.Spawn.RingMin - 1e-3f, c.Spawn.RingMax + 1e-3f);
+        AssertJustOffScreen(enemies.Position[0], View(), c.Spawn);
         Assert.Equal(5f, enemies.Health[0]);
         Assert.Equal(Hero + new Vector2(5, 0), enemies.Position[1]);
     }

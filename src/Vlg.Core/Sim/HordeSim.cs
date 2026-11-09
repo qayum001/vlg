@@ -30,7 +30,7 @@ public sealed class HordeSim
         _workers = workers;
         _rng = new XorShift32(seed);
         Enemies = new EnemySwarm(tuning.EnemyCapacity);
-        Projectiles = new ProjectilePool(tuning.ProjectileCapacity);
+        Projectiles = new ProjectilePool(tuning.ProjectileCapacity, tuning.ProjectileRadius);
         Grid = new SpatialGrid(tuning.GridDim, tuning.GridCellSize, tuning.EnemyCapacity);
         Hits = new PointBuffer(1024);
         Deaths = new PointBuffer(1024);
@@ -46,7 +46,7 @@ public sealed class HordeSim
         Grid.Build(Enemies.Position, Enemies.Count, player);
         Enemies.Update(dt, player, Grid, _swarm, _workers);
         _weapons.Update(dt, targetProjectiles, player, aim, Enemies, Projectiles, ref _rng, _t);
-        Projectiles.Update(dt, Enemies, Grid, Hits, _t.ProjectileRadius + _t.EnemyRadius, _t.EnemySpeed * EnemySwarm.MaxSpeedFactor);
+        Projectiles.Update(dt, Enemies, Grid, Hits, _t.EnemyRadius, _t.EnemySpeed * EnemySwarm.MaxSpeedFactor);
         KilledTotal += Enemies.RemoveDead(Deaths);
         Refill(Math.Min(targetEnemies, Enemies.Capacity), player);
     }

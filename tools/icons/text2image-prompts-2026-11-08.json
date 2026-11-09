@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-11-08",
+  "generator": "OpenAI built-in image_gen",
+  "mode": "text-to-image",
+  "referenceImages": [],
+  "style": "Arcane-inspired painterly 3D",
+  "resolutionPolicy": "Native generated PNG files retained byte-for-byte; user requested no resizing.",
+  "descriptionSources": [
+    "design/items.md",
+    "game/data/items.json",
+    "tools/icons/make_icons.py:ITEMS"
+  ],
+  "assets": [
+    {
+      "id": "plague_flask",
+      "name": "Plague Flask",
+      "sourceDescription": "A single round green poison potion bottle with a cork and a small skull label.",
+      "gameDescription": "Kills leave a poison puddle for 2 seconds. Smells like the undead town. Everything does.",
+      "prompt": "Use case: stylized-concept.\nCreate one finished square inventory icon for a 3D action game. Style: Arcane (the League of Legends animated series), hand-painted 3D with sculptural volume, chiseled planes, visible directional brushwork, worn material surfaces, deep occlusion and selective sharp highlights. Strong three-quarter perspective and physical thickness; cinematic warm/cool contrast. Single centered subject fills about 78% of the square, entire silhouette comfortably inside the frame. Near-black painted background with a subtle contact shadow. Clear bold silhouette readable after downsampling to 400 x 400 and at 64px. Keep the form and materials more important than glow or tiny details. No text, letters, logos, watermark, card frame, UI, characters, extra items, collage, or scenery. Avoid flat vector art, thin cartoon outlines, photoreal photography and glossy smooth plastic.\nSubject: One squat round thick-glass poison flask, cork stopper secured with weathered dark wire, sickly luminous green fluid swirling inside. A small aged parchment label with a simple skull pictogram only, no writing. Glass has uneven thickness, angular painted reflections and deep green refraction; dark leather neck wrapping, stained brass seal. An ominous trace of green vapor curls around the cork, restrained enough to preserve the silhouette. Sculptural translucent glass and murky fluid, cool teal edge light against toxic chartreuse core.\nGame item context (do not render as text): Kills leave a poison puddle for 2 seconds. Smells like the undead town. Everything does.",
+      "destination": "game/assets/icons/items/plague_flask.png"
+    },
+    {
+      "id": "clockwork_heart",
+      "name": "Clockwork Heart",
+      "sourceDescription": "A mechanical clockwork heart made of brass gears.",
+      "gameDescription": "Reduces skill and active-item cooldowns. Ticks. Loudly. At night.",
+      "prompt": "Use case: stylized-concept.\nCreate one finished square inventory icon for a 3D action game. Style: Arcane (the League of Legends animated series), hand-painted 3D with sculptural volume, chiseled planes, visible directional brushwork, worn material surfaces, deep occlusion and selective sharp highlights. Strong three-quarter perspective and physical thickness; cinematic warm/cool contrast. Single centered subject fills about 78% of the square, entire silhouette comfortably inside the frame. Near-black painted background with a subtle contact shadow. Clear bold silhouette readable after downsampling to 400 x 400 and at 64px. Keep the form and materials more important than glow or tiny details. No text, letters, logos, watermark, card frame, UI, characters, extra items, collage, or scenery. Avoid flat vector art, thin cartoon outlines, photoreal photography and glossy smooth plastic.\nSubject: One heart-shaped mechanical clockwork artifact, clearly a manufactured heart rather than flesh. Asymmetric brass casing shapes two upper lobes tapering to a pointed lower chamber; a cutaway reveals a few large interlocking gears and a luminous amber escapement. A short curved mechanical aorta pipe reinforces the heart silhouette. Worn gold-brass planes, dark steel recesses, blue-green oxidation in seams, crisp machined gear teeth painted with textured highlights. Dense, tactile three-dimensional clockwork with amber light from within and a restrained cold cyan rim.\nGame item context (do not render as text): Reduces skill and active-item cooldowns. Ticks. Loudly. At night.",
+      "destination": "game/assets/icons/items/clockwork_heart.png"
+    },
+    {
+      "id": "copper_coil",
+      "name": "Copper Coil",
+      "sourceDescription": "One single tightly wound copper wire coil spring with blue electric sparks.",
+      "gameDescription": "Shots jump to one more enemy; chain skills jump two more. Still humming. Don't lick it.",
+      "prompt": "Use case: stylized-concept.\nCreate one finished square inventory icon for a 3D action game. Style: Arcane (the League of Legends animated series), hand-painted 3D with sculptural volume, chiseled planes, visible directional brushwork, worn material surfaces, deep occlusion and selective sharp highlights. Strong three-quarter perspective and physical thickness; cinematic warm/cool contrast. Single centered subject fills about 78% of the square, entire silhouette comfortably inside the frame. Near-black painted background with a subtle contact shadow. Clear bold silhouette readable after downsampling to 400 x 400 and at 64px. Keep the form and materials more important than glow or tiny details. No text, letters, logos, watermark, card frame, UI, characters, extra items, collage, or scenery. Avoid flat vector art, thin cartoon outlines, photoreal photography and glossy smooth plastic.\nSubject: One stout tightly wound copper-wire helix, angled diagonally in three-quarter perspective with the hollow circular opening clearly visible and a short curled wire terminal at each end. It is one single electrical coil, not a pile or torus. Thick reddish copper windings show hammered painterly facets, bright worn edges and small turquoise oxidation marks. Two or three tight cyan electrical arcs jump between adjacent windings, illuminating their inner thickness. Strong copper-orange versus electric blue contrast; convincing weight, shadow between loops and a clear compact silhouette.\nGame item context (do not render as text): Shots jump to one more enemy; chain skills jump two more. Still humming. Don't lick it.",
+      "destination": "game/assets/icons/items/copper_coil.png"
+    },
+    {
+      "id": "grim_ledger",
+      "name": "Grim Ledger",
+      "sourceDescription": "A dark leather ledger book with a skull clasp and tally marks.",
+      "gameDescription": "Every 200 kills grants damage for this run. Someone has to keep the count.",
+      "prompt": "Use case: stylized-concept.\nCreate one finished square inventory icon for a 3D action game. Style: Arcane (the League of Legends animated series), hand-painted 3D with sculptural volume, chiseled planes, visible directional brushwork, worn material surfaces, deep occlusion and selective sharp highlights. Strong three-quarter perspective and physical thickness; cinematic warm/cool contrast. Single centered subject fills about 78% of the square, entire silhouette comfortably inside the frame. Near-black painted background with a subtle contact shadow. Clear bold silhouette readable after downsampling to 400 x 400 and at 64px. Keep the form and materials more important than glow or tiny details. No text, letters, logos, watermark, card frame, UI, characters, extra items, collage, or scenery. Avoid flat vector art, thin cartoon outlines, photoreal photography and glossy smooth plastic.\nSubject: One closed hefty dark oxblood leather ledger seen in three-quarter view so its cover, spine and thick uneven parchment page block are visible. Cracked leather, beveled tarnished brass corner protectors, a single central brass skull-shaped clasp, a few small scratched tally notches in the leather rather than readable writing. No face or creature besides the clasp pictogram. The chunky clasp and worn binding carry its sinister character; restrained cold violet glow leaks from the page seam. Warm side light sculpts the brass and leather, cool teal rim defines thickness against black. Bold book silhouette, tactile painterly materials.\nGame item context (do not render as text): Every 200 kills grants damage for this run. Someone has to keep the count.",
+      "destination": "game/assets/icons/items/grim_ledger.png"
+    },
+    {
+      "id": "pocket_singularity",
+      "name": "Pocket Singularity",
+      "sourceDescription": "A tiny black hole orb with a swirling purple accretion disk.",
+      "gameDescription": "Pulls enemies to one point for 3 seconds, then pops. Do not fold.",
+      "prompt": "Use case: stylized-concept.\nCreate one finished square inventory icon for a 3D action game. Style: Arcane (the League of Legends animated series), hand-painted 3D with sculptural volume, chiseled planes, visible directional brushwork, worn material surfaces, deep occlusion and selective sharp highlights. Strong three-quarter perspective and physical thickness; cinematic warm/cool contrast. Single centered subject fills about 78% of the square, entire silhouette comfortably inside the frame. Near-black painted background with a subtle contact shadow. Clear bold silhouette readable after downsampling to 400 x 400 and at 64px. Keep the form and materials more important than glow or tiny details. No text, letters, logos, watermark, card frame, UI, characters, extra items, collage, or scenery. Avoid flat vector art, thin cartoon outlines, photoreal photography and glossy smooth plastic.\nSubject: One compact miniature black hole artifact: a deep almost-black spherical center, unmistakably a three-dimensional orb, surrounded by one thick tilted elliptical purple accretion disk. The near arc crosses in front of the orb and the far arc curves behind with gravitational lensing, producing clear spatial depth. The luminous disk looks like dense swirling sculpted ribbons painted in broad chiseled strokes, violet in shadow, hot magenta and pale lavender at select edges. A few tiny debris flecks are pulled along the same orbit, no separate planets or space scene. Dense dark sphere, controlled light, physical volume and clean graphic silhouette; no overwhelming bloom.\nGame item context (do not render as text): Pulls enemies to one point for 3 seconds, then pops. Do not fold.",
+      "destination": "game/assets/icons/items/pocket_singularity.png"
+    }
+  ]
+}

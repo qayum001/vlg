@@ -1,5 +1,5 @@
 # Tooling (this machine)
-Updated: 2026-10-16
+Updated: 2026-10-18
 Related: [overview](overview.md), [status](status.md)
 
 ## Blender
@@ -18,13 +18,13 @@ Different protocols, so different ports. Never put both on one port.
 - **Community "MCP for Blender"** (ahujasid, PyPI `mcp-for-blender`): port 9877.
   - Server: repo `.mcp.json` server `blender`, env `BLENDER_PORT=9877`, `DISABLE_TELEMETRY=true`. Loads in Code sessions as `mcp__blender__*` (lowercase). Addon v1.8, protocol 13, up to date; libraries/generators all off.
   - Addon: `5.2\scripts\addons\blender_mcp.py`, module `blender_mcp`. Port is a per-scene prop (`blendermcp_port`); new files get 9877 from startup.blend, old files keep 9876 → its autostart skips if 9876 is taken.
-  - Tools: `look` (multi-angle rendered screenshots), execute code, scene info. Never use `generate_3d`, `search_assets`, `import_asset` (external assets/AI; art is agent-made only).
+  - Tools: `look` (multi-angle rendered screenshots), execute code, scene info. Never use `generate_3d`, `search_assets`, `import_asset` (external assets / AI 3D, banned by concept.md).
   - Upgrade Blender version → reinstall: `uvx mcp-for-blender install-addon` with `BLENDERMCP_ADDONS_DIR`, then enable.
 - Both run arbitrary Python in the user's Blender, no auth on the socket. User should save their own work first.
 - Test client without session tools: scratch script speaking MCP stdio to `uvx mcp-for-blender` worked (2026-10-13).
 
 ## Local image generation (ComfyUI)
-- ComfyUI portable 0.39.0, installed and started by the user: `C:\Users\qayum\Downloads\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\ComfyUI`. API at http://127.0.0.1:8188 (only while the user runs it). Model: `models\checkpoints\sd_xl_base_1.0.safetensors`.
+- ComfyUI portable 0.39.0 (user installed): `C:\Users\qayum\Downloads\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\ComfyUI`. Agent may start it and add nodes/models (R12): `run_nvidia_gpu.bat` in the portable root. API at http://127.0.0.1:8188 while running. Model: `models\checkpoints\sd_xl_base_1.0.safetensors`. No custom nodes or LoRAs yet (2026-10-18).
 - Drive it over HTTP: POST /prompt (API-format workflow), poll GET /history/<id>, outputs in `ComfyUI\output`, img2img inputs copied into `ComfyUI\input`. ~20 s per 1024² image on the RTX 3070.
 - GPU trap: SDXL keeps ~5 GB VRAM. A Blender EEVEE render at the same time crashed Blender ("GPU has been disconnected", 2026-10-13). Call POST /free {"unload_models": true, "free_memory": true} after jobs. For reference renders, use headless Blender with Cycles on CPU.
 

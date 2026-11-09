@@ -7,7 +7,8 @@ namespace Vlg.Core.Sim;
 
 /// <summary>
 /// Enemies as packed struct-of-arrays: live entries are [0, Count). Removal swaps with the last,
-/// so indices are only stable within one frame.
+/// so indices are only stable within one frame (<see cref="Id"/> is stable).
+/// Statuses (slow, stun, vuln, push) only change in single-thread code; Integrate reads and decays them per index.
 /// Ground plane: Vector2(x, y) = world (x, z).
 /// </summary>
 public sealed class EnemySwarm
@@ -25,10 +26,39 @@ public sealed class EnemySwarm
     /// <summary>1 on hit, decays to 0.</summary>
     public readonly float[] HitFlash;
     public readonly byte[] Variant;
+    /// <summary>Unique per spawn, survives removal swaps.</summary>
+    public readonly uint[] Id;
+    /// <summary>Seconds left / speed fraction removed (0..1).</summary>
+    public readonly float[] SlowTimer;
+    public readonly float[] Slow;
+    public readonly float[] StunTimer;
+    /// <summary>Seconds left / extra damage taken (fraction).</summary>
+    public readonly float[] VulnTimer;
+    public readonly float[] Vuln;
+    /// <summary>Knockback/pull velocity, m/s, added to steering and decayed by SwarmTuning.PushDecay.</summary>
+    public readonly Vector2[] Push;
+    /// <summary>Damage source of the latest hit (kill credit).</summary>
+    public readonly byte[] LastHit;
+    /// <summary>Burn damage per second / seconds left; ticks in Integrate (not counted in DamageDealt).</summary>
+    public readonly float[] Burn;
+    public readonly float[] BurnTimer;
+    /// <summary>Ramp heat for ramping beams: extra damage fraction, decays 1/s.</summary>
+    public readonly float[] Heat;
+
+    /// <summary>Per damage source: vuln applied on every hit (Hex modifier), fraction / seconds.</summary>
+    readonly float[] _hitVuln = new float[256];
+    readonly float[] _hitVulnSec = new float[256];
+
+    /// <summary>Health removed since <see cref="ResetDamageDealt"/>, overkill excluded (life steal).</summary>
+    public float DamageDealt { get; private set; }
 
     public const int VariantCount = 4;
     /// <summary>Separation push can exceed EnemySpeed up to this factor. Grid query padding uses it.</summary>
     public const float MaxSpeedFactor = 1.5f;
+    /// <summary>Push magnitude cap, m/s. Grid query padding adds it to the steering speed.</summary>
+    public const float MaxPushSpeed = 25f;
+
+    uint _nextId;
 
     readonly SteerJob _steer = new();
     readonly IntegrateJob _integrate = new();
@@ -43,6 +73,17 @@ public sealed class EnemySwarm
         Health = new float[capacity];
         HitFlash = new float[capacity];
         Variant = new byte[capacity];
+        Id = new uint[capacity];
+        SlowTimer = new float[capacity];
+        Slow = new float[capacity];
+        StunTimer = new float[capacity];
+        VulnTimer = new float[capacity];
+        Vuln = new float[capacity];
+        Push = new Vector2[capacity];
+        LastHit = new byte[capacity];
+        Burn = new float[capacity];
+        BurnTimer = new float[capacity];
+        Heat = new float[capacity];
     }
 
     public bool Spawn(Vector2 position, float health, ref XorShift32 rng)
@@ -56,7 +97,71 @@ public sealed class EnemySwarm
         Health[i] = health;
         HitFlash[i] = 0f;
         Variant[i] = (byte)rng.Below(VariantCount);
+        Id[i] = ++_nextId;
+        SlowTimer[i] = 0f;
+        Slow[i] = 0f;
+        StunTimer[i] = 0f;
+        VulnTimer[i] = 0f;
+        Vuln[i] = 0f;
+        Push[i] = Vector2.Zero;
+        LastHit[i] = 0;
+        Burn[i] = 0f;
+        BurnTimer[i] = 0f;
+        Heat[i] = 0f;
         return true;
+    }
+
+    /// <summary>Single thread. Vuln multiplies the amount; records hit flash and kill credit.</summary>
+    public void Damage(int i, float amount, byte source)
+    {
+        if (VulnTimer[i] > 0f) amount *= 1f + Vuln[i];
+        float hp = Health[i];
+        Health[i] = hp - amount;
+        DamageDealt += MathF.Min(amount, MathF.Max(0f, hp));
+        HitFlash[i] = 1f;
+        LastHit[i] = source;
+        if (_hitVulnSec[source] > 0f) ApplyVuln(i, _hitVuln[source], _hitVulnSec[source]);
+    }
+
+    public void ResetDamageDealt() => DamageDealt = 0f;
+
+    /// <summary>Hits from <paramref name=source/> apply this vuln after their damage; sec 0 = off.</summary>
+    public void SetHitVuln(byte source, float vuln, float sec)
+    {
+        _hitVuln[source] = vuln;
+        _hitVulnSec[source] = sec;
+    }
+
+    /// <summary>Stronger slow replaces a weaker one; timer keeps the longer.</summary>
+    public void ApplySlow(int i, float fraction, float sec)
+    {
+        if (SlowTimer[i] <= 0f || fraction >= Slow[i]) Slow[i] = Math.Clamp(fraction, 0f, 1f);
+        SlowTimer[i] = MathF.Max(SlowTimer[i], sec);
+    }
+
+    public void ApplyStun(int i, float sec) => StunTimer[i] = MathF.Max(StunTimer[i], sec);
+
+    /// <summary>Stronger burn replaces; timer refreshes to the longer. Kill credit goes to <paramref name="source"/>.</summary>
+    public void ApplyBurn(int i, float dps, float sec, byte source)
+    {
+        if (BurnTimer[i] <= 0f || dps >= Burn[i]) Burn[i] = dps;
+        BurnTimer[i] = MathF.Max(BurnTimer[i], sec);
+        LastHit[i] = source;
+    }
+
+    public void ApplyVuln(int i, float fraction, float sec)
+    {
+        if (VulnTimer[i] <= 0f || fraction >= Vuln[i]) Vuln[i] = fraction;
+        VulnTimer[i] = MathF.Max(VulnTimer[i], sec);
+    }
+
+    /// <summary>Adds push velocity, clamped to <see cref="MaxPushSpeed"/>.</summary>
+    public void AddPush(int i, Vector2 velocity)
+    {
+        var p = Push[i] + velocity;
+        float len2 = p.LengthSquared();
+        if (len2 > MaxPushSpeed * MaxPushSpeed) p *= MaxPushSpeed / MathF.Sqrt(len2);
+        Push[i] = p;
     }
 
     /// <summary>Removes from the end (newest first).</summary>
@@ -128,10 +233,30 @@ public sealed class EnemySwarm
         float turn = t.HeadingTurnRate * dt;
         float flashDecay = t.HitFlashDecay * dt;
         float animStep = t.AnimRate * dt / t.EnemySpeed;
+        float pushKeep = 1f - MathF.Min(1f, t.PushDecay * dt);
         for (int i = start; i < end; i++)
         {
             var v = Velocity[i];
-            Position[i] += v * dt;
+            if (StunTimer[i] > 0f)
+            {
+                v = Vector2.Zero;
+                StunTimer[i] = MathF.Max(0f, StunTimer[i] - dt);
+            }
+            else if (SlowTimer[i] > 0f)
+            {
+                v *= 1f - Slow[i];
+            }
+            if (SlowTimer[i] > 0f) SlowTimer[i] = MathF.Max(0f, SlowTimer[i] - dt);
+            if (VulnTimer[i] > 0f) VulnTimer[i] = MathF.Max(0f, VulnTimer[i] - dt);
+            if (BurnTimer[i] > 0f)
+            {
+                Health[i] -= Burn[i] * MathF.Min(dt, BurnTimer[i]);
+                BurnTimer[i] = MathF.Max(0f, BurnTimer[i] - dt);
+            }
+            if (Heat[i] > 0f) Heat[i] = MathF.Max(0f, Heat[i] - dt);
+            var push = Push[i];
+            Position[i] += (v + push) * dt;
+            Push[i] = push * pushKeep;
             float speed2 = v.LengthSquared();
             if (speed2 > 1e-4f)
             {
@@ -170,13 +295,17 @@ public sealed class EnemySwarm
         public void Execute(int start, int end) => _s.Integrate(start, end, _dt, _t);
     }
 
-    /// <summary>Compacts out entries with Health &lt;= 0, records their positions. Returns removed count.</summary>
-    public int RemoveDead(PointBuffer deaths)
+    /// <summary>
+    /// Compacts out entries with Health &lt;= 0, records their positions (and kill credit into
+    /// <paramref name="sources"/> at the same index, if given). Returns removed count.
+    /// </summary>
+    public int RemoveDead(PointBuffer deaths, byte[]? sources = null)
     {
         int removed = 0;
         for (int i = Count - 1; i >= 0; i--)
         {
             if (Health[i] > 0f) continue;
+            if (sources != null && deaths.Count < sources.Length) sources[deaths.Count] = LastHit[i];
             deaths.Add(Position[i]);
             int last = --Count;
             if (i != last) MoveSlot(last, i);
@@ -194,6 +323,17 @@ public sealed class EnemySwarm
         Health[to] = Health[from];
         HitFlash[to] = HitFlash[from];
         Variant[to] = Variant[from];
+        Id[to] = Id[from];
+        SlowTimer[to] = SlowTimer[from];
+        Slow[to] = Slow[from];
+        StunTimer[to] = StunTimer[from];
+        VulnTimer[to] = VulnTimer[from];
+        Vuln[to] = Vuln[from];
+        Push[to] = Push[from];
+        LastHit[to] = LastHit[from];
+        Burn[to] = Burn[from];
+        BurnTimer[to] = BurnTimer[from];
+        Heat[to] = Heat[from];
     }
 
     static float WrapAngle(float a)

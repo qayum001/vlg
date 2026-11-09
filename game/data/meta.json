@@ -1,0 +1,17 @@
+// Meta-progression (domain.md). Parsed strictly by Vlg.Core MetaConfig. All numbers are placeholders.
+{
+  // Each kill drops a meta credit orb with this chance; completing loop L pays loopRewardBase + loopRewardStep * (L - 1).
+  "creditDropChance": 0.01,
+  "creditValue": 1,
+  "loopRewardBase": 3,
+  "loopRewardStep": 2,
+  // Sold by The Fixer in the hub. Rank r (0-based) costs costBase + costStep * r meta credits.
+  "upgrades": [
+    { "id": "active_slot", "name": "Extra Active Slot", "text": "+1 active item slot (2 at start, up to 5).", "kind": "activeSlots", "perRank": 1, "maxRank": 3, "costBase": 40, "costStep": 40 },
+    { "id": "usable_slot", "name": "Extra Usable Slot", "text": "+1 usable item slot (2 at start, up to 5).", "kind": "usableSlots", "perRank": 1, "maxRank": 3, "costBase": 40, "costStep": 40 },
+    { "id": "damage", "name": "Practice", "text": "+1% damage per rank.", "kind": "damage", "perRank": 0.01, "maxRank": 10, "costBase": 10, "costStep": 5 },
+    { "id": "max_hp", "name": "Stage Presence", "text": "+3% max HP per rank.", "kind": "maxHp", "perRank": 0.03, "maxRank": 10, "costBase": 10, "costStep": 5 },
+    { "id": "pickup", "name": "Long Cable", "text": "+5% pickup radius per rank.", "kind": "pickup", "perRank": 0.05, "maxRank": 5, "costBase": 8, "costStep": 4 },
+    { "id": "start_credits", "name": "Merch Money", "text": "+10 credits at the start of a run per rank.", "kind": "startCredits", "perRank": 10, "maxRank": 5, "costBase": 15, "costStep": 5 }
+  ]
+}

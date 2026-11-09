@@ -26,12 +26,36 @@ public sealed record LaunchOptions
     public int? Threads { get; init; }
     /// <summary>Open the stress test instead of the game run. --bench implies it.</summary>
     public bool Stress { get; init; }
+    /// <summary>Open the level run directly instead of the hub. Any run dev arg implies it.</summary>
+    public bool Run { get; init; }
+    public string? Hero { get; init; }
+    /// <summary>Hero skill ids for the run loadout; null = the hero's default.</summary>
+    public string[]? Loadout { get; init; }
+    /// <summary>Dev: every loadout skill starts at this level (ignores the level cap).</summary>
+    public int? SkillLevel { get; init; }
+    /// <summary>Dev: answers the queued branch picks at start, in order (option index, 0-based).</summary>
+    public int[]? Branches { get; init; }
+    /// <summary>Ultimate id for the run; null = the hero's default.</summary>
+    public string? Ultimate { get; init; }
+    /// <summary>Dev: ultimate starts at this level (hero level ignored).</summary>
+    public int? UltimateLevel { get; init; }
+    /// <summary>Dev: start at this stage index of loop 1 (0 = first).</summary>
+    public int? Stage { get; init; }
+    /// <summary>Dev: starting credits.</summary>
+    public int? Credits { get; init; }
+    /// <summary>Dev: item ids granted at start (modifiers go to the stash).</summary>
+    public string[]? Items { get; init; }
 
     public bool WantsStressTest => Stress || Bench != null;
 
+    /// <summary>Skip the hub: --run or any run-only arg (loadout, levels, stage, items...).</summary>
+    public bool WantsRun => Run || Hero != null || Loadout != null || SkillLevel != null || Branches != null || Ultimate != null
+        || UltimateLevel != null || Stage != null || Credits != null || Items != null;
+
     public const string Usage =
-        "--stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
-        "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>";
+        "--run  --hero lowkey|pyromancer  --stress  --bench enemies|overdraw|particles  --preset <name>  --out <csv>  --screenshot <png>  " +
+        "--screenshot-at <sec>  --exit-after <sec>  --windowed  --seed <n>  --ramp-start <n>  --ramp-step <n>  --ramp-max <n>  --threads <n>  " +
+        "--loadout <id,id,...>  --skill-level <n>  --branch <i,i,...>  --ultimate <id>  --ultimate-level <n>  --stage <n>  --credits <n>  --items <id,id,...>";
 
     public static LaunchOptions Parse(string[] args)
     {
@@ -50,11 +74,21 @@ public sealed record LaunchOptions
                 "--exit-after" => o with { ExitAfterSec = ParseFloat(a, Next()) },
                 "--windowed" => o with { Windowed = true },
                 "--stress" => o with { Stress = true },
+                "--run" => o with { Run = true },
+                "--hero" => o with { Hero = ParseHero(Next()) },
                 "--seed" => o with { Seed = uint.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--ramp-start" => o with { RampStart = ParseInt(a, Next(), 0) },
                 "--ramp-step" => o with { RampStep = ParseInt(a, Next(), 1) },
                 "--ramp-max" => o with { RampMax = ParseInt(a, Next(), 0) },
                 "--threads" => o with { Threads = ParseInt(a, Next(), 0) },
+                "--loadout" => o with { Loadout = ParseList(a, Next()) },
+                "--skill-level" => o with { SkillLevel = ParseInt(a, Next(), 1) },
+                "--ultimate" => o with { Ultimate = Next() },
+                "--ultimate-level" => o with { UltimateLevel = ParseInt(a, Next(), 0) },
+                "--stage" => o with { Stage = ParseInt(a, Next(), 0) },
+                "--credits" => o with { Credits = ParseInt(a, Next(), 0) },
+                "--items" => o with { Items = ParseList(a, Next()) },
+                "--branch" => o with { Branches = Array.ConvertAll(ParseList(a, Next()), x => ParseInt(a, x, 0)) },
                 _ => throw new ArgumentException($"unknown arg '{a}'. Usage: {Usage}"),
             };
         }
@@ -77,6 +111,15 @@ public sealed record LaunchOptions
         Enum.TryParse<BenchMode>(s, ignoreCase: true, out var m) && !int.TryParse(s, out _)
             ? m
             : throw new ArgumentException($"unknown bench mode '{s}'. Usage: {Usage}");
+
+    static string[] ParseList(string arg, string s)
+    {
+        var items = s.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        return items.Length > 0 ? items : throw new ArgumentException($"{arg} needs comma-separated ids, got '{s}'");
+    }
+
+    static string ParseHero(string id) => HeroRoster.Contains(id) ? id
+        : throw new ArgumentException($"unknown hero '{id}'");
 
     static float ParseFloat(string arg, string s) =>
         float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) && v >= 0

@@ -58,7 +58,10 @@ public sealed class ChoicePanel
         column.AddChild(_buttons);
     }
 
-    public void Show(string title, string body, IReadOnlyList<string> options, Action<int> onPick)
+    public bool IsOpen => _root.Visible;
+
+    /// <param name="icons">Per option icon (null entries or list = none).</param>
+    public void Show(string title, string body, IReadOnlyList<string> options, Action<int> onPick, IReadOnlyList<Texture2D?>? icons = null)
     {
         foreach (var child in _buttons.GetChildren()) child.QueueFree();
         _onPick = onPick;
@@ -75,8 +78,10 @@ public sealed class ChoicePanel
                 Text = $"{i + 1}   {options[i]}",
                 Alignment = HorizontalAlignment.Left,
                 CustomMinimumSize = new Vector2(0, 52),
+                Icon = icons != null && i < icons.Count ? icons[i] : null,
             };
             button.AddThemeFontSizeOverride("font_size", 20);
+            button.AddThemeConstantOverride("icon_max_width", 56);
             button.Pressed += () => Pick(index);
             _buttons.AddChild(button);
             first ??= button;

@@ -19,7 +19,8 @@ Then `EnemyRenderer`/`ProjectileRenderer` write the whole MultiMesh buffer (`Ren
 ## Non-obvious
 - Ground plane: `System.Numerics.Vector2(x, y)` = world `(x, z)`. Yaw 0 looks toward -Z (`CameraMath`).
 - `EnemySwarm.Update` takes `SwarmTuning` (stress: `SimTuning.ToSwarm()`, run: `WalkerSettings.ToSwarm`). `ProjectilePool` stores damage per projectile; `Update` takes hit radius + max enemy speed (`EnemySwarm.MaxSpeedFactor` = 1.5 × speed) for query padding.
-- Arena props: 44 per 60 m tile, 3×3 copies in one MultiMesh (~400 total, as before). `Arena.Follow` (run only) moves ground + snaps props by whole tiles.
+- Camera: fixed 55° tilt / 22 m / FOV 45 (constants in StressTest; run camera lives in run.json).
+- Arena props: 44 per 60 m tile, 3×3 copies in one MultiMesh (~400 total, as before; `propTiles` param, run uses 5). `Arena.Follow` (run only) moves ground + snaps props by whole tiles.
 - Enemy mesh is flat-shaded triangle soup so `VERTEX_ID` indexes the VAT texture (RGBA16F, rows = frames, then normals). LOD via index buffers would keep this valid.
 - MultiMesh buffer must be exactly instance_count × stride, so capacity rounds to 512 and the whole buffer uploads each frame.
 - Overdraw layers = camera-attached full-screen additive quads; 1 layer = every pixel blended once.
