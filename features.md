@@ -16,8 +16,12 @@ Expected: ...
 
 ## Awaiting confirmation (dev)
 
+None.
+
+## Confirmed (master)
+
 ### Pyromancer and hub hero selection
-Added: 2026-11-08 | Confirmed: -
+Added: 2026-11-08 | Confirmed: 2026-11-10
 What: Pyromancer is available during development alongside Lowkey. Six skills, three ultimates, Ember Heart kill healing, full rank 5/10 branch trees, second-based cooldowns, and fire effects. Hero selection is saved and uses the existing setlist, item and progression systems.
 How to test:
 1. Launch the normal hub. Press H or interact with the Change hero stand near the starting point. Pick Pyromancer; the capsule turns orange and the HUD shows his name. Use Setlist to choose four of his six skills and one of three ultimates, then enter the portal.
@@ -28,7 +32,7 @@ How to test:
 Expected: both heroes are available, setlists never cross between heroes, no missing-resource errors, and the hero remains a capsule placeholder (R11). Balance is provisional. Full kit and ability-authoring notes: `design/heroes/pyromancer.md`.
 
 ### Release launchers
-Added: 2026-11-08 | Confirmed: -
+Added: 2026-11-08 | Confirmed: 2026-11-10
 What: two batch files in `launch/`: build and launch a standalone Windows release, or launch the newest completed release without rebuilding. Both use normal hub startup with no dev/debug launch arguments.
 How to test:
 1. Double-click `launch/build-and-launch.bat`: it exports the current code, then opens the hub.
@@ -37,7 +41,7 @@ How to test:
 Expected: successful launches use `build/release/<timestamp>/vlg.exe`. Failed exports do not replace the latest completed build. If no completed build exists, the latest launcher tells you to run the build launcher.
 
 ### Five item icons: painterly 3D text-to-image
-Added: 2026-11-08 | Confirmed: -
+Added: 2026-11-08 | Confirmed: 2026-11-10
 What: Plague Flask, Clockwork Heart, Copper Coil, Grim Ledger and Pocket Singularity now use Arcane-inspired painterly 3D icons generated from their written descriptions with OpenAI's built-in image tool. No reference images were supplied. Native generated resolution is retained; no resizing.
 How to test:
 1. Launch the dev game with `-- --run --stage 4 --items plague_flask,clockwork_heart,copper_coil,grim_ledger,pocket_singularity`.
@@ -45,7 +49,7 @@ How to test:
 Expected: each item shows the correct new image, without clipping, stretching or missing textures. All five PNGs are 1254 x 1254. Prompts and source descriptions: `tools/icons/text2image-prompts-2026-11-08.json`.
 
 ### Hub, meta-progression, icons, props, effects
-Added: 2026-10-18 | Confirmed: -
+Added: 2026-10-18 | Confirmed: 2026-11-10
 What: the game opens in The Crossroads hub. Portal = start the endless Undead Town run. Setlist desk = pick 4 skills + 1 ultimate (saved). The Fixer (capsule placeholder) = meta upgrades: slots, damage, HP, pickup, start credits. Runs drop rare violet meta orbs and pay meta credits per finished loop, kept on death (save: `%APPDATA%\Godotpp_userdatalg\save.json`). Also: 35 icons on cards, shop and HUD; 3D props (speaker, subwoofer, vinyl, cowbell, boombox, toy drone, mortar shell); new ring/beam/zone effects.
 How to test:
 1. Play from source without args: the hub opens. Walk to The Fixer, press E, buy with F5 meta credits. Walk to Setlist, press E, pick 4 skills and an ultimate. Walk into the portal, press E: the run starts with that setlist.
@@ -54,7 +58,7 @@ How to test:
 Expected: no errors; upgrades and setlist survive a restart of the game.
 
 ### Items: credits, shop, chest, 25 items
-Added: 2026-10-18 | Confirmed: -
+Added: 2026-10-18 | Confirmed: 2026-11-10
 What: the item pool from `design/items.md` is in the game (`game/data/items.json`):
 - **Credits:** some kills drop gold coins, picked up like XP. The count is on the HUD, bottom right.
 - **Shop** (after each loop, full heal): 10 offers, Buy, Reroll (costs more each time, resets each shop), and your build. Modifiers go into skill sockets: 1 per unlocked skill, +1 at skill levels 5 and 10. A modifier only fits a skill that shares one of its tags. Ones that don't fit wait in the stash.
@@ -70,7 +74,7 @@ How to test:
 Expected: no errors in the console. You can't buy without credits, can't own two of the same active or usable, and can't overfill slots. Passive effects show (faster move with sneakers, regen, etc.). Credits stay between shops.
 
 ### Lowkey ultimates
-Added: 2026-10-18 | Confirmed: -
+Added: 2026-10-18 | Confirmed: 2026-11-10
 What: Lowkey's 3 ultimates from `design/heroes/lowkey.md`. Each run has 1 of them (default Sub Quake, `--ultimate` picks another). At hero level 10 a level-up card offers "Unlock ultimate", and levels 20 and 30 offer upgrades. You fire it with Space (gamepad Y) once it's charged. Each one charges differently:
 - **Sub Quake:** 60 s cooldown. One 808 hit over the whole screen that damages and stuns. At level 3 the ground keeps shaking.
 - **Encore:** charged by 1500 kills. The Drop stays on and skills fire 50% faster. At level 3 you heal on kills.
@@ -84,7 +88,7 @@ How to test:
 Expected: no errors in the console. Space does nothing while locked, charging or already running. The ultimate never fires during a card or the pause menu. Upgrade cards appear only at hero levels 10, 20 and 30.
 
 ### Lowkey skill forms (branches at skill level 5 and 10)
-Added: 2026-10-18 | Confirmed: -
+Added: 2026-10-18 | Confirmed: 2026-11-10
 What: every Lowkey skill now changes form. At skill level 5 you pick 1 of 3 forms, and at level 10 1 of 2 follow-ups of that form: 54 forms in total, as in `design/heroes/lowkey.md`. Some forms deepen the skill (more notes, pierce, bounces, extra rings). Others change what it is: falling cowbells, ground cracks, a flying boombox, a shield, a sweeping beam, records thrown like frisbees. The HUD and the level-up cards show the form name ("Cowbell · Ricochet · Pinball").
 How to test:
 1. Normal play: raise a skill to level 5 (F3 for levels). Right after the "4 → 5" card, a "Cowbell: choose a form" card shows 3 options with a one-line description each. At level 10 it shows 2 follow-ups of the chosen form.
@@ -95,7 +99,7 @@ How to test:
 Expected: no errors in the console, every form plays as its card text says, and form choices never repeat for the same skill. A wrong `--branch` count stops the game with an error.
 
 ### Lowkey base kit + The Drop (beat clock)
-Added: 2026-10-18 | Confirmed: -
+Added: 2026-10-18 | Confirmed: 2026-11-10
 What: the placeholder skills are gone. The hero is now Lowkey (`game/data/heroes/lowkey.json`, design: `design/heroes/lowkey.md`) with 90 HP and speed 7. She has a pool of 6 skills, and 4 of them are in the loadout. Her skills fire on a 130 BPM beat. Every 8 bars a 1-bar build-up leads into a 2-bar Drop (+30% damage, +20% area) that starts with a shockwave. A placeholder groove plays on the beat (kick, clap, hats, riser, drop boom, plus a sound for each skill cast). Skill branches, ultimates and items come next.
 How to test:
 1. Build, then play from source (`LAUNCH.md`). Default loadout: Cowbell (unlocked), Low End, Speaker Stack, Slap.
@@ -111,7 +115,7 @@ How to test:
 Expected: no errors in the console. Skills fire on the beat, never between beats. The groove and the HUD squares stay in sync, stop while a card or the pause menu is open, and continue in time. During the Drop, the skill visuals get bigger and walkers die faster. A wrong id in `--loadout` stops the game with an error that lists the valid ids.
 
 ### Run camera: lower and farther, off-screen spawning
-Added: 2026-10-17 | Confirmed: -
+Added: 2026-10-17 | Confirmed: 2026-11-10
 What: the run camera tilts 40° below the horizon (was 55°) and sits 28 m from the hero (was 22 m). Values are in `game/data/run.json` → `camera`. Walkers now spawn just outside the visible screen area in every direction, following camera rotation and screen shape. The stress test camera is unchanged.
 How to test:
 1. Play from source: `Godot_v4.7.2-stable_mono_win64_console.exe --path game`.
@@ -120,8 +124,6 @@ How to test:
 4. Walk far in one direction: props and shadows cover the whole view, up to the top corners.
 5. Optional: change `tiltDeg` / `distance` in `run.json` and restart. A tilt that shows the horizon (below fovDeg / 2 + 5) or a too-small `despawnRadius` stops the game with an error naming the key.
 Expected: no errors in the console, no walkers popping in on screen, the stress test (`-- --stress`) still looks as before.
-
-## Confirmed (master)
 
 ### Level run (first gameplay slice)
 Added: 2026-10-17 | Confirmed: 2026-10-17
