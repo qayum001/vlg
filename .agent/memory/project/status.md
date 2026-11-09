@@ -4,7 +4,7 @@ Related: [overview](overview.md), [open questions](open-questions.md), [concept]
 
 - Phase: gameplay prototype. The first playable run and horde stress test are on master; performance results are in `design/engine.md` section 7.
 - Confirmed on master: camera orbit/aiming, Lowkey's six-skill pool with branches and three ultimates, 25 items with shop/chest/credits, The Crossroads hub and persistent meta progression, generated icons/props/effects, five replacement item icons, release launchers, Pyromancer and saved hub hero selection. See `features.md` for authoritative feature states and manual checks.
-- Dev tooling approved for merge, pending review and integration: automatic Codex instruction loading and its recovery fix, QuestionForms design interviews, and clarified review authorization / merge-status workflow.
+- Tooling confirmed on master: automatic Codex instruction loading and its recovery fix, QuestionForms design interviews, and clarified review authorization / merge-status workflow.
 - Domain and design source of truth: `design/concept.md`, `design/domain.md`, `design/heroes/lowkey.md`, `design/heroes/pyromancer.md`, `design/items.md`. Memory records implementation context, not duplicate designs.
 - User supplies humanoid models; both heroes and The Fixer still use placeholders. Asset production details: [assets](../architecture/assets.md).
 - Engine: Godot 4.7 + C#, Mobile renderer; minimum target 8 GB RAM / 2 GB VRAM. See [engine decision](../decisions/engine.md).

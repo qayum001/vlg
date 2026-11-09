@@ -21,8 +21,12 @@ None.
 
 ## Approved for merge (dev)
 
+None.
+
+## Confirmed (master)
+
 ### Clarification, review authorization and merge states
-Added: 2026-11-10 | Approved for merge: 2026-11-10 | Confirmed: -
+Added: 2026-11-10 | Approved for merge: 2026-11-10 | Confirmed: 2026-11-10
 What: clarification explicitly seeks omitted requirements through as many rounds as needed. The required pre-merge or explicitly requested reviewer is authorized by R6; other subagents still need an explicit request. Merge approval is tracked separately from successful integration.
 How to test:
 1. Read R4/R6/R8/R15 and the matching shared workflows: the exception should apply only to reviews, and the review-result pause should remain even with no findings.
@@ -31,7 +35,7 @@ How to test:
 Expected: approval alone never means Confirmed; failed merges leave approved features pending.
 
 ### QuestionForms design interviews
-Added: 2026-11-10 | Approved for merge: 2026-11-10 | Confirmed: -
+Added: 2026-11-10 | Approved for merge: 2026-11-10 | Confirmed: 2026-11-10
 What: the project `grill-me` workflow uses the installed QuestionForms skill to collect browser answers and records agreed game decisions in `design/`. Agent setup and connection details are linked from `AGENTS.md` and the memory index.
 How to test:
 1. With the existing local QuestionForms service running, invoke `$grill-me` with a vlg design topic.
@@ -41,7 +45,7 @@ How to test:
 Expected: questions and answers use QuestionForms through connected MCP tools or the installed Python bridge. Pending forms remain unanswered until submitted; no extra service instance starts. Full interview testing awaits a user-provided topic.
 
 ### Automatic Codex project rules
-Added: 2026-11-10 | Approved for merge: 2026-11-10 | Confirmed: -
+Added: 2026-11-10 | Approved for merge: 2026-11-10 | Confirmed: 2026-11-10
 What: one read-only Codex SessionStart hook supplies current dev instructions on startup, resume, clear, compaction and fork, including older linked worktrees. It only loads context, adds nothing on ordinary prompts, and never blocks rule-repair requests.
 How to test:
 1. Inspect the single vlg SessionStart entry in Codex Settings > Hooks; trust it if Codex requests it. Open a new vlg chat.
@@ -49,8 +53,6 @@ How to test:
 3. Run `tools/codex/test-project-rules.ps1`: its disposable repository checks missing, empty and oversized rules, successful repair, older worktrees and installation without modifying real rules.
 4. Start a chat in an unrelated repository: the loader supplies no vlg instructions.
 Expected: automatic complete context or a non-blocking diagnostic. No workflow execution, approval logic or repeated per-prompt injection. Exact behavior, inspection command, setup and removal: `tools/codex/README.md`.
-
-## Confirmed (master)
 
 ### Pyromancer and hub hero selection
 Added: 2026-11-08 | Confirmed: 2026-11-10

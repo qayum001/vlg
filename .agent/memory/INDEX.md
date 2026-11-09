@@ -5,7 +5,7 @@ Game design source of truth: `design/` (human-readable, shared with the user). M
 
 ## project
 - [Overview](project/overview.md) — what vlg is, concept + domain summary, art approach, engine, platforms, min spec, user's design habits
-- [Status](project/status.md) — gameplay prototype, confirmed content and pending dev tooling
+- [Status](project/status.md) — gameplay prototype, confirmed content and tooling
 - [Open questions](project/open-questions.md) — unverified hardware targets, engine testing, LFS and settings data
 - [Tooling](project/tooling.md) — Godot path/templates/GPU indexes, .NET SDKs, Blender path/prefs, two Blender MCPs, Telegram notify MCP, broken claude CLI
 - [QuestionForms](project/questionforms.md) - installed grill-me entry point, local MCP/API, Python bridge and interview resume
